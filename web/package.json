@@ -10,8 +10,8 @@
     "lint": "eslint .",
     "generate:api": "openapi-typescript openapi.json -o lib/api-schema.ts",
     "test:e2e": "playwright test",
-    "format": "prettier --write app components hooks lib/api.ts lib/types.ts tests scripts *.ts *.mjs *.json",
-    "format:check": "prettier --check app components hooks lib/api.ts lib/types.ts tests scripts *.ts *.mjs *.json"
+    "format": "prettier --write app components hooks lib tests scripts *.ts *.mjs *.json",
+    "format:check": "prettier --check app components hooks lib tests scripts *.ts *.mjs *.json"
   },
   "dependencies": {
     "@firebase/app": "0.16.2",

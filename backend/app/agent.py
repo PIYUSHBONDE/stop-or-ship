@@ -367,6 +367,7 @@ async def investigate(store, job):
             )
             provider = "Gemini · " + config.MODEL
         result = validate_result(result, list(evidence.values()))
+        roles_version = s["incident"]["calculation_version"]
 
         def complete(current):
             require_active_claim(current)
@@ -377,6 +378,7 @@ async def investigate(store, job):
                 diagnosis=result,
                 provider=provider,
                 evidence=list(evidence.values()),
+                roles_calculation_version=roles_version,
                 state="awaiting_approval",
                 lease_until=0,
             )

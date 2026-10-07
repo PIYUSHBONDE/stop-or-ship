@@ -57,6 +57,18 @@ The additional failure downtime is incremental to planned loss; remaining output
 
 Approval requires an exact calculation version and an idempotency key. Recalculation supersedes a work order and requires renewed approval. Agent tools cannot approve actions or write work orders.
 
+### Incident workspace and authorization revisions
+
+The dedicated Incidents route selects a persisted case through `?incident=<id>`. Archived or resolved cases are read-only. The page has separate investigation and intervention sections, with canonical dependency branches and a cost table from the backend. Evidence is normalized centrally from the saved investigation snapshot into a readonly `EvidenceView`; live telemetry never silently replaces cited readings. Original excerpts, document identity and provenance remain inspectable. Retrieved document JSON cannot classify itself as a measured signal record.
+
+`decision_rules.py` checks the configured 85 °C demo limit on each replay window and before approval or repair start. The first breach is latched for the current incident, including its signal, timestamp, unit and provenance. Before execution it creates a new calculation revision and retires an existing work order as superseded. The original approval and calculation snapshot remain in the superseded-order history. Revision events preserve the old and new version IDs and the reason. Specialist positions retain the version they considered, so the UI labels them stale after a change.
+
+A rejected stale command can still discover a new constraint. `persist_decision_transition` commits that constraint in the same ownership-checked transaction before returning HTTP 409; the client then reloads current state. Old idempotency receipts may be returned for exact retries but cannot reactivate a superseded order. The client verifies the current incident, order status and calculation version before presenting the Maintenance handoff, and Maintenance checks its incident deep link again.
+
+The latch also sets affected-line capacity to zero in the simulated plant. Once a repair is being executed, its authorization snapshot stays immutable; a later breach records the constraint without rewriting executed work. Verification cannot count a window above the limit as healthy. Three healthy windows resolve the case and release the latch, while retaining the triggering evidence for review. These are demonstration workflow rules, not industrial control or manufacturer safety limits.
+
+The `/evidence-preview` route runs only the evidence components with labelled synthetic fixtures. It disables session bootstrap and polling, allowing teammate work without Python, data downloads or model credentials.
+
 Diagnosis references are checked against returned evidence IDs. Generated currency claims are rejected. Documents and notes are untrusted evidence. Citation existence does not establish that a claim is scientifically correct; live-model grounding quality must be evaluated separately.
 
 Repair completion stores the technician's correction, preserves the original hypothesis, and starts three-window recovery verification. Verified memory improves future retrieval context; no online model training is implemented.

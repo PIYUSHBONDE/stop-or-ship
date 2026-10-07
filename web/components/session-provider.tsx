@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { usePlantSession } from '@/hooks/use-plant-session';
 
 type SessionController = ReturnType<typeof usePlantSession> & {
@@ -10,7 +11,8 @@ type SessionController = ReturnType<typeof usePlantSession> & {
 const SessionContext = createContext<SessionController | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const controller = usePlantSession();
+  const pathname = usePathname();
+  const controller = usePlantSession(pathname !== '/evidence-preview');
   const [selected, selectAsset] = useState('P-107');
   return (
     <SessionContext.Provider value={{ ...controller, selected, selectAsset }}>

@@ -33,6 +33,7 @@ export function DecisionPanel({
 }: Props) {
   const incident = state.incident;
   const calc = incident?.calculation;
+  const dirty = !!calc && risk !== calc.risk_multiplier;
   return !calc ? (
     <Empty
       icon={<Layers3 size={32} />}
@@ -49,7 +50,11 @@ export function DecisionPanel({
           incident.diagnosis.roles.map((r) => (
             <div key={r.role}>
               <strong>{r.role}</strong>
+              <p>{calc.options.find((o) => o.id === r.preferred_option)?.name}</p>
               <p>{r.explanation}</p>
+              {incident.roles_calculation_version !== incident.calculation_version && (
+                <small className="muted">Earlier comparison · explanation needs review</small>
+              )}
             </div>
           ))
         ) : (
@@ -129,6 +134,20 @@ export function DecisionPanel({
       >
         Recalculate · requires new approval
       </button>
+      {dirty && (
+        <>
+          <p className="fine-print" role="alert">
+            Unapplied risk changes. Recalculate or discard them before approval.
+          </p>
+          <button
+            className="text-button full"
+            disabled={busy}
+            onClick={() => setRisk(calc.risk_multiplier)}
+          >
+            Discard changes
+          </button>
+        </>
+      )}
       <label className="field-label">
         Approver
         <input
@@ -141,7 +160,13 @@ export function DecisionPanel({
       <button
         className="primary full"
         onClick={approve}
-        disabled={busy || incident?.state !== 'awaiting_approval' || approver.trim().length < 2}
+        disabled={
+          busy ||
+          dirty ||
+          !chosen?.feasible ||
+          incident?.state !== 'awaiting_approval' ||
+          approver.trim().length < 2
+        }
       >
         <ShieldCheck size={15} />
         Approve selected intervention

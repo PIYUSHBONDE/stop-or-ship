@@ -26,6 +26,7 @@ const destinations = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { state, connected, error, busy, dismissError } = usePlant();
+  if (pathname === '/evidence-preview') return children;
   if (!state)
     return (
       <main className="boot">

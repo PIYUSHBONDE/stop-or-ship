@@ -1,4 +1,9 @@
-import OperationsWorkspace from '@/components/operations-workspace';
+import { Suspense } from 'react';
+import IncidentWorkspace from '@/components/incidents/incident-workspace';
 export default function Page() {
-  return <OperationsWorkspace view="incidents" />;
+  return (
+    <Suspense fallback={<p className="muted">Loading incident workspace…</p>}>
+      <IncidentWorkspace />
+    </Suspense>
+  );
 }

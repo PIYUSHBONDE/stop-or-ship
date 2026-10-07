@@ -132,6 +132,8 @@ class WorkOrder(BaseModel):
     status: str
     option: DecisionOption
     calculation_snapshot: dict
+    superseded_at: str | None = None
+    superseded_reason: str | None = None
 
 
 class VerifiedCase(BaseModel):
@@ -229,6 +231,12 @@ class RuntimeIncident(Incident):
     progress: list[ProgressRecord]
     calculation: Calculation
     calculation_version: str
+    calculation_revision: int = 1
+    safety_stop: bool = False
+    safety_evidence: list[Signal] = []
+    roles_calculation_version: str | None = None
+    decision_changed_reason: str | None = None
+    decision_changes: list["DecisionChange"] = []
     work_order: WorkOrder | None
     verification_windows: int
     attempts: int
@@ -239,6 +247,13 @@ class RuntimeIncident(Incident):
     repair_attempts: list[dict] = []
     superseded_work_orders: list[WorkOrder] = []
     model_calls: int = 0
+
+
+class DecisionChange(BaseModel):
+    at: str
+    reason: str
+    previous_version: str
+    calculation_version: str
 
 
 class TelemetryWindow(BaseModel):

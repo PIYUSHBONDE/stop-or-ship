@@ -102,6 +102,35 @@ Generated OpenAPI types power the typed session client and frontend view models.
 
 See [deployment instructions](docs/deployment.md), [architecture](docs/architecture.md), [evaluation](docs/evaluation.md), [engineering conventions](docs/engineering.md), and [demo narrative](docs/demo-script.md).
 
+## Milestone 1 and teammate setup
+
+The dedicated **Incidents** page opens a selected case at `/incidents?incident=<id>`. It shows persisted evidence, branching production impact, intervention costs, saved risk assumptions and versioned human approval. An unapplied risk edit must be recalculated or discarded. Historical cases are read-only; the authorized work-order link opens the matching case in Maintenance.
+
+Read the [teammate handoff](docs/teammate-handoff.md) for the frozen evidence-component contract, file ownership, branch workflow and acceptance checklist. The `/evidence-preview` workshop runs with the frontend alone and makes no API calls; all of its examples are explicitly synthetic fixtures.
+
+The implementation is on `milestone/incidents-approval`; the teammate starts from `feature/incident-evidence`. See the [Milestone 1 review guide](docs/milestone-1-review.md) and [measured validation results](docs/status.md). Keep both branches separate until component review and the combined acceptance demonstration.
+
+### Linux and macOS
+
+From the repository root:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install uv==0.12.23
+UV_PROJECT_ENVIRONMENT="$PWD/.venv" .venv/bin/uv sync --project backend --frozen --extra dev
+cd web
+npm ci
+npm run build
+```
+
+Start the API from the repository root in one terminal:
+
+```sh
+.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+```
+
+Start the frontend from `web` in a second terminal with `npm run start`, or use `npm run dev` during development. Dataset preparation is optional; unavailable measured data is labelled as a synthetic fallback. Runtime execution on Linux/macOS is covered by the supplied setup commands and CI configuration; local validation in this workspace uses Windows.
+
 ## AI providers for local work
 
 Persistence and AI identity are separate settings. The default is `PLANTSENSE_MODE=local` with `PLANTSENSE_AI_PROVIDER=scripted`; no model credentials are needed for the demo. Local retrieval uses the reviewed knowledge pack and session memory.

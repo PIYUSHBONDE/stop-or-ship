@@ -413,6 +413,17 @@ export interface components {
              */
             risk_multiplier: number;
         };
+        /** DecisionChange */
+        DecisionChange: {
+            /** At */
+            at: string;
+            /** Reason */
+            reason: string;
+            /** Previous Version */
+            previous_version: string;
+            /** Calculation Version */
+            calculation_version: string;
+        };
         /** DecisionOption */
         DecisionOption: {
             /**
@@ -677,6 +688,30 @@ export interface components {
             calculation: components["schemas"]["Calculation"];
             /** Calculation Version */
             calculation_version: string;
+            /**
+             * Calculation Revision
+             * @default 1
+             */
+            calculation_revision: number;
+            /**
+             * Safety Stop
+             * @default false
+             */
+            safety_stop: boolean;
+            /**
+             * Safety Evidence
+             * @default []
+             */
+            safety_evidence: components["schemas"]["Signal"][];
+            /** Roles Calculation Version */
+            roles_calculation_version?: string | null;
+            /** Decision Changed Reason */
+            decision_changed_reason?: string | null;
+            /**
+             * Decision Changes
+             * @default []
+             */
+            decision_changes: components["schemas"]["DecisionChange"][];
             work_order: components["schemas"]["WorkOrder"] | null;
             /** Verification Windows */
             verification_windows: number;
@@ -855,6 +890,10 @@ export interface components {
             calculation_snapshot: {
                 [key: string]: unknown;
             };
+            /** Superseded At */
+            superseded_at?: string | null;
+            /** Superseded Reason */
+            superseded_reason?: string | null;
         };
     };
     responses: never;

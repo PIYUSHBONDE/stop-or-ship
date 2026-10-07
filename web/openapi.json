@@ -1391,6 +1391,34 @@
         "type": "object",
         "title": "CalculationRequest"
       },
+      "DecisionChange": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "previous_version": {
+            "type": "string",
+            "title": "Previous Version"
+          },
+          "calculation_version": {
+            "type": "string",
+            "title": "Calculation Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "reason",
+          "previous_version",
+          "calculation_version"
+        ],
+        "title": "DecisionChange"
+      },
       "DecisionOption": {
         "properties": {
           "id": {
@@ -2090,6 +2118,54 @@
             "type": "string",
             "title": "Calculation Version"
           },
+          "calculation_revision": {
+            "type": "integer",
+            "title": "Calculation Revision",
+            "default": 1
+          },
+          "safety_stop": {
+            "type": "boolean",
+            "title": "Safety Stop",
+            "default": false
+          },
+          "safety_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Signal"
+            },
+            "type": "array",
+            "title": "Safety Evidence",
+            "default": []
+          },
+          "roles_calculation_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roles Calculation Version"
+          },
+          "decision_changed_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Changed Reason"
+          },
+          "decision_changes": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionChange"
+            },
+            "type": "array",
+            "title": "Decision Changes",
+            "default": []
+          },
           "work_order": {
             "anyOf": [
               {
@@ -2568,6 +2644,28 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Calculation Snapshot"
+          },
+          "superseded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded At"
+          },
+          "superseded_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded Reason"
           }
         },
         "type": "object",

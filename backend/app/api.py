@@ -34,7 +34,13 @@ from .models import (
     WorkOrder,
 )
 from .questions import answer_question
-from .workflow import finish_repair, recalculate_decision, reopen_repair, start_repair
+from .workflow import (
+    finish_repair,
+    persist_decision_transition,
+    recalculate_decision,
+    reopen_repair,
+    start_repair,
+)
 
 router = APIRouter()
 ExpectedIncident = Annotated[str | None, Header(alias="X-Incident-ID", pattern=r"^[a-f0-9-]{36}$")]
@@ -126,7 +132,9 @@ def recalculate(
     store: Storage,
     expected_incident: ExpectedIncident = None,
 ) -> PlantSnapshot:
-    store.mutate(sid, uid, guard_incident(expected_incident, lambda s: recalculate_decision(s, request)))
+    persist_decision_transition(
+        store, sid, uid, expected_incident, lambda s: recalculate_decision(s, request)
+    )
     return snapshot(store.read(sid, uid))
 
 
@@ -139,8 +147,8 @@ def approval(
     idempotency_key: Annotated[str, Header(min_length=8, max_length=100)],
     expected_incident: ExpectedIncident = None,
 ) -> WorkOrder:
-    return store.mutate(
-        sid, uid, guard_incident(expected_incident, lambda s: approve(s, request, idempotency_key))
+    return persist_decision_transition(
+        store, sid, uid, expected_incident, lambda s: approve(s, request, idempotency_key)
     )
 
 
@@ -171,7 +179,7 @@ def reopen(sid: str, uid: Owner, store: Storage, expected_incident: ExpectedInci
 def begin_repair(
     sid: str, uid: Owner, store: Storage, expected_incident: ExpectedIncident = None
 ) -> PlantSnapshot:
-    store.mutate(sid, uid, guard_incident(expected_incident, start_repair))
+    persist_decision_transition(store, sid, uid, expected_incident, start_repair)
     return snapshot(store.read(sid, uid))
 
 

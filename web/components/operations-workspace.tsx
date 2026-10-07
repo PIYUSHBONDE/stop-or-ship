@@ -73,7 +73,13 @@ export default function OperationsWorkspace({
   const [scenario, setScenario] =
     useState<CommandBodies['/scenarios']['scenario']>('pump_degradation');
   const [option, setOption] = useState<CommandBodies['/approve']['option_id'] | ''>('');
-  const [risk, setRisk] = useState(1);
+  const [riskDraft, setRiskDraft] = useState({ version: '', value: 1 });
+  const risk =
+    riskDraft.version === state?.incident?.calculation_version
+      ? riskDraft.value
+      : (state?.incident?.calculation.risk_multiplier ?? 1);
+  const setRisk = (value: number) =>
+    setRiskDraft({ version: state?.incident?.calculation_version || '', value });
   const [approver, setApprover] = useState('Maintenance manager');
   const [cause, setCause] = useState('');
   const [fix, setFix] = useState('');

@@ -1,19 +1,17 @@
-import hashlib
 import json
 import time
 import uuid
-from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
-from .economics import ASSUMPTIONS, calculate
+from .decision_rules import calc_version as calc_version
+from .decision_rules import refresh_constraints, temperature_triggers
+from .economics import calculate
+from .events import event as event
+from .events import now as now
 from .plant import AREAS, ASSETS, DEPENDENCIES, PLANT, downstream
 from .profiles import SCENARIOS, affected_lines, profile_for, session_profile
 from .telemetry import asset_signals, replay_data, sample
-
-
-def now():
-    return datetime.now(timezone.utc).isoformat()
 
 
 def fresh(owner, id=None, quotas=None):
@@ -34,19 +32,6 @@ def fresh(owner, id=None, quotas=None):
         "idempotency": {},
         "events": [],
     }
-
-
-def event(s, message):
-    s["events"].append({"at": now(), "message": message})
-    s["events"] = s["events"][-40:]
-
-
-def calc_version(s):
-    i = s["incident"]
-    content = json.dumps(
-        {"generation": s["generation"], "incident": i["id"], "calculation": i["calculation"]}, sort_keys=True
-    )
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
 def require_incident(s, states):
@@ -114,26 +99,21 @@ def advance(s, step=False):
             and all(r["anomaly"] for r in s["history"][-3:])
         ):
             s["quotas"]["investigations"] += 1
-            safety_stop = any(
-                signal["signal_id"] == "temperature"
-                and signal["value"] >= ASSUMPTIONS["configured_temperature_stop_celsius"]
-                for signal in row["signals"]
-            )
             i = {
                 "id": str(uuid.uuid4()),
                 "asset_id": profile.asset_id,
                 "profile_id": profile.id,
                 "affected_lines": affected_lines(profile.asset_id),
                 "state": "detected",
-                "severity": "critical" if safety_stop else "warning",
+                "severity": "warning",
                 "created_at": now(),
                 "evidence": [],
                 "diagnosis": None,
                 "progress": [],
-                "calculation": calculate(
-                    safety_stop=safety_stop, profile=profile, lines=affected_lines(profile.asset_id)
-                ),
-                "safety_stop": safety_stop,
+                "calculation": calculate(profile=profile, lines=affected_lines(profile.asset_id)),
+                "safety_stop": False,
+                "safety_evidence": [],
+                "calculation_revision": 1,
                 "work_order": None,
                 "verification_windows": 0,
                 "lease_until": 0,
@@ -149,10 +129,15 @@ def advance(s, step=False):
                 "generation": s["generation"],
                 "incident_id": i["id"],
             }
+        refresh_constraints(s)
         if i and i["state"] == "verifying":
-            i["verification_windows"] = 0 if row["anomaly"] else i["verification_windows"] + 1
+            temperature_breach = bool(temperature_triggers(s, row))
+            i["verification_windows"] = (
+                0 if row["anomaly"] or temperature_breach else i["verification_windows"] + 1
+            )
             if i["verification_windows"] >= 3:
                 i["state"] = "resolved"
+                i["safety_stop"] = False
                 i["work_order"]["status"] = "verified"
                 repair = i["repair"]
                 s["memory"].append(
@@ -172,10 +157,15 @@ def advance(s, step=False):
                 event(s, "Three healthy windows verified; confirmed repair stored in reliability memory")
             elif row["anomaly"]:
                 i["verification_message"] = "Recovery not established: abnormal telemetry persists"
+            elif temperature_breach:
+                i["verification_message"] = (
+                    "Recovery not established: temperature exceeds the configured demo limit"
+                )
     return job
 
 
 def approve(s, request, key):
+    refresh_constraints(s)
     if key in s["idempotency"]:
         prior = s["idempotency"][key]
         if prior["request"] != request.model_dump():
@@ -213,6 +203,7 @@ def snapshot(s):
         i
         and (
             i["state"] == "repairing"
+            or (active and i.get("safety_stop", False))
             or (i["state"] == "approved" and i["work_order"]["approval"]["option_id"] == "stop")
         )
     )
