@@ -44,6 +44,12 @@ Open **http://127.0.0.1:3000**. API docs: http://127.0.0.1:8000/docs.
 
 For development use `npm.cmd run dev`. Alternatively, `scripts/start-local.ps1` starts development servers in hidden windows and prints their process IDs. Do not launch it if ports 3000/8000 are already occupied.
 
+### Docker
+
+With Docker running in Linux-container mode, run `docker compose up --build --wait` from the repository root and open **http://127.0.0.1:3000**. A fresh clone needs no dataset download or credentials. Sessions persist in a named volume; the API is private to the container network.
+
+See [Docker setup and validation](docs/docker.md) for alternate ports, measured-data preparation and container controls, and [security boundaries](SECURITY.md) for the current controls and production requirements.
+
 ## Try the complete workflow
 
 1. Open **Plant** for the full factory explorer. Use the asset list, camera presets and close-up controls, or switch to the keyboard-accessible 2D plan. Start **Pump degradation**. Six replay windows establish healthy context and persistent abnormality; use the step control to accelerate.

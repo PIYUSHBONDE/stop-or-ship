@@ -2,7 +2,7 @@
 
 Local implementation includes the whole plant, measured replay, runtime detector, explicitly scripted investigation, evidence inspection, option calculations, versioned approval, work order, repair verification, technician correction and subsequent case retrieval.
 
-Google Cloud integration and reproducible deployment configuration are implemented. No active Google Cloud login was found; existing application-default credentials failed a read-only refresh check (`RefreshError`), so deployment, live Gemini/retrieval evaluation, budget provisioning and a public prototype URL remain pending. No public video upload was performed. Docker Engine is unavailable locally; container execution remains unverified.
+Google Cloud integration and reproducible deployment configuration are implemented. No active Google Cloud login was found; existing application-default credentials failed a read-only refresh check (`RefreshError`), so deployment, live Gemini/retrieval evaluation, budget provisioning and a public prototype URL remain pending. No public video upload was performed. Docker packaging and localhost Compose configuration are implemented; container execution remains unverified because this session cannot access Docker Desktop's engine pipe.
 
 The proposal PDF and local recording are drafts. They must not be submitted as proof of a live Gemini integration. See the deployment acceptance gate and evaluation limitations before publication.
 
@@ -28,7 +28,7 @@ The 6 October browser run finished with ten passes and no failed or flaky tests.
 
 ## Review the prototype
 
-The local web server is available at **http://127.0.0.1:3000**, with API documentation at **http://127.0.0.1:8000/docs**, while those processes remain running. Restart instructions are in `README.md`.
+After starting the local services, review the web application at **http://127.0.0.1:3000**, with API documentation at **http://127.0.0.1:8000/docs**. Restart instructions are in `README.md`; container instructions are in `docs/docker.md`.
 
 Current v2 review artifacts: `plant-v2.png`, `memory-v2.png`, and `mobile-plant-v2.png`. The proposal and recording below still show the earlier dashboard and need refreshing after live AI validation.
 
@@ -83,3 +83,20 @@ The local incident-to-authorization implementation is ready for review.
 - Upstream Starlette/OpenTelemetry/Three.js deprecation warnings remain. Browser CLI also reports a color-environment warning; neither caused acceptance failures.
 
 See `docs/milestone-1-review.md` for the acceptance walkthrough. Local servers bind to loopback on ports 3000/8000. Cloud deployment, live Gemini and cloud retrieval validation, remote CI results and GPU performance remain separate gates. This milestone does not redesign the remaining Operations, Maintenance or Memory workspaces, and it does not establish hackathon submission readiness.
+
+## Docker and source security — 7 October 2026
+
+- Added a local `compose.yaml` with a private API and web access bound to localhost. Sessions use a named database volume. Both services have non-root users, read-only root filesystems, dropped Linux capabilities, privilege restrictions, health checks, process/memory/CPU limits and rotated logs.
+- Python and Node images use verified registry digests and separate build/runtime stages. Application code remains root-owned; only database and bounded cache/temporary storage are writable. Frozen dependency locks and allowlisted build contexts exclude credentials, host databases, raw datasets and runtime caches. A fresh clone is configured to build with the labelled synthetic fallback when measured artifacts are absent.
+- Added `SECURITY.md`, Docker instructions and a runtime check for container isolation, health/security headers, cross-origin write rejection and session ownership. CI now includes production dependency audits, a checksum-verified Gitleaks binary, full-history secret scanning, clean-checkout container builds and browser workflows against Compose. CI actions are pinned to verified commit IDs.
+
+### Observed checks and remaining gates
+
+- **39 backend tests passed** again, with the two existing upstream deprecation warnings. The first attempt could not create SQLite test databases in the sandbox's default temporary directory; rerunning with a writable, ignored workspace temporary directory passed without application changes.
+- Production npm and locked Python dependency audits reported **no known vulnerabilities** at the time of checking. Gitleaks reported no leaks across the five commits that preceded this packaging update; the final commit is scanned separately before publishing.
+- Compose configuration, workflow/Compose YAML parsing, Ruff lint/formatting, Prettier formatting, TypeScript checks, ESLint and `git diff --check` passed.
+- The new production build attempt was blocked before compilation by Windows access denial during SWC canonicalization of the project path. The earlier Milestone 1 build and 29-test browser run above remain the last completed production/browser validation; they do not validate the new container packaging.
+- Docker Desktop was opened by the user. The current sandbox denies its Linux-engine named pipe, and the filesystem permission tool cannot represent that pipe path. Image builds, runtime isolation checks and the container browser suite therefore remain pending. Configured CI jobs have not been observed running.
+- Git's credential helper encounters a Windows sandbox/MSYS access denial. Automatic approval review rejected unsandboxed Git execution because the current approval policy disables that category. Publishing this packaging commit requires Git execution from an authorized environment; existing Milestone 1 work was already published on `milestone/incidents-approval`.
+
+These are checks of the implemented scope, not production security certification. Cloud deployment remains deferred.

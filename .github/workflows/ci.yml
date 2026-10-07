@@ -10,21 +10,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with:
           version: '0.12.23'
       - run: uv sync --frozen --extra dev --project backend
       - run: uv run --project backend pytest backend/tests -q
       - run: uv run --project backend ruff check backend/app backend/scripts backend/tests
       - run: uv run --project backend ruff format --check backend/app backend/scripts backend/tests
+      - run: uv run --project backend ruff check scripts/check_containers.py
+      - run: uv run --project backend ruff format --check scripts/check_containers.py
+      - run: |
+          uv export --project backend --frozen --no-dev --no-emit-project --output-file /tmp/runtime-requirements.txt
+          uvx --from pip-audit==2.9.0 python -m pip_audit --disable-pip --require-hashes -r /tmp/runtime-requirements.txt
       - run: uv run --project backend python backend/scripts/export_openapi.py
       - run: npm ci
+        working-directory: web
+      - run: npm audit --omit=dev --audit-level=high
         working-directory: web
       - run: npm run generate:api && git diff --exit-code -- openapi.json lib/api-schema.ts
         working-directory: web
@@ -38,10 +45,57 @@ jobs:
           npm run start > web.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && curl -fsS http://127.0.0.1:3000 && break; sleep 1; done
           npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: browser-results
           path: |
             web/test-results
             docs/artifacts/*.png
+
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Scan Git history for secrets
+        shell: bash
+        run: |
+          curl -fsSL --retry 3 https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
+          echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz' | sha256sum --check --strict
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks git . --redact --log-opts='--all' --no-banner
+
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: docker compose config --quiet
+      - run: docker compose up --build --wait --wait-timeout 120
+      - run: python3 scripts/check_containers.py
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run test:e2e
+        working-directory: web
+      - name: Container diagnostics
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=100
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: container-browser-results
+          path: web/test-results
+      - run: docker compose down
+        if: always()

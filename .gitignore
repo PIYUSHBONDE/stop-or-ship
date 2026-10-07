@@ -18,6 +18,16 @@ playwright-report/
 *.log
 .gcloud/
 
+# Private identity material belongs outside the repository.
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+**/credentials*.json
+**/*service-account*.json
+**/application_default_credentials.json
+
 .codex-remote-attachments/
 .codex/
 

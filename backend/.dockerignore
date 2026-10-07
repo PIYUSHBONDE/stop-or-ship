@@ -1,7 +1,19 @@
-.venv
-__pycache__
-.pytest_cache
-data/raw
-data/*.db*
-tests
-*.egg-info
+# Allow only runtime source, locked dependencies, knowledge and optional prepared replay.
+**
+!pyproject.toml
+!uv.lock
+!app/
+!app/**
+!data/
+!data/knowledge.json
+!data/artifacts/
+!data/artifacts/replay.json
+!data/artifacts/detector.pkl
+!data/artifacts/bearing-replay.json
+**/__pycache__
+**/*.pyc
+**/.env*
+**/*.pem
+**/*.key
+**/*credentials*.json
+**/*service-account*.json

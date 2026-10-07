@@ -1,5 +1,7 @@
 .gcloudignore
 .git
+.codex
+.codex-remote-attachments
 .venv
 node_modules
 web/node_modules
@@ -11,5 +13,11 @@ web/test-results
 web/playwright-report
 docs/artifacts/*.webm
 docs/artifacts/*.png
-.env
-web/.env.local
+**/.env*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*credentials*.json
+**/*service-account*.json
+secrets/
