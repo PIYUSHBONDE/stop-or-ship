@@ -1,0 +1,11 @@
+import type { components } from './api-schema';
+export type Evidence = components['schemas']['Evidence'];
+export type Signal = components['schemas']['Signal'];
+export type Asset = components['schemas']['Asset'];
+export type Option = components['schemas']['DecisionOption'];
+export type Diagnosis = components['schemas']['InvestigationResult'];
+export type Calculation = components['schemas']['Calculation'];
+export type WorkOrder = components['schemas']['WorkOrder'];
+export type Incident = components['schemas']['RuntimeIncident'];
+export type Case = components['schemas']['VerifiedCase'];
+export type State = components['schemas']['PlantSnapshot'];

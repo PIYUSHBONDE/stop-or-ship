@@ -1,0 +1,61 @@
+# Implementation status
+
+Local implementation includes the whole plant, measured replay, runtime detector, explicitly scripted investigation, evidence inspection, option calculations, versioned approval, work order, repair verification, technician correction and subsequent case retrieval.
+
+Google Cloud integration and reproducible deployment configuration are implemented. No active Google Cloud login was found; existing application-default credentials failed a read-only refresh check (`RefreshError`), so deployment, live Gemini/retrieval evaluation, budget provisioning and a public prototype URL remain pending. No public video upload was performed. Docker Engine is unavailable locally; container execution remains unverified.
+
+The proposal PDF and local recording are drafts. They must not be submitted as proof of a live Gemini integration. See the deployment acceptance gate and evaluation limitations before publication.
+
+## Completed local validation
+
+- Backend: **29 tests passed**; Ruff lint, import ordering and formatting checks passed.
+- Browser: **14 tests passed**, including five consecutive complete primary workflows, refresh recovery, keyboard/dialog interaction, sensor uncertainty, failed recovery, rejection/reopening, delayed-polling protection, source inspection and proxy request boundaries. No failed or flaky tests in the final run.
+- Frontend: production build, TypeScript checks, lint, formatting and OpenAPI client generation passed. The dependency audit reported zero vulnerabilities at the time of checking.
+- Backend dependency lock validated; deployment PowerShell scripts passed syntax checks. CI and container execution have not been run remotely.
+- Final API smoke check: healthy local service and all twelve assets returned after restart.
+- Previous dashboard preview (6 October, before the v2 scene): usable controls in **543 ms** after API readiness; approximately **51.4 animation-frame callbacks/second** in Chromium software rendering. This is not a GPU frame-rate benchmark or a measurement on the judge's laptop.
+
+## Engineering update — 6 October 2026
+
+- Separated app composition, HTTP routes, authentication dependencies, task dispatch, read-only questions, and repair transitions. Tests inject isolated persistence through the app factory.
+- Serialized client polling and user actions; coalesced session/identity bootstrap and retained approval idempotency keys for the same retry intent.
+- Added strict request contracts, body size/time bounds, checked question citations, safe error request IDs, same-origin proxy writes, redirect rejection and browser security headers.
+- Fenced worker callbacks by claim ownership, preserved evidence across retries, and made queued/expired investigations explicit recoverable failures.
+- Enabled SQLite WAL; validated and warmed the detector before API readiness.
+- Added pinned formatting tools and CI format gates, plus `AGENTS.md` and `docs/engineering.md` for future local development.
+
+The 6 October browser run finished with ten passes and no failed or flaky tests. The backend suite has one upstream Starlette TestClient deprecation warning; it does not affect application requests.
+
+## Review the prototype
+
+The local web server is available at **http://127.0.0.1:3000**, with API documentation at **http://127.0.0.1:8000/docs**, while those processes remain running. Restart instructions are in `README.md`.
+
+Current v2 review artifacts: `plant-v2.png`, `memory-v2.png`, and `mobile-plant-v2.png`. The proposal and recording below still show the earlier dashboard and need refreshing after live AI validation.
+
+Earlier review artifacts in `docs/artifacts/`: `plant-3d.png`, `investigation.png`, `verified-memory.png`, `PlantSense_Proposal_Draft.pdf`, and `plantsense-local-demo.webm`. The video is a 2:59.6 silent, captioned local rehearsal with a scripted investigator; it is not the final cloud submission video.
+
+## Remaining release gates
+
+1. Refresh Google Cloud login and application-default credentials, and confirm the intended billing-enabled project and Firebase configuration.
+2. Run the supplied deployment scripts, provision budget alerts, seed vector retrieval and verify private worker authentication.
+3. Evaluate live Gemini grounding, ambiguity, retrieval, timeout/retry handling and malicious document instructions. Local tests do not prove live-model performance.
+4. Repeat acceptance on the public deployment, record the narrated three-minute final demonstration and replace draft submission links with public URLs.
+5. Measure the dedicated plant scene on the demo laptop with hardware graphics available and reach the 30 FPS target; software rendering is currently below that target.
+
+The conventional detector report is deliberately limited: six healthy training cycles and only one healthy cycle among 38 held-out examples. See `docs/evaluation.md` before quoting its precision or recall.
+
+## Local v2 update — 7 October 2026
+
+- Dedicated `/plant` factory explorer with a cutaway industrial hall, service pipes, original procedural floor texture, equipment activity, orbit cameras, close-ups, quality controls, searchable equipment, explicit status labels and a selectable 2D fallback.
+- Shared session/navigation across Plant, Operations, Incidents, Maintenance and Memory; separate workflow presentation components. Browser refresh restores the session and navigation does not create a new identity.
+- Equipment profiles cover hydraulic pump, shared cooler, press valve and drive-motor bearing. UCI replay includes nine signals and 27 detector features. The measured IMS subset is prepared with provenance, snapshot checksums and explicit source-unit labels.
+- Dependency-based production and costs count unique affected lines. Finished-goods telemetry matches whole-plant output. Currency formatting preserves non-zero paise. Costs and probabilities remain synthetic configured assumptions.
+- One active incident with retained read-only history, transaction-checked incident IDs, exact calculation versions and stable approval retry keys. Failed verification can continue the approved intervention; earlier outcomes remain retained and unverified cases remain excluded from memory. Recurrence targets the most recently verified equipment.
+- Configurable scripted, Gemini API and Vertex providers, with credentials restricted to the backend. ADK investigator, independent Reliability/Production positions, evidence review and deterministic arbitration are implemented. Specialist outputs are stub-tested; no live Gemini quality, latency or cost is claimed.
+- Local validation: 29 backend tests and 14 browser tests passed, including five complete primary runs, cross-workspace navigation, direct 3D equipment selection, mobile selection, WebGL fallback, equipment workflows, archived ownership and stale-action rejection. Ruff, Prettier, TypeScript, lint, OpenAPI generation and production build pass. Upstream Starlette and OpenTelemetry deprecation warnings remain.
+- Final v2 production preview: controls usable in 482–486 ms after API readiness at 1600 × 1050. Two isolated Chromium runs measured 13.5 and 19.6 animation-frame callbacks/second; both used SwiftShader software rendering (the default renderer also fell back to SwiftShader). Automatic quality used a 0.7-resolution canvas without shadows. No browser errors were observed. These are short cadence measurements, not GPU benchmarks; the 30 FPS target is not met in this environment and actual GPU performance remains unverified. See `docs/artifacts/browser-performance-v2.json` and `browser-performance-v2-default.json`.
+- Hydraulic threshold selection uses one independent healthy validation cycle; fitting and evaluation remain separate.
+- Expanded hydraulic evaluation: 38 held-out cycles (one healthy, 37 abnormal), precision 0.973684, recall 1.0, confusion matrix `[[0,1],[0,37]]`. The healthy cycle was a false positive; these tiny and imbalanced counts do not establish robust detection.
+- IMS replay uses a single experiment with 18 reference snapshots, six threshold snapshots, six early replay snapshots and twelve late snapshots. Independent-experiment evaluation is not performed. Recovery replay is illustrative, not a documented real repair.
+
+Cloud deployment remains deferred at the user's request. Live model access, semantic claim-support evaluation, cloud vector queries, cloud worker security and submission refresh remain release gates. The local application is ready for review; it is not presented as a completed cloud hackathon submission.

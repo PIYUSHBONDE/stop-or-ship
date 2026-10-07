@@ -1,0 +1,2587 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PlantSense API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/local-identity": {
+      "post": {
+        "summary": "Local Identity",
+        "operationId": "local_identity_api_v1_local_identity_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions": {
+      "post": {
+        "summary": "Create Session",
+        "operationId": "create_session_api_v1_sessions_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}": {
+      "get": {
+        "summary": "Get Session",
+        "operationId": "get_session_api_v1_sessions__sid__get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/advance": {
+      "post": {
+        "summary": "Tick",
+        "operationId": "tick_api_v1_sessions__sid__advance_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/reset": {
+      "post": {
+        "summary": "Reset",
+        "operationId": "reset_api_v1_sessions__sid__reset_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/scenarios": {
+      "post": {
+        "summary": "Scenario",
+        "operationId": "scenario_api_v1_sessions__sid__scenarios_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/replay": {
+      "post": {
+        "summary": "Replay",
+        "operationId": "replay_api_v1_sessions__sid__replay_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/investigation/retry": {
+      "post": {
+        "summary": "Retry",
+        "operationId": "retry_api_v1_sessions__sid__investigation_retry_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/calculate": {
+      "post": {
+        "summary": "Recalculate",
+        "operationId": "recalculate_api_v1_sessions__sid__calculate_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/approve": {
+      "post": {
+        "summary": "Approval",
+        "operationId": "approval_api_v1_sessions__sid__approve_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "idempotency-key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkOrder"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/reject": {
+      "post": {
+        "summary": "Reject",
+        "operationId": "reject_api_v1_sessions__sid__reject_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/reopen": {
+      "post": {
+        "summary": "Reopen",
+        "operationId": "reopen_api_v1_sessions__sid__reopen_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/repair/start": {
+      "post": {
+        "summary": "Begin Repair",
+        "operationId": "begin_repair_api_v1_sessions__sid__repair_start_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/repair/complete": {
+      "post": {
+        "summary": "Complete Repair",
+        "operationId": "complete_repair_api_v1_sessions__sid__repair_complete_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepairRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/memory": {
+      "get": {
+        "summary": "Memory",
+        "operationId": "memory_api_v1_sessions__sid__memory_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/questions": {
+      "post": {
+        "summary": "Question",
+        "operationId": "question_api_v1_sessions__sid__questions_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/incidents/{incident_id}": {
+      "get": {
+        "summary": "Read Incident",
+        "operationId": "read_incident_api_v1_sessions__sid__incidents__incident_id__get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "incident_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeIncident"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{sid}/repair/reopen": {
+      "post": {
+        "summary": "Continue Repair",
+        "operationId": "continue_repair_api_v1_sessions__sid__repair_reopen_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "X-Incident-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9-]{36}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Incident-Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlantSnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Approval": {
+        "properties": {
+          "option_id": {
+            "type": "string",
+            "title": "Option Id"
+          },
+          "calculation_version": {
+            "type": "string",
+            "title": "Calculation Version"
+          },
+          "approver": {
+            "type": "string",
+            "title": "Approver"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "option_id",
+          "calculation_version",
+          "approver",
+          "timestamp"
+        ],
+        "title": "Approval"
+      },
+      "ApprovalRequest": {
+        "properties": {
+          "option_id": {
+            "type": "string",
+            "enum": [
+              "stop",
+              "defer",
+              "derate",
+              "continue"
+            ],
+            "title": "Option Id"
+          },
+          "calculation_version": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{16}$",
+            "title": "Calculation Version"
+          },
+          "approver": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Approver"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "option_id",
+          "calculation_version",
+          "approver"
+        ],
+        "title": "ApprovalRequest"
+      },
+      "Area": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "purpose"
+        ],
+        "title": "Area"
+      },
+      "Asset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "area_id": {
+            "type": "string",
+            "title": "Area Id"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          },
+          "position": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Position"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status",
+            "default": "healthy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type",
+          "area_id",
+          "purpose",
+          "position"
+        ],
+        "title": "Asset"
+      },
+      "AuditEvent": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "message"
+        ],
+        "title": "AuditEvent"
+      },
+      "Calculation": {
+        "properties": {
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionOption"
+            },
+            "type": "array",
+            "title": "Options"
+          },
+          "recommended": {
+            "type": "string",
+            "enum": [
+              "stop",
+              "defer",
+              "derate",
+              "continue"
+            ],
+            "title": "Recommended"
+          },
+          "assumptions": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Assumptions"
+          },
+          "risk_multiplier": {
+            "type": "number",
+            "title": "Risk Multiplier"
+          },
+          "sensitivity": {
+            "items": {
+              "$ref": "#/components/schemas/Sensitivity"
+            },
+            "type": "array",
+            "title": "Sensitivity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "options",
+          "recommended",
+          "assumptions",
+          "risk_multiplier",
+          "sensitivity"
+        ],
+        "title": "Calculation"
+      },
+      "CalculationRequest": {
+        "properties": {
+          "risk_multiplier": {
+            "type": "number",
+            "maximum": 3.0,
+            "minimum": 0.25,
+            "title": "Risk Multiplier",
+            "default": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CalculationRequest"
+      },
+      "DecisionOption": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "stop",
+              "defer",
+              "derate",
+              "continue"
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "feasible": {
+            "type": "boolean",
+            "title": "Feasible"
+          },
+          "constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Constraint"
+          },
+          "repair_cost_paise": {
+            "type": "integer",
+            "title": "Repair Cost Paise"
+          },
+          "lost_margin_paise": {
+            "type": "integer",
+            "title": "Lost Margin Paise"
+          },
+          "penalty_paise": {
+            "type": "integer",
+            "title": "Penalty Paise"
+          },
+          "failure_exposure_paise": {
+            "type": "integer",
+            "title": "Failure Exposure Paise"
+          },
+          "total_paise": {
+            "type": "integer",
+            "title": "Total Paise"
+          },
+          "failure_probability": {
+            "type": "number",
+            "title": "Failure Probability"
+          },
+          "lost_units": {
+            "type": "integer",
+            "title": "Lost Units"
+          },
+          "downtime_minutes": {
+            "type": "integer",
+            "title": "Downtime Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "feasible",
+          "constraint",
+          "repair_cost_paise",
+          "lost_margin_paise",
+          "penalty_paise",
+          "failure_exposure_paise",
+          "total_paise",
+          "failure_probability",
+          "lost_units",
+          "downtime_minutes"
+        ],
+        "title": "DecisionOption"
+      },
+      "Dependency": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "relationship": {
+            "type": "string",
+            "title": "Relationship"
+          },
+          "capacity_fraction": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Capacity Fraction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "relationship",
+          "capacity_fraction"
+        ],
+        "title": "Dependency"
+      },
+      "Evidence": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "section",
+          "version",
+          "provenance",
+          "text"
+        ],
+        "title": "Evidence"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Hypothesis": {
+        "properties": {
+          "cause": {
+            "type": "string",
+            "title": "Cause"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence"
+          },
+          "supporting_evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Supporting Evidence"
+          },
+          "conflicting_evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Conflicting Evidence",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "cause",
+          "confidence",
+          "supporting_evidence"
+        ],
+        "title": "Hypothesis"
+      },
+      "InvestigationResult": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Hypotheses"
+          },
+          "missing_information": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Information"
+          },
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RolePosition"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "hypotheses",
+          "missing_information",
+          "citations",
+          "roles"
+        ],
+        "title": "InvestigationResult"
+      },
+      "MemoryResponse": {
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedCase"
+            },
+            "type": "array",
+            "title": "Cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cases"
+        ],
+        "title": "MemoryResponse"
+      },
+      "Plant": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "simulation": {
+            "type": "boolean",
+            "title": "Simulation",
+            "default": true
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "INR"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Plant"
+      },
+      "PlantSnapshot": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "generation": {
+            "type": "string",
+            "title": "Generation"
+          },
+          "plant": {
+            "$ref": "#/components/schemas/Plant"
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/Area"
+            },
+            "type": "array",
+            "title": "Areas"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/Asset"
+            },
+            "type": "array",
+            "title": "Assets"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/Dependency"
+            },
+            "type": "array",
+            "title": "Dependencies"
+          },
+          "signals": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/Signal"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Signals"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario"
+          },
+          "window": {
+            "type": "integer",
+            "title": "Window"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "incident": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuntimeIncident"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "incidents": {
+            "items": {
+              "$ref": "#/components/schemas/RuntimeIncident"
+            },
+            "type": "array",
+            "title": "Incidents",
+            "default": []
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioDefinition"
+            },
+            "type": "array",
+            "title": "Scenarios",
+            "default": []
+          },
+          "affected": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Affected"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetryWindow"
+            },
+            "type": "array",
+            "title": "History"
+          },
+          "memory": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedCase"
+            },
+            "type": "array",
+            "title": "Memory"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "quotas": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Quotas"
+          },
+          "output_per_hour": {
+            "type": "integer",
+            "title": "Output Per Hour"
+          },
+          "nominal_output_per_hour": {
+            "type": "integer",
+            "title": "Nominal Output Per Hour"
+          },
+          "data_mode": {
+            "type": "string",
+            "title": "Data Mode"
+          },
+          "simulated_minutes": {
+            "type": "integer",
+            "title": "Simulated Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "generation",
+          "plant",
+          "areas",
+          "assets",
+          "dependencies",
+          "signals",
+          "scenario",
+          "window",
+          "running",
+          "incident",
+          "affected",
+          "history",
+          "memory",
+          "events",
+          "quotas",
+          "output_per_hour",
+          "nominal_output_per_hour",
+          "data_mode",
+          "simulated_minutes"
+        ],
+        "title": "PlantSnapshot"
+      },
+      "ProgressRecord": {
+        "properties": {
+          "at": {
+            "type": "number",
+            "title": "At"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "unavailable"
+            ],
+            "title": "Status",
+            "default": "completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "message"
+        ],
+        "title": "ProgressRecord"
+      },
+      "QuestionRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Question"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "QuestionRequest"
+      },
+      "QuestionResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Answer"
+          },
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Citations"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "answer",
+          "citations",
+          "provider",
+          "evidence"
+        ],
+        "title": "QuestionResponse"
+      },
+      "RepairRequest": {
+        "properties": {
+          "observed_cause": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Observed Cause"
+          },
+          "fix": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Fix"
+          },
+          "parts": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Parts"
+          },
+          "outcome": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Outcome"
+          },
+          "recovery": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "failed"
+            ],
+            "title": "Recovery",
+            "default": "healthy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "observed_cause",
+          "fix",
+          "parts",
+          "outcome"
+        ],
+        "title": "RepairRequest"
+      },
+      "ReplayRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "play",
+              "pause",
+              "step"
+            ],
+            "title": "Action"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "ReplayRequest"
+      },
+      "RolePosition": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "Reliability",
+              "Production"
+            ],
+            "title": "Role"
+          },
+          "preferred_option": {
+            "type": "string",
+            "title": "Preferred Option"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "preferred_option",
+          "explanation"
+        ],
+        "title": "RolePosition"
+      },
+      "RuntimeIncident": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "diagnosis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "profile_id": {
+            "type": "string",
+            "title": "Profile Id",
+            "default": "pump"
+          },
+          "affected_lines": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Affected Lines",
+            "default": []
+          },
+          "progress": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressRecord"
+            },
+            "type": "array",
+            "title": "Progress"
+          },
+          "calculation": {
+            "$ref": "#/components/schemas/Calculation"
+          },
+          "calculation_version": {
+            "type": "string",
+            "title": "Calculation Version"
+          },
+          "work_order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkOrder"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verification_windows": {
+            "type": "integer",
+            "title": "Verification Windows"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "verification_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Message"
+          },
+          "repair": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair"
+          },
+          "repair_attempts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Repair Attempts",
+            "default": []
+          },
+          "superseded_work_orders": {
+            "items": {
+              "$ref": "#/components/schemas/WorkOrder"
+            },
+            "type": "array",
+            "title": "Superseded Work Orders",
+            "default": []
+          },
+          "model_calls": {
+            "type": "integer",
+            "title": "Model Calls",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "state",
+          "severity",
+          "created_at",
+          "evidence",
+          "progress",
+          "calculation",
+          "calculation_version",
+          "work_order",
+          "verification_windows",
+          "attempts"
+        ],
+        "title": "RuntimeIncident"
+      },
+      "ScenarioDefinition": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "profile_id": {
+            "type": "string",
+            "title": "Profile Id"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "measured_available": {
+            "type": "boolean",
+            "title": "Measured Available"
+          },
+          "requires_memory": {
+            "type": "boolean",
+            "title": "Requires Memory",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "asset_id",
+          "profile_id",
+          "provenance",
+          "measured_available"
+        ],
+        "title": "ScenarioDefinition"
+      },
+      "ScenarioRequest": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "enum": [
+              "pump_degradation",
+              "cooler_degradation",
+              "valve_degradation",
+              "bearing_degradation",
+              "sensor_uncertainty",
+              "memory_recurrence"
+            ],
+            "title": "Scenario"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scenario"
+        ],
+        "title": "ScenarioRequest"
+      },
+      "Sensitivity": {
+        "properties": {
+          "multiplier": {
+            "type": "number",
+            "title": "Multiplier"
+          },
+          "recommended": {
+            "type": "string",
+            "title": "Recommended"
+          }
+        },
+        "type": "object",
+        "required": [
+          "multiplier",
+          "recommended"
+        ],
+        "title": "Sensitivity"
+      },
+      "Signal": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "signal_id": {
+            "type": "string",
+            "title": "Signal Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "provenance": {
+            "type": "string",
+            "enum": [
+              "measured_replay",
+              "synthetic"
+            ],
+            "title": "Provenance"
+          },
+          "source_cycle_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Cycle Id"
+          },
+          "source_dataset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Dataset Id"
+          },
+          "source_record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Record Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "signal_id",
+          "timestamp",
+          "value",
+          "unit",
+          "provenance"
+        ],
+        "title": "Signal"
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "healthy",
+          "degrading",
+          "investigating",
+          "critical",
+          "affected",
+          "stopped",
+          "verifying"
+        ],
+        "title": "Status"
+      },
+      "TelemetryWindow": {
+        "properties": {
+          "window": {
+            "type": "integer",
+            "title": "Window"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/Signal"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "baseline": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Baseline"
+          },
+          "deviations": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Deviations"
+          },
+          "feature_deviations": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Feature Deviations",
+            "default": {}
+          },
+          "anomaly": {
+            "type": "boolean",
+            "title": "Anomaly"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "sensor_disagreement": {
+            "type": "boolean",
+            "title": "Sensor Disagreement"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "source_cycle_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Cycle Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window",
+          "signals",
+          "baseline",
+          "deviations",
+          "anomaly",
+          "score",
+          "sensor_disagreement",
+          "provenance",
+          "source_cycle_id"
+        ],
+        "title": "TelemetryWindow"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerifiedCase": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "incident_id": {
+            "type": "string",
+            "title": "Incident Id"
+          },
+          "observed_cause": {
+            "type": "string",
+            "title": "Observed Cause"
+          },
+          "fix": {
+            "type": "string",
+            "title": "Fix"
+          },
+          "parts": {
+            "type": "string",
+            "title": "Parts"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "verified_at": {
+            "type": "string",
+            "title": "Verified At"
+          },
+          "original_diagnosis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "incident_id",
+          "observed_cause",
+          "fix",
+          "parts",
+          "outcome",
+          "verified_at",
+          "original_diagnosis"
+        ],
+        "title": "VerifiedCase"
+      },
+      "WorkOrder": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "incident_id": {
+            "type": "string",
+            "title": "Incident Id"
+          },
+          "approval": {
+            "$ref": "#/components/schemas/Approval"
+          },
+          "procedure": {
+            "type": "string",
+            "title": "Procedure"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "option": {
+            "$ref": "#/components/schemas/DecisionOption"
+          },
+          "calculation_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Calculation Snapshot"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "incident_id",
+          "approval",
+          "procedure",
+          "status",
+          "option",
+          "calculation_snapshot"
+        ],
+        "title": "WorkOrder"
+      }
+    }
+  }
+}

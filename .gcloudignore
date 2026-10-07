@@ -1,0 +1,15 @@
+.gcloudignore
+.git
+.venv
+node_modules
+web/node_modules
+web/.next
+backend/data/raw
+backend/data/*.db*
+*.log
+web/test-results
+web/playwright-report
+docs/artifacts/*.webm
+docs/artifacts/*.png
+.env
+web/.env.local

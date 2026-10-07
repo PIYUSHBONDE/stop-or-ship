@@ -1,0 +1,6 @@
+{
+  "usable_ms": 543,
+  "animation_frame_callbacks_per_second": 51.39464098842442,
+  "rendering": "Chromium software rendering; requestAnimationFrame cadence is not a GPU frame benchmark",
+  "errors": []
+}

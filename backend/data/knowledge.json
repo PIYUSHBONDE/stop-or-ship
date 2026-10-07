@@ -1,0 +1,111 @@
+[
+  {
+    "id": "sop-pump-01",
+    "source": "PlantSense demo SOP",
+    "section": "Hydraulic pump / diagnostic checks",
+    "version": "1.0",
+    "provenance": "Synthetic demo procedure; not a manufacturer instruction",
+    "text": "Falling delivered flow with a changed pressure profile may be consistent with internal pump leakage, valve bypass, or operating-load changes. Compare flow, pressure, motor power, and operating conditions before assigning a cause. A condition label from a test rig does not establish time to failure.",
+    "equipment_families": [
+      "pump"
+    ]
+  },
+  {
+    "id": "sop-sensor-01",
+    "source": "PlantSense demo SOP",
+    "section": "Instrumentation / independent confirmation",
+    "version": "1.0",
+    "provenance": "Synthetic demo procedure; not a manufacturer instruction",
+    "text": "A single extreme pressure reading while independent flow, power, and temperature remain normal is insufficient to confirm mechanical failure. Request an independent pressure measurement and sensor calibration check. Do not infer a safe operating condition solely from disagreement.",
+    "equipment_families": [
+      "pump",
+      "cooler",
+      "valve"
+    ]
+  },
+  {
+    "id": "sop-repair-01",
+    "source": "PlantSense demo SOP",
+    "section": "Maintenance / approval and recovery",
+    "version": "1.0",
+    "provenance": "Synthetic demo procedure; not a manufacturer instruction",
+    "text": "An authorized human must approve the intervention before a work order is issued. A technician records the observed cause, fix, and parts. Work completion is not proof of recovery. Verify three consecutive healthy telemetry windows before storing a confirmed case. Actual plant isolation procedures require site-specific review.",
+    "equipment_families": [
+      "pump",
+      "cooler",
+      "valve",
+      "bearing"
+    ]
+  },
+  {
+    "id": "sop-production-01",
+    "source": "PlantSense demo planning note",
+    "section": "Production / dependency model",
+    "version": "1.0",
+    "provenance": "Synthetic plant configuration",
+    "text": "Pump P-107 supplies Press PR-101, which feeds Conveyor CV-101 and finished goods FG-001. Line B is independently driven. Reduced Line A capacity affects half of nominal whole-plant production; the parallel line is not automatically stopped.",
+    "equipment_families": [
+      "pump",
+      "cooler",
+      "valve",
+      "bearing"
+    ]
+  },
+  {
+    "id": "uci-hydraulic-reference",
+    "source": "UCI Machine Learning Repository - hydraulic condition dataset",
+    "section": "Dataset Information / Attribute Information",
+    "version": "DOI 10.24432/C5CW21",
+    "provenance": "Public CC BY 4.0 dataset metadata; paraphrased; https://archive.ics.uci.edu/dataset/447/condition+monitoring+of+hydraulic+systems",
+    "text": "The hydraulic test rig repeats 60-second load cycles. Its pressure, volume-flow, temperature, motor-power and vibration measurements accompany cycle-level component conditions. The pump target distinguishes no internal leakage, weak leakage and severe leakage. Cooler, valve and accumulator conditions also vary. Multiple faults can coexist, so a pressure or flow change alone does not uniquely establish a pump cause. Test-rig condition labels do not provide calibrated future failure probabilities.",
+    "equipment_families": [
+      "pump",
+      "cooler",
+      "valve"
+    ]
+  },
+  {
+    "id": "sop-cooler-01",
+    "source": "PlantSense demo SOP",
+    "section": "cooler / diagnostic checks",
+    "version": "2.0",
+    "provenance": "Synthetic demo procedure; not a manufacturer instruction",
+    "text": "Reduced cooling performance may be consistent with fouling, low cooling flow, excess heat load or temperature instrumentation. Compare cooling efficiency, cooling power, temperature and flow; independently inspect the shared circuit. Both production lines depend on cooling.",
+    "equipment_families": [
+      "cooler"
+    ]
+  },
+  {
+    "id": "sop-valve-01",
+    "source": "PlantSense demo SOP",
+    "section": "valve / diagnostic checks",
+    "version": "2.0",
+    "provenance": "Synthetic demo procedure; not a manufacturer instruction",
+    "text": "Valve timing degradation may change pressure distributions and cycle flow. Cycle means alone may hide timing faults. Compare pressure and flow variation and independently measure spool response before attributing a press problem to the valve.",
+    "equipment_families": [
+      "valve"
+    ]
+  },
+  {
+    "id": "sop-bearing-01",
+    "source": "PlantSense demo SOP",
+    "section": "bearing / diagnostic checks",
+    "version": "2.0",
+    "provenance": "Synthetic demo procedure; not a manufacturer instruction",
+    "text": "Elevated acceleration RMS, impulsiveness or spectral changes may be consistent with bearing damage, looseness, misalignment or acquisition differences. Acceleration is not velocity. Inspect the bearing and alignment independently; test-rig or synthetic demonstration signals cannot confirm damage in a real plant.",
+    "equipment_families": [
+      "bearing"
+    ]
+  },
+  {
+    "id": "ims-bearing-reference",
+    "source": "NASA IMS bearing archive / bundled dataset README",
+    "section": "Data structure / Set No. 2",
+    "version": "IMS second experiment, February 2004",
+    "provenance": "Public dataset metadata; https://data.nasa.gov/dataset/ims-bearings; supplied by University of Cincinnati IMS with Rexnord support",
+    "equipment_families": [
+      "bearing"
+    ],
+    "text": "The second experiment has four channels and 984 snapshots; channel one corresponds to bearing one. Snapshots contain 20,480 samples acquired at 20 kHz. The README reports outer-race failure of bearing one at the experiment endpoint. It does not label every snapshot with a fault or specify amplitude units. Retain source units and distinguish an early/late replay demonstration from validated industrial diagnosis or an observed repair."
+  }
+]

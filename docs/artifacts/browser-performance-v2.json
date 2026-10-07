@@ -1,0 +1,17 @@
+{
+  "usable_ms": 486,
+  "viewport": {
+    "width": 1600,
+    "height": 1050
+  },
+  "graphics_selection": "auto",
+  "canvas": {
+    "buffer_width": 1052,
+    "buffer_height": 689,
+    "displayed_width": 1504,
+    "displayed_height": 985
+  },
+  "animation_frame_callbacks_per_second": 13.52130599934173,
+  "rendering": "Chromium software rendering; requestAnimationFrame cadence is not a GPU frame benchmark",
+  "errors": []
+}

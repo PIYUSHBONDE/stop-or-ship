@@ -1,0 +1,19 @@
+{
+  "usable_ms": 482,
+  "viewport": {
+    "width": 1600,
+    "height": 1050
+  },
+  "graphics_selection": "auto",
+  "canvas": {
+    "buffer_width": 1052,
+    "buffer_height": 689,
+    "displayed_width": 1504,
+    "displayed_height": 985
+  },
+  "animation_frame_callbacks_per_second": 19.57689925943397,
+  "requested_renderer": "Browser default",
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "rendering": "requestAnimationFrame cadence is not a GPU frame benchmark",
+  "errors": []
+}

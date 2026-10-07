@@ -1,0 +1,26 @@
+node_modules/
+.next/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+**/data/raw/
+**/data/artifacts/
+*.egg-info/
+*.tsbuildinfo
+test-results/
+playwright-report/
+*.log
+.gcloud/
+
+.codex-remote-attachments/
+.codex/
+
+# Large rehearsal recordings stay local; reviewed screenshots can be shared.
+docs/artifacts/*.webm
+docs/artifacts/*.mp4

@@ -1,0 +1,41 @@
+name: Validate PlantSense
+on: [push, pull_request]
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.23'
+      - run: uv sync --frozen --extra dev --project backend
+      - run: uv run --project backend pytest backend/tests -q
+      - run: uv run --project backend ruff check backend/app backend/scripts backend/tests
+      - run: uv run --project backend ruff format --check backend/app backend/scripts backend/tests
+      - run: uv run --project backend python backend/scripts/export_openapi.py
+      - run: npm ci
+        working-directory: web
+      - run: npm run generate:api && git diff --exit-code -- openapi.json lib/api-schema.ts
+        working-directory: web
+      - run: npm run format:check && npm run typecheck && npm run lint && npm run build
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: |
+          uv run --project backend uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 > backend.log 2>&1 &
+          cd web
+          npm run start > web.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && curl -fsS http://127.0.0.1:3000 && break; sleep 1; done
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-results
+          path: |
+            web/test-results
+            docs/artifacts/*.png

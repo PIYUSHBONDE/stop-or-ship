@@ -1,0 +1,11 @@
+{
+  "duration_target_seconds": 180,
+  "elapsed_seconds": 257.742,
+  "mode": "local scripted investigator",
+  "audio": false,
+  "submission_ready": false,
+  "original_video_duration_seconds": 181.64,
+  "elapsed_seconds_note": "Includes video encoding and context shutdown; not the video playback duration.",
+  "video_duration_seconds": 179.6,
+  "edit": "Removed two seconds of initial page loading; retained the full workflow."
+}
