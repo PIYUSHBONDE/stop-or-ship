@@ -22,7 +22,7 @@
 | `web/components/session-provider.tsx` | Shared session lifetime and selected equipment |
 | `web/components/workflow/` | Separate investigation, decision, work-order and memory panels |
 | `web/components/incidents/` | Dedicated incident workspace, dependency branches and intervention comparison |
-| `web/lib/incident-view-model.ts` | Saved-evidence normalization and frozen readonly teammate contract |
+| `web/lib/incident-view-model.ts` | Saved-evidence normalization and readonly presentation types |
 | `web/app/*/page.tsx` | Dedicated workspace routes |
 
 Stores are created at application startup rather than import time. Trusted replay/model artifacts are validated and warmed before the API accepts traffic. Tests inject isolated stores through `create_app(store)`. SQLite uses WAL and explicit write transactions; callbacks must not perform external network operations inside a transaction.
@@ -57,9 +57,7 @@ The IMS preparation utility verifies its reviewed archive checksum, restricts ex
 
 Use `PLANTSENSE_AI_PROVIDER` to choose scripted, Gemini API or Vertex identity independently of local/cloud persistence. All credentials remain server side. Do not present the scripted stages or stubbed specialist tests as live model evaluation.
 
-## Milestone 1 collaboration
-
-The integration branch is `milestone/incidents-approval`; evidence presentation work belongs on `feature/incident-evidence`. Shared contracts, fixtures, session logic and backend transitions are owned by the integration builder. The teammate owns `web/components/incidents/evidence/` and receives only prepared data and callbacks. Review their component changes before merging and repeat the combined acceptance checks. See `docs/teammate-handoff.md` for setup and screenshots.
+## Incident decision rules
 
 Risk controls derive from the saved calculation. Unapplied edits block approval and require explicit recalculation or discard. Incident actions carry the displayed case ID through the shared controller; historical cases must not dispatch mutations against the active case. Specialist explanations carry their source calculation version and never determine feasibility or cost. A HTTP 409 triggers a serialized refresh so newly committed constraints become visible immediately.
 

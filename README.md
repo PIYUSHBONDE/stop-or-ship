@@ -102,13 +102,13 @@ Generated OpenAPI types power the typed session client and frontend view models.
 
 See [deployment instructions](docs/deployment.md), [architecture](docs/architecture.md), [evaluation](docs/evaluation.md), [engineering conventions](docs/engineering.md), and [demo narrative](docs/demo-script.md).
 
-## Milestone 1 and teammate setup
+## Milestone 1
 
 The dedicated **Incidents** page opens a selected case at `/incidents?incident=<id>`. It shows persisted evidence, branching production impact, intervention costs, saved risk assumptions and versioned human approval. An unapplied risk edit must be recalculated or discarded. Historical cases are read-only; the authorized work-order link opens the matching case in Maintenance.
 
-Read the [teammate handoff](docs/teammate-handoff.md) for the frozen evidence-component contract, file ownership, branch workflow and acceptance checklist. The `/evidence-preview` workshop runs with the frontend alone and makes no API calls; all of its examples are explicitly synthetic fixtures.
+The `/evidence-preview` workshop runs with the frontend alone and makes no API calls; all of its examples are explicitly synthetic fixtures.
 
-The implementation is on `milestone/incidents-approval`; the teammate starts from `feature/incident-evidence`. See the [Milestone 1 review guide](docs/milestone-1-review.md) and [measured validation results](docs/status.md). Keep both branches separate until component review and the combined acceptance demonstration.
+The implementation is on `milestone/incidents-approval`. See the [Milestone 1 review guide](docs/milestone-1-review.md) and [measured validation results](docs/status.md).
 
 ### Linux and macOS
 

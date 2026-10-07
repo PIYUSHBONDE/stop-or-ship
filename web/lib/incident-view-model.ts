@@ -1,6 +1,6 @@
 import type { Evidence } from './types';
 
-/** Frozen teammate contract. Values are presentation strings, never executable source content. */
+/** Saved evidence presentation types. Values are strings, never executable source content. */
 export type EvidenceKind = 'measured' | 'synthetic' | 'mixed' | 'document' | 'verified' | 'unknown';
 export type EvidenceValue = Readonly<{
   label: string;

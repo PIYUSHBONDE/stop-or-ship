@@ -34,8 +34,4 @@ The investigator is scripted in the default local setup. Dataset availability is
 
 The temperature tests insert synthetic hot windows into isolated test sessions. They do not claim that the measured dataset documents a later temperature breach or a real repair. The configured 85 °C limit is a demo assumption.
 
-## Collaboration review
-
-The frozen contract and reference evidence components are implemented. The human teammate's refinement, component review and combined demonstration remain to be completed after repository access is granted. Follow `docs/teammate-handoff.md`; their work stays inside the evidence component directory. Development and deployment review are separate: cloud deployment remains deferred.
-
 Exact automated results and outstanding release limits are recorded in `docs/status.md`.

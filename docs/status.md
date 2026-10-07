@@ -62,15 +62,15 @@ Cloud deployment remains deferred at the user's request. Live model access, sema
 
 ## Milestone 1 implementation — 7 October 2026
 
-The local incident-to-authorization implementation is ready for builder review. The human teammate's component refinement and joint acceptance demonstration remain outstanding; they have not been represented as completed work.
+The local incident-to-authorization implementation is ready for review.
 
 - Dedicated `/incidents?incident=<id>` workspace with a case list, equipment identity, lifecycle/progress, hypotheses, conflicting evidence, missing information, source details, branching production impact, a four-option INR comparison and human approval.
 - Historical/resolved cases remain read-only. Maintenance deep links validate the selected case, and the handoff is presented only after refreshing and checking the current authorized order/version.
 - The configured temperature constraint is checked on every new replay window and before approval or repair start. Its first breach is latched with typed signal evidence, retires pre-execution authorization, updates the calculation revision and persists before a stale-command conflict is returned. Superseded orders remain inactive; retry receipts cannot reactivate them.
 - Risk controls initialize from the saved calculation. Unapplied changes block approval and offer Recalculate/Discard. Specialist positions retain their calculation version; explanations are labelled stale after a revision.
 - Original approval/cost snapshots remain recorded. Executed repairs retain their authorization snapshot; hot or abnormal windows cannot verify recovery. Three healthy windows release the demo latch while preserving the original trigger for review.
-- Evidence normalization retains saved excerpts and provenance, keeps measured/synthetic/document/verified-case categories distinct and rejects document JSON as measured telemetry. Scoped reference components, seven synthetic fixtures, a frontend-only `/evidence-preview` workshop and the frozen teammate handoff are provided.
-- Git preserves the existing remote history, with an imported reviewed baseline and separate integration/evidence branches. Credentials, raw datasets, local databases, dependency caches and rehearsal recordings are excluded. The private repository owner still needs to grant the teammate's GitHub account access.
+- Evidence normalization retains saved excerpts and provenance, keeps measured/synthetic/document/verified-case categories distinct and rejects document JSON as measured telemetry. Scoped components, seven synthetic fixtures and a frontend-only `/evidence-preview` workshop are provided.
+- Git preserves the existing remote history with an imported reviewed baseline. Credentials, raw datasets, local databases, dependency caches and rehearsal recordings are excluded.
 
 ### Measured acceptance results
 
@@ -82,4 +82,4 @@ The local incident-to-authorization implementation is ready for builder review. 
 - Browser screenshots are saved as `evidence-workshop.png`, `evidence-details.png`, `evidence-mobile.png`, `incidents-milestone-1.png` and `incidents-mobile.png` under `docs/artifacts/`. Desktop and mobile examples were visually inspected.
 - Upstream Starlette/OpenTelemetry/Three.js deprecation warnings remain. Browser CLI also reports a color-environment warning; neither caused acceptance failures.
 
-See `docs/milestone-1-review.md` for the acceptance walkthrough and `docs/teammate-handoff.md` for the teammate's bounded task. Local servers bind to loopback on ports 3000/8000. Cloud deployment, live Gemini and cloud retrieval validation, remote CI results, GPU performance and the human component review remain separate gates. This milestone does not redesign the remaining Operations, Maintenance or Memory workspaces, and it does not establish hackathon submission readiness.
+See `docs/milestone-1-review.md` for the acceptance walkthrough. Local servers bind to loopback on ports 3000/8000. Cloud deployment, live Gemini and cloud retrieval validation, remote CI results and GPU performance remain separate gates. This milestone does not redesign the remaining Operations, Maintenance or Memory workspaces, and it does not establish hackathon submission readiness.
