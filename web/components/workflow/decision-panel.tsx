@@ -33,6 +33,13 @@ export function DecisionPanel({
 }: Props) {
   const incident = state.incident;
   const calc = incident?.calculation;
+  const dirty = !!calc && risk !== calc.risk_multiplier;
+  const source = state.monitoring?.enabled
+    ? state.monitoring.health.find((item) => item.asset_id === incident?.asset_id)
+    : undefined;
+  const qualityBlocked = !!source && source.quality !== 'fresh';
+  const canReview = !state.workspace || state.workspace.permissions.includes('incident.review');
+  const canApprove = !state.workspace || state.workspace.permissions.includes('incident.approve');
   return !calc ? (
     <Empty
       icon={<Layers3 size={32} />}
@@ -49,7 +56,11 @@ export function DecisionPanel({
           incident.diagnosis.roles.map((r) => (
             <div key={r.role}>
               <strong>{r.role}</strong>
+              <p>{calc.options.find((o) => o.id === r.preferred_option)?.name}</p>
               <p>{r.explanation}</p>
+              {incident.roles_calculation_version !== incident.calculation_version && (
+                <small className="muted">Earlier comparison · explanation needs review</small>
+              )}
             </div>
           ))
         ) : (
@@ -121,7 +132,9 @@ export function DecisionPanel({
       </label>
       <button
         className="secondary full"
-        disabled={busy || !['awaiting_approval', 'approved'].includes(incident!.state)}
+        disabled={
+          !canReview || busy || !['awaiting_approval', 'approved'].includes(incident!.state)
+        }
         onClick={() => {
           setOption('');
           act('/calculate', { risk_multiplier: risk });
@@ -129,11 +142,26 @@ export function DecisionPanel({
       >
         Recalculate · requires new approval
       </button>
+      {dirty && (
+        <>
+          <p className="fine-print" role="alert">
+            Unapplied risk changes. Recalculate or discard them before approval.
+          </p>
+          <button
+            className="text-button full"
+            disabled={busy}
+            onClick={() => setRisk(calc.risk_multiplier)}
+          >
+            Discard changes
+          </button>
+        </>
+      )}
       <label className="field-label">
-        Approver
+        {state.workspace ? 'Authenticated approver' : 'Approver'}
         <input
           aria-label="Approver"
-          value={approver}
+          value={state.workspace?.user.display_name || approver}
+          readOnly={!!state.workspace}
           maxLength={80}
           onChange={(e) => setApprover(e.target.value)}
         />
@@ -141,24 +169,39 @@ export function DecisionPanel({
       <button
         className="primary full"
         onClick={approve}
-        disabled={busy || incident?.state !== 'awaiting_approval' || approver.trim().length < 2}
+        disabled={
+          busy ||
+          !canApprove ||
+          qualityBlocked ||
+          dirty ||
+          !chosen?.feasible ||
+          incident?.state !== 'awaiting_approval' ||
+          approver.trim().length < 2
+        }
       >
         <ShieldCheck size={15} />
         Approve selected intervention
       </button>
       <button
         className="text-button full"
-        disabled={busy || incident?.state !== 'awaiting_approval'}
+        disabled={!canApprove || busy || incident?.state !== 'awaiting_approval'}
         onClick={() => act('/reject')}
       >
         Reject proposal
       </button>
       {incident?.state === 'proposal_rejected' && (
-        <button className="secondary full" onClick={() => act('/reopen')}>
+        <button
+          className="secondary full"
+          disabled={!canApprove || busy}
+          onClick={() => act('/reopen')}
+        >
           Reopen for review
         </button>
       )}
       <p className="fine-print">
+        {qualityBlocked && (
+          <span>{source?.reason}. Restore valid monitoring evidence before approval. </span>
+        )}
         Human approval authorizes simulated work only. Financial risk is an assumption, not a
         predicted probability.
       </p>

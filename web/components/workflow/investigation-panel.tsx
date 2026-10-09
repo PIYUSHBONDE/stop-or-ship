@@ -88,7 +88,11 @@ export function InvestigationPanel({ state, busy, act, setEvidence, setTab }: Pr
           {incident.state === 'investigation_failed' && (
             <button
               className="secondary"
-              disabled={busy || incident.attempts >= 2}
+              disabled={
+                busy ||
+                incident.attempts >= 2 ||
+                (!!state.workspace && !state.workspace.permissions.includes('incident.review'))
+              }
               onClick={() => act('/investigation/retry')}
             >
               Retry investigation

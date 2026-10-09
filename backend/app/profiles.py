@@ -1,6 +1,6 @@
 """Reviewed demo configuration; profiles are data, never model instructions."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ PROFILES = {
         "Reduced cooling performance",
         "Changing heat load or temperature instrumentation",
         "Independent oil temperature and cooling-circuit inspection",
-        "Isolate shared cooling in the simulation; inspect airflow, fouling and cooling flow before servicing both lines.",
+        "Isolate shared cooling in the simulation; inspect airflow, fouling and cooling flow before restoring dependent lines.",
         2400000,
         90,
         65,
@@ -90,14 +90,17 @@ def profile_for(scenario: str | None) -> EquipmentProfile:
     return PROFILES[SCENARIOS.get(scenario, "pump")]
 
 
-def affected_lines(asset_id: str) -> list[str]:
-    from .plant import ASSETS, downstream
+def affected_lines(asset_id: str, configuration=None) -> list[str]:
+    from .plant import catalog
+    from .plant_configuration import affected_capacities
 
-    affected = {asset_id, *downstream(asset_id)}
-    return sorted({a.area_id for a in ASSETS if a.type == "press" and a.id in affected})
+    return sorted(affected_capacities(asset_id, configuration or catalog({})))
 
 
 def session_profile(session) -> EquipmentProfile:
+    if session.get("_profile_id") in PROFILES:
+        profile = PROFILES[session["_profile_id"]]
+        return replace(profile, asset_id=session.get("_asset_id", profile.asset_id))
     if session["scenario"] == "memory_recurrence" and session["memory"]:
         asset_id = session["memory"][-1]["asset_id"]
         return next(

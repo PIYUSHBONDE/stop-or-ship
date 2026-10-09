@@ -7,7 +7,7 @@ import type { State } from './types';
 type Schema = components['schemas'];
 export type CommandBodies = {
   '/reset': Record<string, never>;
-  '/scenarios': Schema['ScenarioRequest'];
+  '/scenarios': Schema['WorkspaceSourceRequest'];
   '/replay': Schema['ReplayRequest'];
   '/investigation/retry': Record<string, never>;
   '/calculate': Schema['CalculationRequest'];

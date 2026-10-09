@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import {
   ArrowRight,
@@ -28,6 +29,7 @@ const PlantScene = dynamic(() => import('./plant-scene'), {
 });
 
 export function FactoryWorkspace() {
+  const router = useRouter();
   const { state, selected, selectAsset, busy, act } = usePlant();
   const [planView, setPlanView] = useState(false);
   const [quality, setQuality] = useState<'auto' | 'detail' | 'balanced'>('auto');
@@ -41,11 +43,29 @@ export function FactoryWorkspace() {
   const [overlay, setOverlay] = useState<'health' | 'impact'>('health');
   const [scenario, setScenario] =
     useState<CommandBodies['/scenarios']['scenario']>('pump_degradation');
+  const [sourceAsset, setSourceAsset] = useState('');
   if (!state) return null;
+  const canManage = !state.workspace || state.workspace.permissions.includes('plant.manage');
   const asset = state.assets.find((a) => a.id === selected) || state.assets[0];
   const incident = state.incident;
+  const equipmentIncident = state.workspace
+    ? state.incidents
+        .slice()
+        .reverse()
+        .find((item) => item.asset_id === asset.id)
+    : incident;
   const active = incident && incident.state !== 'resolved';
+  const sourceComplete = !!state.workspace && incident?.state === 'resolved';
   const signals = state.signals[asset.id] || [];
+  const sourceProfile = state.scenarios.find((item) => item.id === scenario)?.profile_id;
+  const eligibleAssets = state.assets.filter((item) =>
+    scenario === 'memory_recurrence'
+      ? state.memory.some((repair) => repair.asset_id === item.id) && !!item.diagnostic_profile
+      : item.diagnostic_profile === sourceProfile,
+  );
+  const mappedAsset = eligibleAssets.some((item) => item.id === sourceAsset)
+    ? sourceAsset
+    : eligibleAssets[0]?.id;
   const recommended = active
     ? incident.calculation.options.find((o) => o.id === incident.calculation.recommended)
     : undefined;
@@ -76,7 +96,10 @@ export function FactoryWorkspace() {
             FACTORY EXPLORER <span className="live-tag">REPLAY</span>
           </span>
           <h1>Your plant, in context.</h1>
-          <p>Two forming lines. Shared services. Every dependency visible.</p>
+          <p>
+            {state.areas.filter((area) => area.nominal_units_per_hour > 0).length} forming lines.
+            Shared services. Every dependency visible.
+          </p>
         </div>
         <button
           className="icon-button inspector-toggle"
@@ -89,10 +112,13 @@ export function FactoryWorkspace() {
       <div className="factory-stats">
         <span>
           <i className={`dot ${active ? 'degrading' : 'healthy'}`} />
-          {state.assets.filter((a) => a.status === 'healthy').length} / 12 healthy
+          {state.assets.filter((a) => a.status === 'healthy').length} / {state.assets.length}{' '}
+          healthy
         </span>
         <span>
-          <strong>{state.output_per_hour}</strong> parts/h <small>of 200 nominal</small>
+          <strong>{state.output_per_hour}</strong> parts/h{' '}
+          <small>of {state.nominal_output_per_hour} nominal</small>
+          {state.monitoring?.enabled && <small> · configured estimate</small>}
         </span>
         <button
           className="factory-assumptions"
@@ -168,9 +194,11 @@ export function FactoryWorkspace() {
           }}
         >
           <option value="overview">Whole factory</option>
-          <option value="line-a">Line A</option>
-          <option value="line-b">Line B</option>
-          <option value="utilities">Shared utilities</option>
+          {state.areas.map((area) => (
+            <option key={area.id} value={area.id}>
+              {area.name}
+            </option>
+          ))}
           <option value="asset">Selected equipment</option>
         </select>
         <button
@@ -217,6 +245,12 @@ export function FactoryWorkspace() {
             {asset.status.replace('_', ' ')}
           </span>
           <p>{asset.purpose}</p>
+          {state.monitoring?.enabled && (
+            <p className="muted">
+              {state.monitoring.health.find((source) => source.asset_id === asset.id)?.reason} ·{' '}
+              <Link href="/monitoring">Source details</Link>
+            </p>
+          )}
           <div className="inspector-signals">
             {signals.map((signal) => (
               <div key={signal.signal_id}>
@@ -258,11 +292,19 @@ export function FactoryWorkspace() {
                 <ArrowRight size={12} />
               </button>
             ))}
-          {incident && (
-            <Link className="primary inspector-cta" href="/incidents">
+          {equipmentIncident && (
+            <Link
+              className="primary inspector-cta"
+              href={`/incidents?incident=${equipmentIncident.id}`}
+            >
               Open investigation <ArrowRight size={15} />
             </Link>
           )}
+          <p className="muted">
+            {asset.diagnostic_profile
+              ? `Evidence-backed ${asset.diagnostic_profile} investigation is available for this equipment.`
+              : 'Context telemetry only. An equipment-specific diagnostic model is not configured.'}
+          </p>
           <p className="muted">
             Measured test-rig replay is mapped onto a fictional factory. Production consequences are
             configured simulation.
@@ -270,7 +312,7 @@ export function FactoryWorkspace() {
         </aside>
       )}
       {active && (
-        <Link href="/incidents" className="factory-incident-toast">
+        <Link href={`/incidents?incident=${incident.id}`} className="factory-incident-toast">
           <span className="dot degrading" />
           <div>
             <strong>{incident.asset_id} needs attention</strong>
@@ -282,57 +324,111 @@ export function FactoryWorkspace() {
         </Link>
       )}
       <footer className="factory-console">
-        <div className="scenario-picker">
-          <span className="eyebrow">EXPLORE A SCENARIO</span>
-          <select
-            aria-label="Demo scenario"
-            value={scenario}
-            onChange={(e) => setScenario(e.target.value as typeof scenario)}
-          >
-            {state.scenarios.map((s) => (
-              <option key={s.id} value={s.id} disabled={s.requires_memory && !state.memory.length}>
-                {s.name}
-                {!s.measured_available ? ' · synthetic' : ''}
-              </option>
-            ))}
-          </select>
-          <button
-            className="primary"
-            disabled={busy || !!active || state.quotas.investigations >= 3}
-            onClick={() => act('/scenarios', { scenario })}
-          >
-            Start scenario <ArrowRight size={15} />
-          </button>
-        </div>
-        <div className="replay-controls">
-          <small>
-            {state.data_mode} · {state.simulated_minutes} simulated min · 12×
-          </small>
-          <button
-            className="icon-button"
-            aria-label={state.running ? 'Pause replay' : 'Play replay'}
-            disabled={busy}
-            onClick={() => act('/replay', { action: state.running ? 'pause' : 'play' })}
-          >
-            {state.running ? <Pause size={17} /> : <Play size={17} />}
-          </button>
-          <button
-            className="icon-button"
-            aria-label="Advance one telemetry window"
-            disabled={busy}
-            onClick={() => act('/replay', { action: 'step' })}
-          >
-            <SkipForward size={17} />
-          </button>
-          <button
-            className="icon-button"
-            aria-label="Reset demo plant"
-            disabled={busy}
-            onClick={() => act('/reset')}
-          >
-            <RotateCcw size={17} />
-          </button>
-        </div>
+        {state.monitoring?.enabled ? (
+          <>
+            <div>
+              <span className="eyebrow">WHOLE-PLANT MONITORING</span>
+              <p>
+                Tick {state.monitoring.tick} · {state.monitoring.running ? 'running' : 'paused'} ·{' '}
+                {state.monitoring.quality_issue_count} quality issues
+              </p>
+              <small>
+                Production is a configured estimate. Missing data means unknown condition.
+              </small>
+            </div>
+            <Link className="primary" href="/monitoring">
+              Manage telemetry sources <ArrowRight size={15} />
+            </Link>
+          </>
+        ) : (
+          <>
+            <div className="scenario-picker">
+              <span className="eyebrow">EXPLORE A SCENARIO</span>
+              <select
+                aria-label="Demo scenario"
+                value={scenario}
+                onChange={(e) => setScenario(e.target.value as typeof scenario)}
+              >
+                {state.scenarios.map((s) => (
+                  <option
+                    key={s.id}
+                    value={s.id}
+                    disabled={s.requires_memory && !state.memory.length}
+                  >
+                    {s.name}
+                    {!s.measured_available ? ' · synthetic' : ''}
+                  </option>
+                ))}
+              </select>
+              {state.workspace && (
+                <select
+                  aria-label="Telemetry equipment"
+                  value={mappedAsset || ''}
+                  onChange={(event) => setSourceAsset(event.target.value)}
+                >
+                  {!eligibleAssets.length && <option value="">No compatible equipment</option>}
+                  {eligibleAssets.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.id} · {item.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                className="primary"
+                disabled={
+                  busy ||
+                  !canManage ||
+                  (!!state.workspace && !mappedAsset) ||
+                  (!state.workspace && (!!active || state.quotas.investigations >= 3))
+                }
+                onClick={async () => {
+                  if (
+                    await act('/scenarios', {
+                      scenario,
+                      ...(state.workspace ? { asset_id: mappedAsset } : {}),
+                    })
+                  ) {
+                    if (state.workspace) router.replace('/plant', { scroll: false });
+                  }
+                }}
+              >
+                Start scenario <ArrowRight size={15} />
+              </button>
+            </div>
+            <div className="replay-controls">
+              <small>
+                {state.data_mode} · {state.simulated_minutes} simulated min · 12×
+              </small>
+              <button
+                className="icon-button"
+                aria-label={state.running ? 'Pause replay' : 'Play replay'}
+                disabled={busy || !canManage || sourceComplete}
+                onClick={() => act('/replay', { action: state.running ? 'pause' : 'play' })}
+              >
+                {state.running ? <Pause size={17} /> : <Play size={17} />}
+              </button>
+              <button
+                className="icon-button"
+                aria-label="Advance one telemetry window"
+                disabled={busy || !canManage || sourceComplete}
+                onClick={() => act('/replay', { action: 'step' })}
+              >
+                <SkipForward size={17} />
+              </button>
+              {!state.workspace && (
+                <button
+                  className="icon-button"
+                  aria-label="Reset demo plant"
+                  disabled={busy}
+                  onClick={() => act('/reset')}
+                >
+                  <RotateCcw size={17} />
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </footer>
       <EvidenceDialog
         evidence={null}

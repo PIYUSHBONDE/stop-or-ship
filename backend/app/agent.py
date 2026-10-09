@@ -8,6 +8,7 @@ import uuid
 from . import config
 from .agent_workflow import specialists
 from .ai_client import client as model_client
+from .economics import rounded
 from .engine import event, snapshot
 from .knowledge import search
 from .models import InvestigationResult
@@ -134,13 +135,13 @@ async def investigate(store, job):
         log.info("tool_complete", extra={"incident_id": job["incident_id"], "tool": message})
 
     def telemetry_history() -> dict:
-        """Read recent telemetry, baseline, anomaly score, and independent signal deviations for P-107."""
+        """Read this incident's mapped telemetry, baseline and independent signal deviations."""
         row = s["history"][-1]
         doc = {
             "id": "telemetry-current",
             "source": profile.asset_id + " telemetry replay",
             "section": "Current window and healthy baseline",
-            "version": "1.0",
+            "version": str(s.get("_configuration_version", "demo-1")),
             "provenance": row["provenance"],
             "text": json.dumps(
                 {
@@ -148,6 +149,12 @@ async def investigate(store, job):
                     "baseline": row["baseline"],
                     "deviations": row["deviations"],
                     "sensor_disagreement": row["sensor_disagreement"],
+                    "plant_configuration_version": s.get("_configuration_version"),
+                    "monitoring_version": row.get("monitoring_version"),
+                    "plant_tick": row.get("plant_tick"),
+                    "observed_at": row.get("observed_at"),
+                    "quality": row.get("quality", "fresh"),
+                    "mapping": "Test-rig measurements mapped to fictional configured equipment; not a live sensor",
                     "feature_deviations": row.get("feature_deviations", {}),
                     "source_records": [
                         {
@@ -170,13 +177,27 @@ async def investigate(store, job):
             "id": "plant-impact",
             "source": "Canonical plant model",
             "section": "Affected production dependencies",
-            "version": "1.0",
+            "version": str(s.get("_configuration_version", "demo-1")),
             "provenance": "Synthetic plant configuration",
             "text": json.dumps(
                 {
                     "source": profile.asset_id,
                     "affected_assets": plant["affected"],
                     "affected_lines": s["incident"].get("affected_lines", []),
+                    "dependencies": [
+                        edge
+                        for edge in plant["dependencies"]
+                        if edge["source"] in {profile.asset_id, *plant["affected"]}
+                        and edge["target"] in plant["affected"]
+                    ],
+                    "equipment": [
+                        asset
+                        for asset in plant["assets"]
+                        if asset["id"] in {profile.asset_id, *plant["affected"]}
+                    ],
+                    "configured_line_capacities": s["incident"]["calculation"]["assumptions"].get(
+                        "line_capacities_units_per_hour", {}
+                    ),
                 }
             ),
         }
@@ -185,6 +206,8 @@ async def investigate(store, job):
             "evidence_id": doc["id"],
             "affected": plant["affected"],
             "output_per_hour": plant["output_per_hour"],
+            "nominal_output_per_hour": plant["nominal_output_per_hour"],
+            "plant_configuration_version": s.get("_configuration_version"),
         }
 
     async def search_knowledge(query: str) -> dict:
@@ -213,13 +236,24 @@ async def investigate(store, job):
             "text": "Compare all options over the same shift; reject infeasible options first, then minimize expected configured cost.",
         }
         update_progress("Four intervention options calculated from shared assumptions", [doc])
+        assumptions = s["incident"]["calculation"]["assumptions"]
+        target = assumptions.get("affected_delivery_target_units")
+        if target is None:
+            # Retained cases may predate the explicit affected-capacity calculation fields.
+            capacity = sum(
+                assumptions.get(
+                    "line_capacities_units_per_hour",
+                    {line: 100 for line in s["incident"].get("affected_lines", [])},
+                ).values()
+            )
+            target = rounded(assumptions["delivery_target_units"] * capacity / 100)
         return {
             "evidence_id": doc["id"],
             "calculation": s["incident"]["calculation"],
             "inventory": {profile.id + "_service_kit": 1, "provenance": "synthetic"},
             "production_order": {
                 "affected_lines": s["incident"].get("affected_lines", []),
-                "target_parts": s["incident"]["calculation"]["assumptions"]["delivery_target_units"],
+                "target_parts": target,
             },
         }
 
@@ -231,6 +265,7 @@ async def investigate(store, job):
             await search_knowledge(profile.id + " diagnostic checks independent sensor repair")
             decision_context()
             uncertain = s["scenario"] == "sensor_uncertainty"
+            procedure = "sop-sensor-01" if uncertain else "sop-" + profile.id + "-01"
             cases = [d for d in evidence.values() if d["id"].startswith("case-")]
             result = {
                 "summary": "Independent signals disagree. Confirm instrumentation before assigning a mechanical cause."
@@ -244,7 +279,7 @@ async def investigate(store, job):
                         "confidence": "low" if uncertain else "medium",
                         "supporting_evidence": [
                             "telemetry-current",
-                            "sop-sensor-01" if uncertain else "sop-" + profile.id + "-01",
+                            *([procedure] if procedure in evidence else []),
                         ],
                         "conflicting_evidence": ["telemetry-current"] if uncertain else [],
                     },
@@ -279,6 +314,10 @@ async def investigate(store, job):
                     " A previously verified repair is available as context, not proof of the current cause."
                 )
                 result["hypotheses"][0]["supporting_evidence"].append(cases[0]["id"])
+            if procedure not in evidence:
+                raise ValueError(
+                    "Reviewed equipment procedure was not retrieved; collected evidence retained"
+                )
             update_progress(
                 "Scripted Reliability and Production positions completed; shared cost table retained"
             )
@@ -367,6 +406,7 @@ async def investigate(store, job):
             )
             provider = "Gemini · " + config.MODEL
         result = validate_result(result, list(evidence.values()))
+        roles_version = s["incident"]["calculation_version"]
 
         def complete(current):
             require_active_claim(current)
@@ -377,6 +417,7 @@ async def investigate(store, job):
                 diagnosis=result,
                 provider=provider,
                 evidence=list(evidence.values()),
+                roles_calculation_version=roles_version,
                 state="awaiting_approval",
                 lease_until=0,
             )

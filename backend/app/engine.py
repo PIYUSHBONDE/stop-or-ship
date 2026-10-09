@@ -1,19 +1,18 @@
-import hashlib
 import json
 import time
 import uuid
-from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
-from .economics import ASSUMPTIONS, calculate
-from .plant import AREAS, ASSETS, DEPENDENCIES, PLANT, downstream
+from .decision_rules import calc_version as calc_version
+from .decision_rules import refresh_constraints, temperature_triggers
+from .economics import calculate, rounded
+from .events import event as event
+from .events import now as now
+from .plant import PLANT, catalog, downstream
+from .plant_configuration import affected_capacities, line_capacities
 from .profiles import SCENARIOS, affected_lines, profile_for, session_profile
 from .telemetry import asset_signals, replay_data, sample
-
-
-def now():
-    return datetime.now(timezone.utc).isoformat()
 
 
 def fresh(owner, id=None, quotas=None):
@@ -34,19 +33,6 @@ def fresh(owner, id=None, quotas=None):
         "idempotency": {},
         "events": [],
     }
-
-
-def event(s, message):
-    s["events"].append({"at": now(), "message": message})
-    s["events"] = s["events"][-40:]
-
-
-def calc_version(s):
-    i = s["incident"]
-    content = json.dumps(
-        {"generation": s["generation"], "incident": i["id"], "calculation": i["calculation"]}, sort_keys=True
-    )
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
 
 
 def require_incident(s, states):
@@ -90,7 +76,7 @@ def advance(s, step=False):
         )
         event(s, "Investigation dispatch interrupted; retry remains available")
     elapsed = time.time() - s["last_tick"]
-    count = 1 if step else min(12, int(elapsed / 5)) if s["running"] else 0
+    count = 0 if s.get("_monitoring") else 1 if step else min(12, int(elapsed / 5)) if s["running"] else 0
     if not count:
         return None
     s["last_tick"] = time.time() if step else s["last_tick"] + count * 5
@@ -106,81 +92,121 @@ def advance(s, step=False):
             recovering,
             failed,
         )
-        s["history"] = (s["history"] + [row])[-80:]
-        if (
-            not i
-            and s["scenario"]
-            and len(s["history"]) >= 3
-            and all(r["anomaly"] for r in s["history"][-3:])
-        ):
-            s["quotas"]["investigations"] += 1
-            safety_stop = any(
-                signal["signal_id"] == "temperature"
-                and signal["value"] >= ASSUMPTIONS["configured_temperature_stop_celsius"]
-                for signal in row["signals"]
-            )
-            i = {
-                "id": str(uuid.uuid4()),
-                "asset_id": profile.asset_id,
-                "profile_id": profile.id,
-                "affected_lines": affected_lines(profile.asset_id),
-                "state": "detected",
-                "severity": "critical" if safety_stop else "warning",
-                "created_at": now(),
-                "evidence": [],
-                "diagnosis": None,
-                "progress": [],
-                "calculation": calculate(
-                    safety_stop=safety_stop, profile=profile, lines=affected_lines(profile.asset_id)
-                ),
-                "safety_stop": safety_stop,
-                "work_order": None,
-                "verification_windows": 0,
-                "lease_until": 0,
-                "attempts": 0,
-                "queued_at": time.time(),
-            }
-            s["incident"] = i
-            i["calculation_version"] = calc_version(s)
-            event(s, f"Persistent anomaly detected on {profile.asset_id}; investigation queued")
-            job = {
-                "session_id": s["id"],
-                "owner": s["owner"],
-                "generation": s["generation"],
-                "incident_id": i["id"],
-            }
-        if i and i["state"] == "verifying":
-            i["verification_windows"] = 0 if row["anomaly"] else i["verification_windows"] + 1
-            if i["verification_windows"] >= 3:
-                i["state"] = "resolved"
-                i["work_order"]["status"] = "verified"
-                repair = i["repair"]
-                s["memory"].append(
-                    {
-                        "id": "case-" + i["id"],
-                        "asset_id": i["asset_id"],
-                        "incident_id": i["id"],
-                        "observed_cause": repair["observed_cause"],
-                        "fix": repair["fix"],
-                        "parts": repair["parts"],
-                        "outcome": repair["outcome"],
-                        "verified_at": now(),
-                        "original_diagnosis": i["diagnosis"],
-                        "provenance": "Verified in simulated plant",
-                    }
-                )
-                event(s, "Three healthy windows verified; confirmed repair stored in reliability memory")
-            elif row["anomaly"]:
-                i["verification_message"] = "Recovery not established: abnormal telemetry persists"
+        # Map a measured test-rig record to configured equipment without changing its values or source IDs.
+        for signal in row["signals"]:
+            signal["asset_id"] = profile.asset_id
+        job = ingest_window(s, row) or job
     return job
 
 
+def ingest_window(s, row):
+    """Apply one aligned, quality-labelled window to the incident lifecycle."""
+    profile = session_profile(s)
+    i = s["incident"]
+    job = None
+    s["history"] = (s["history"] + [row])[-80:]
+    if (
+        not i
+        and s["scenario"]
+        and len(s["history"]) >= 3
+        and all(r["anomaly"] and r.get("quality", "fresh") == "fresh" for r in s["history"][-3:])
+    ):
+        s["quotas"]["investigations"] += 1
+        i = {
+            "id": str(uuid.uuid4()),
+            "asset_id": profile.asset_id,
+            "profile_id": profile.id,
+            "monitoring_version": row.get("monitoring_version"),
+            "detection_tick": row.get("plant_tick"),
+            "detection_observed_at": row.get("observed_at"),
+            "affected_lines": affected_lines(profile.asset_id, catalog(s)),
+            "plant_configuration_version": s.get("_configuration_version"),
+            "plant_context": json.loads(json.dumps(catalog(s))),
+            "state": "detected",
+            "severity": "warning",
+            "created_at": now(),
+            "evidence": [],
+            "diagnosis": None,
+            "progress": [],
+            "calculation": calculate(
+                profile=profile,
+                lines=affected_lines(profile.asset_id, catalog(s)),
+                capacities=affected_capacities(profile.asset_id, catalog(s)),
+            ),
+            "safety_stop": False,
+            "safety_evidence": [],
+            "calculation_revision": 1,
+            "work_order": None,
+            "verification_windows": 0,
+            "lease_until": 0,
+            "attempts": 0,
+            "queued_at": time.time(),
+        }
+        s["incident"] = i
+        i["calculation_version"] = calc_version(s)
+        event(s, f"Persistent anomaly detected on {profile.asset_id}; investigation queued")
+        job = {
+            "session_id": s["id"],
+            "owner": s["owner"],
+            "generation": s["generation"],
+            "incident_id": i["id"],
+        }
+    refresh_constraints(s)
+    if i and i["state"] == "verifying":
+        temperature_breach = bool(temperature_triggers(s, row))
+        i["verification_windows"] = (
+            0
+            if row["anomaly"] or temperature_breach or row.get("quality", "fresh") != "fresh"
+            else i["verification_windows"] + 1
+        )
+        if i["verification_windows"] >= 3:
+            i["state"] = "resolved"
+            i["safety_stop"] = False
+            i["work_order"]["status"] = "verified"
+            repair = i["repair"]
+            s["memory"].append(
+                {
+                    "id": "case-" + i["id"],
+                    "asset_id": i["asset_id"],
+                    "incident_id": i["id"],
+                    "observed_cause": repair["observed_cause"],
+                    "fix": repair["fix"],
+                    "parts": repair["parts"],
+                    "outcome": repair["outcome"],
+                    "verified_at": now(),
+                    "original_diagnosis": i["diagnosis"],
+                    "provenance": "Verified in simulated plant",
+                }
+            )
+            event(s, "Three healthy windows verified; confirmed repair stored in reliability memory")
+        elif row.get("quality", "fresh") != "fresh":
+            i["verification_message"] = "Recovery not established: fresh, consistent telemetry is required"
+        elif row["anomaly"]:
+            i["verification_message"] = "Recovery not established: abnormal telemetry persists"
+        elif temperature_breach:
+            i["verification_message"] = (
+                "Recovery not established: temperature exceeds the configured demo limit"
+            )
+    return job
+
+
+def require_current_telemetry(s):
+    if s.get("_monitoring") and (
+        not s["history"] or s.get("_monitoring_quality", s["history"][-1].get("quality")) != "fresh"
+    ):
+        raise HTTPException(
+            409, "Fresh, consistent monitoring evidence is required before authorization or repair"
+        )
+
+
 def approve(s, request, key):
+    refresh_constraints(s)
     if key in s["idempotency"]:
         prior = s["idempotency"][key]
         if prior["request"] != request.model_dump():
             raise HTTPException(409, "Idempotency key was already used for a different approval")
         return prior["response"]
+    require_current_telemetry(s)
     i = require_incident(s, {"awaiting_approval"})
     if request.calculation_version != i["calculation_version"]:
         raise HTTPException(409, "Decision changed; review the current calculation before approving")
@@ -188,10 +214,13 @@ def approve(s, request, key):
     if not option["feasible"]:
         raise HTTPException(409, option["constraint"])
     approval = {**request.model_dump(), "timestamp": now()}
+    if s.get("_actor"):
+        approval.update(actor_id=s["_actor"]["id"], approver=s["_actor"]["display_name"])
     i["state"] = "approved"
     i["work_order"] = {
-        "id": "WO-" + i["id"][:8].upper(),
+        "id": "WO-" + (i["id"] if s.get("_plant_id") else i["id"][:8]).upper(),
         "incident_id": i["id"],
+        "approved_tick": s["window"],
         "approval": approval,
         "status": "approved",
         "procedure": session_profile(s).procedure,
@@ -207,19 +236,22 @@ def snapshot(s):
     i = s["incident"]
     profile = session_profile(s)
     active = bool(i and i["state"] != "resolved")
-    affected = downstream(i["asset_id"]) if active else []
-    lines = affected_lines(i["asset_id"]) if active else []
+    configuration = catalog(s)
+    capacities = line_capacities(configuration)
+    affected = downstream(i["asset_id"], configuration) if active else []
+    lines = affected_lines(i["asset_id"], configuration) if active else []
     stopped = bool(
         i
         and (
             i["state"] == "repairing"
+            or (active and i.get("safety_stop", False))
             or (i["state"] == "approved" and i["work_order"]["approval"]["option_id"] == "stop")
         )
     )
-    assets = [a.model_dump() for a in ASSETS]
+    assets = [dict(asset, status="healthy") for asset in configuration["assets"]]
     for a in assets:
         if a["id"] in affected:
-            a["status"] = "stopped" if stopped and a["id"] != "FG-001" else "affected"
+            a["status"] = "stopped" if stopped and a["type"] != "goods" else "affected"
         if i and a["id"] == i["asset_id"]:
             a["status"] = {
                 "detected": "degrading",
@@ -250,7 +282,13 @@ def snapshot(s):
         and i["work_order"]["approval"]["option_id"] == "derate"
     ):
         rate = profile.derated_rate
-    output = 200 - len(lines) * (100 - rate)
+    rates = {
+        line: rounded(capacity * (rate if line in lines else 100) / 100)
+        for line, capacity in capacities.items()
+    }
+    output = sum(rates.values())
+    for signal in row["signals"]:
+        signal["asset_id"] = profile.asset_id
     signals = {
         a["id"]: row["signals"] if a["id"] == profile.asset_id else asset_signals(a, s["window"])
         for a in assets
@@ -259,14 +297,15 @@ def snapshot(s):
         if asset["type"] == "goods":
             signals[asset["id"]][0]["value"] = output
         elif asset["type"] == "press" and asset["id"] != profile.asset_id:
-            signals[asset["id"]][0]["value"] = rate if asset["area_id"] in lines else 100
+            signals[asset["id"]][0]["value"] = rates.get(asset["area_id"], 0)
     return {
         "id": s["id"],
         "generation": s["generation"],
         "plant": PLANT.model_dump(),
-        "areas": [a.model_dump() for a in AREAS],
+        "areas": configuration["areas"],
         "assets": assets,
-        "dependencies": [d.model_dump() for d in DEPENDENCIES],
+        "dependencies": configuration["dependencies"],
+        "configuration_version": s.get("_configuration_version"),
         "signals": signals,
         "scenario": s["scenario"],
         "window": s["window"],
@@ -280,7 +319,8 @@ def snapshot(s):
         "events": s["events"],
         "quotas": s["quotas"],
         "output_per_hour": output,
-        "nominal_output_per_hour": 200,
+        "line_output_per_hour": rates,
+        "nominal_output_per_hour": sum(capacities.values()),
         "data_mode": ("IMS measured bearing replay" if profile.id == "bearing" else "UCI measured replay")
         if row["provenance"] == "measured_replay"
         else "Synthetic fallback · dataset not prepared",

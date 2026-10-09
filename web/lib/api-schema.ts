@@ -310,6 +310,433 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/access/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Access */
+        get: operations["access_api_v1_access_state_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Setup */
+        post: operations["setup_api_v1_access_setup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign In */
+        post: operations["sign_in_api_v1_access_sign_in_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/sign-out": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign Out */
+        post: operations["sign_out_api_v1_access_sign_out_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/access/accept-invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept Invitation */
+        post: operations["accept_invitation_api_v1_access_accept_invitation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite */
+        post: operations["invite_api_v1_plants__plant_id__invitations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Members */
+        get: operations["members_api_v1_plants__plant_id__members_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update Member */
+        post: operations["update_member_api_v1_plants__plant_id__members__user_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Snapshot */
+        get: operations["snapshot_api_v1_plants__plant_id__snapshot_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit */
+        get: operations["audit_api_v1_plants__plant_id__audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Source */
+        post: operations["source_api_v1_plants__plant_id__scenarios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Configuration */
+        get: operations["configuration_api_v1_plants__plant_id__configuration_get"];
+        put?: never;
+        /** Update Configuration */
+        post: operations["update_configuration_api_v1_plants__plant_id__configuration_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/configuration/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Template */
+        post: operations["template_api_v1_plants__plant_id__configuration_template_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/configuration/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate Configuration */
+        post: operations["validate_configuration_api_v1_plants__plant_id__configuration_validate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replay */
+        post: operations["replay_api_v1_plants__plant_id__replay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/calculate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calculate */
+        post: operations["calculate_api_v1_plants__plant_id__calculate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approval */
+        post: operations["approval_api_v1_plants__plant_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject */
+        post: operations["reject_api_v1_plants__plant_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reopen */
+        post: operations["reopen_api_v1_plants__plant_id__reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/repair/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Begin Repair */
+        post: operations["begin_repair_api_v1_plants__plant_id__repair_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/repair/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete Repair */
+        post: operations["complete_repair_api_v1_plants__plant_id__repair_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/repair/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Continue Repair */
+        post: operations["continue_repair_api_v1_plants__plant_id__repair_reopen_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/investigation/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry */
+        post: operations["retry_api_v1_plants__plant_id__investigation_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/monitoring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read */
+        get: operations["read_api_v1_plants__plant_id__monitoring_get"];
+        put?: never;
+        /** Configure */
+        post: operations["configure_api_v1_plants__plant_id__monitoring_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/monitoring/clock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Control */
+        post: operations["control_api_v1_plants__plant_id__monitoring_clock_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -331,6 +758,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptInvitation */
+        AcceptInvitation: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+            /** Display Name */
+            display_name: string;
+            /** Token */
+            token: string;
+        };
+        /** AccessState */
+        AccessState: {
+            /** Available */
+            available: boolean;
+            /** Setup Required */
+            setup_required: boolean;
+            user?: components["schemas"]["StaffUser"] | null;
+            /**
+             * Plants
+             * @default []
+             */
+            plants: components["schemas"]["PlantAccess"][];
+            /**
+             * Identity Provider
+             * @default local_staff
+             */
+            identity_provider: string;
+        };
         /** Approval */
         Approval: {
             /** Option Id */
@@ -341,6 +797,8 @@ export interface components {
             approver: string;
             /** Timestamp */
             timestamp: string;
+            /** Actor Id */
+            actor_id?: string | null;
         };
         /** ApprovalRequest */
         ApprovalRequest: {
@@ -362,6 +820,11 @@ export interface components {
             name: string;
             /** Purpose */
             purpose: string;
+            /**
+             * Nominal Units Per Hour
+             * @default 0
+             */
+            nominal_units_per_hour: number;
         };
         /** Asset */
         Asset: {
@@ -379,6 +842,8 @@ export interface components {
             position: number[];
             /** @default healthy */
             status: components["schemas"]["Status"];
+            /** Diagnostic Profile */
+            diagnostic_profile?: ("pump" | "bearing" | "valve" | "cooler") | null;
         };
         /** AuditEvent */
         AuditEvent: {
@@ -386,6 +851,13 @@ export interface components {
             at: string;
             /** Message */
             message: string;
+        };
+        /** AuditPage */
+        AuditPage: {
+            /** Items */
+            items: components["schemas"]["DurableAuditEvent"][];
+            /** Next Cursor */
+            next_cursor: number | null;
         };
         /** Calculation */
         Calculation: {
@@ -412,6 +884,84 @@ export interface components {
              * @default 1
              */
             risk_multiplier: number;
+        };
+        /** ConfigurationUpdate */
+        ConfigurationUpdate: {
+            /** Expected Version */
+            expected_version: number;
+            configuration: components["schemas"]["PlantConfiguration"];
+        };
+        /** ConfigurationView */
+        ConfigurationView: {
+            /** Version */
+            version: number;
+            configuration: components["schemas"]["PlantConfiguration"];
+        };
+        /** ConfiguredArea */
+        ConfiguredArea: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Purpose */
+            purpose: string;
+            /**
+             * Nominal Units Per Hour
+             * @default 0
+             */
+            nominal_units_per_hour: number;
+        };
+        /** ConfiguredAsset */
+        ConfiguredAsset: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "pump" | "motor" | "press" | "conveyor" | "cooling" | "compressor" | "electrical" | "goods";
+            /** Area Id */
+            area_id: string;
+            /** Purpose */
+            purpose: string;
+            /** Position */
+            position: number[];
+            /** Diagnostic Profile */
+            diagnostic_profile?: ("pump" | "bearing" | "valve" | "cooler") | null;
+        };
+        /** ConfiguredDependency */
+        ConfiguredDependency: {
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+            /** Relationship */
+            relationship: string;
+            /**
+             * Capacity Fraction
+             * @default 1
+             */
+            capacity_fraction: number;
+        };
+        /** Credentials */
+        Credentials: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /** DecisionChange */
+        DecisionChange: {
+            /** At */
+            at: string;
+            /** Reason */
+            reason: string;
+            /** Previous Version */
+            previous_version: string;
+            /** Calculation Version */
+            calculation_version: string;
         };
         /** DecisionOption */
         DecisionOption: {
@@ -454,6 +1004,29 @@ export interface components {
             /** Capacity Fraction */
             capacity_fraction: number;
         };
+        /** DurableAuditEvent */
+        DurableAuditEvent: {
+            /** Sequence */
+            sequence: number;
+            /** Id */
+            id: string;
+            /** At */
+            at: string;
+            /** Plant Id */
+            plant_id: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /** Actor Name */
+            actor_name: string;
+            /** Action */
+            action: string;
+            /** Incident Id */
+            incident_id: string | null;
+            /** Calculation Version */
+            calculation_version: string | null;
+            /** Message */
+            message: string;
+        };
         /** Evidence */
         Evidence: {
             /** Id */
@@ -491,6 +1064,17 @@ export interface components {
              */
             conflicting_evidence: string[];
         };
+        /** IncidentPlantContext */
+        IncidentPlantContext: {
+            /** Name */
+            name: string;
+            /** Areas */
+            areas: components["schemas"]["Area"][];
+            /** Assets */
+            assets: components["schemas"]["Asset"][];
+            /** Dependencies */
+            dependencies: components["schemas"]["Dependency"][];
+        };
         /** InvestigationResult */
         InvestigationResult: {
             /** Summary */
@@ -504,10 +1088,132 @@ export interface components {
             /** Roles */
             roles: components["schemas"]["RolePosition"][];
         };
+        /** InvitationReceipt */
+        InvitationReceipt: {
+            /** Token */
+            token: string;
+            /** Email */
+            email: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager" | "reliability" | "technician" | "viewer";
+            /** Expires At */
+            expires_at: string;
+        };
+        /** InviteRequest */
+        InviteRequest: {
+            /** Email */
+            email: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager" | "reliability" | "technician" | "viewer";
+        };
+        /** Member */
+        Member: {
+            /** Id */
+            id: string;
+            /** Email */
+            email: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager" | "reliability" | "technician" | "viewer";
+            /** Active */
+            active: boolean;
+        };
+        /** MembershipUpdate */
+        MembershipUpdate: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager" | "reliability" | "technician" | "viewer";
+            /** Active */
+            active: boolean;
+        };
         /** MemoryResponse */
         MemoryResponse: {
             /** Cases */
             cases: components["schemas"]["VerifiedCase"][];
+        };
+        /** MonitoringControl */
+        MonitoringControl: {
+            /** Expected Version */
+            expected_version: number;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "play" | "pause" | "step";
+            /** Expected Tick */
+            expected_tick: number;
+        };
+        /** MonitoringUpdate */
+        MonitoringUpdate: {
+            /** Expected Version */
+            expected_version: number;
+            /** Plant Configuration Version */
+            plant_configuration_version: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Sources */
+            sources: components["schemas"]["SourceBinding"][];
+        };
+        /** MonitoringView */
+        MonitoringView: {
+            /**
+             * Investigations Remaining Today
+             * @default 3
+             */
+            investigations_remaining_today: number;
+            /** Version */
+            version: number;
+            /** Plant Configuration Version */
+            plant_configuration_version: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Running */
+            running: boolean;
+            /** Tick */
+            tick: number;
+            /** Observed At */
+            observed_at: string | null;
+            /**
+             * Interval Seconds
+             * @default 5
+             */
+            interval_seconds: number;
+            /**
+             * Simulated Minutes Per Tick
+             * @default 1
+             */
+            simulated_minutes_per_tick: number;
+            /** Sources */
+            sources: components["schemas"]["SourceBinding"][];
+            /** Health */
+            health: components["schemas"]["SourceHealth"][];
+            /**
+             * Output Basis
+             * @default Configured production estimate; generated supporting signals
+             */
+            output_basis: string;
+            /**
+             * Quality Issue Count
+             * @default 0
+             */
+            quality_issue_count: number;
+            /**
+             * Clock Label
+             * @default Backend-owned replay clock; accelerated simulation
+             */
+            clock_label: string;
         };
         /** Plant */
         Plant: {
@@ -526,8 +1232,44 @@ export interface components {
              */
             currency: string;
         };
+        /** PlantAccess */
+        PlantAccess: {
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id: string;
+            /** Organization Name */
+            organization_name: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager" | "reliability" | "technician" | "viewer";
+            /** Permissions */
+            permissions: string[];
+        };
+        /** PlantConfiguration */
+        PlantConfiguration: {
+            /** Name */
+            name: string;
+            /** Areas */
+            areas: components["schemas"]["ConfiguredArea"][];
+            /** Assets */
+            assets: components["schemas"]["ConfiguredAsset"][];
+            /** Dependencies */
+            dependencies: components["schemas"]["ConfiguredDependency"][];
+        };
         /** PlantSnapshot */
         PlantSnapshot: {
+            /** Configuration Version */
+            configuration_version?: number | null;
+            /**
+             * Active Source Count
+             * @default 0
+             */
+            active_source_count: number;
             /** Id */
             id: string;
             /** Generation */
@@ -576,6 +1318,13 @@ export interface components {
             output_per_hour: number;
             /** Nominal Output Per Hour */
             nominal_output_per_hour: number;
+            /**
+             * Line Output Per Hour
+             * @default {}
+             */
+            line_output_per_hour: {
+                [key: string]: number;
+            };
             /** Data Mode */
             data_mode: string;
             /** Simulated Minutes */
@@ -662,6 +1411,15 @@ export interface components {
             /** Evidence */
             evidence: components["schemas"]["Evidence"][];
             diagnosis?: components["schemas"]["InvestigationResult"] | null;
+            /** Monitoring Version */
+            monitoring_version?: number | null;
+            /** Detection Tick */
+            detection_tick?: number | null;
+            /** Detection Observed At */
+            detection_observed_at?: string | null;
+            /** Plant Configuration Version */
+            plant_configuration_version?: number | null;
+            plant_context?: components["schemas"]["IncidentPlantContext"] | null;
             /**
              * Profile Id
              * @default pump
@@ -677,6 +1435,30 @@ export interface components {
             calculation: components["schemas"]["Calculation"];
             /** Calculation Version */
             calculation_version: string;
+            /**
+             * Calculation Revision
+             * @default 1
+             */
+            calculation_revision: number;
+            /**
+             * Safety Stop
+             * @default false
+             */
+            safety_stop: boolean;
+            /**
+             * Safety Evidence
+             * @default []
+             */
+            safety_evidence: components["schemas"]["Signal"][];
+            /** Roles Calculation Version */
+            roles_calculation_version?: string | null;
+            /** Decision Changed Reason */
+            decision_changed_reason?: string | null;
+            /**
+             * Decision Changes
+             * @default []
+             */
+            decision_changes: components["schemas"]["DecisionChange"][];
             work_order: components["schemas"]["WorkOrder"] | null;
             /** Verification Windows */
             verification_windows: number;
@@ -745,6 +1527,90 @@ export interface components {
             /** Recommended */
             recommended: string;
         };
+        /** SetupRequest */
+        SetupRequest: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+            /** Display Name */
+            display_name: string;
+            /** Organization Name */
+            organization_name: string;
+            /** Plant Name */
+            plant_name: string;
+        };
+        /** SharedPlantSnapshot */
+        SharedPlantSnapshot: {
+            /** Configuration Version */
+            configuration_version?: number | null;
+            /**
+             * Active Source Count
+             * @default 0
+             */
+            active_source_count: number;
+            /** Id */
+            id: string;
+            /** Generation */
+            generation: string;
+            plant: components["schemas"]["Plant"];
+            /** Areas */
+            areas: components["schemas"]["Area"][];
+            /** Assets */
+            assets: components["schemas"]["Asset"][];
+            /** Dependencies */
+            dependencies: components["schemas"]["Dependency"][];
+            /** Signals */
+            signals: {
+                [key: string]: components["schemas"]["Signal"][];
+            };
+            /** Scenario */
+            scenario: string | null;
+            /** Window */
+            window: number;
+            /** Running */
+            running: boolean;
+            incident: components["schemas"]["RuntimeIncident"] | null;
+            /**
+             * Incidents
+             * @default []
+             */
+            incidents: components["schemas"]["RuntimeIncident"][];
+            /**
+             * Scenarios
+             * @default []
+             */
+            scenarios: components["schemas"]["ScenarioDefinition"][];
+            /** Affected */
+            affected: string[];
+            /** History */
+            history: components["schemas"]["TelemetryWindow"][];
+            /** Memory */
+            memory: components["schemas"]["VerifiedCase"][];
+            /** Events */
+            events: components["schemas"]["AuditEvent"][];
+            /** Quotas */
+            quotas: {
+                [key: string]: number;
+            };
+            /** Output Per Hour */
+            output_per_hour: number;
+            /** Nominal Output Per Hour */
+            nominal_output_per_hour: number;
+            /**
+             * Line Output Per Hour
+             * @default {}
+             */
+            line_output_per_hour: {
+                [key: string]: number;
+            };
+            /** Data Mode */
+            data_mode: string;
+            /** Simulated Minutes */
+            simulated_minutes: number;
+            monitoring?: components["schemas"]["MonitoringView"] | null;
+            workspace: components["schemas"]["WorkspaceContext"];
+        };
         /** Signal */
         Signal: {
             /** Asset Id */
@@ -769,13 +1635,79 @@ export interface components {
             /** Source Record Id */
             source_record_id?: string | null;
         };
+        /** SourceBinding */
+        SourceBinding: {
+            /** Asset Id */
+            asset_id: string;
+            /**
+             * Mode
+             * @default healthy
+             * @enum {string}
+             */
+            mode: "healthy" | "degradation";
+            /**
+             * Quality Mode
+             * @default fresh
+             * @enum {string}
+             */
+            quality_mode: "fresh" | "missing" | "stale" | "conflicting";
+        };
+        /** SourceHealth */
+        SourceHealth: {
+            /** Asset Id */
+            asset_id: string;
+            /** Profile Id */
+            profile_id: string | null;
+            /** Source Label */
+            source_label: string;
+            /**
+             * Quality
+             * @enum {string}
+             */
+            quality: "fresh" | "missing" | "stale" | "conflicting" | "not_started";
+            /** Reason */
+            reason: string;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Received At */
+            received_at?: string | null;
+            /**
+             * Signals
+             * @default []
+             */
+            signals: components["schemas"]["Signal"][];
+            /** Workflow Id */
+            workflow_id?: string | null;
+            /** Incident Id */
+            incident_id?: string | null;
+        };
+        /** StaffUser */
+        StaffUser: {
+            /** Id */
+            id: string;
+            /** Email */
+            email: string;
+            /** Display Name */
+            display_name: string;
+        };
         /**
          * Status
          * @enum {string}
          */
-        Status: "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
+        Status: "unknown" | "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
         /** TelemetryWindow */
         TelemetryWindow: {
+            /** Plant Tick */
+            plant_tick?: number | null;
+            /** Monitoring Version */
+            monitoring_version?: number | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /**
+             * Quality
+             * @default fresh
+             */
+            quality: string;
             /** Window */
             window: number;
             /** Signals */
@@ -805,6 +1737,13 @@ export interface components {
             provenance: string;
             /** Source Cycle Id */
             source_cycle_id: number | null;
+        };
+        /** TemplateRequest */
+        TemplateRequest: {
+            /** Lines */
+            lines: number;
+            /** Name */
+            name: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -841,6 +1780,8 @@ export interface components {
         };
         /** WorkOrder */
         WorkOrder: {
+            /** Approved Tick */
+            approved_tick?: number | null;
             /** Id */
             id: string;
             /** Incident Id */
@@ -855,6 +1796,49 @@ export interface components {
             calculation_snapshot: {
                 [key: string]: unknown;
             };
+            /** Superseded At */
+            superseded_at?: string | null;
+            /** Superseded Reason */
+            superseded_reason?: string | null;
+        };
+        /** WorkspaceApproval */
+        WorkspaceApproval: {
+            /**
+             * Option Id
+             * @enum {string}
+             */
+            option_id: "stop" | "defer" | "derate" | "continue";
+            /** Calculation Version */
+            calculation_version: string;
+        };
+        /** WorkspaceContext */
+        WorkspaceContext: {
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id: string;
+            /** Organization Name */
+            organization_name: string;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "admin" | "manager" | "reliability" | "technician" | "viewer";
+            /** Permissions */
+            permissions: string[];
+            user: components["schemas"]["StaffUser"];
+        };
+        /** WorkspaceSourceRequest */
+        WorkspaceSourceRequest: {
+            /**
+             * Scenario
+             * @enum {string}
+             */
+            scenario: "pump_degradation" | "cooler_degradation" | "valve_degradation" | "bearing_degradation" | "sensor_uncertainty" | "memory_recurrence";
+            /** Asset Id */
+            asset_id?: string | null;
         };
     };
     responses: never;
@@ -1465,6 +2449,970 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    access_api_v1_access_state_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    setup_api_v1_access_setup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_in_api_v1_access_sign_in_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Credentials"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_out_api_v1_access_sign_out_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_invitation_api_v1_access_accept_invitation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInvitation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    invite_api_v1_plants__plant_id__invitations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationReceipt"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    members_api_v1_plants__plant_id__members_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_member_api_v1_plants__plant_id__members__user_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+                user_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MembershipUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    snapshot_api_v1_plants__plant_id__snapshot_get: {
+        parameters: {
+            query?: {
+                incident?: string | null;
+            };
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audit_api_v1_plants__plant_id__audit_get: {
+        parameters: {
+            query?: {
+                cursor?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    source_api_v1_plants__plant_id__scenarios_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceSourceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    configuration_api_v1_plants__plant_id__configuration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigurationView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_configuration_api_v1_plants__plant_id__configuration_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfigurationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigurationView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    template_api_v1_plants__plant_id__configuration_template_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantConfiguration"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_configuration_api_v1_plants__plant_id__configuration_validate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlantConfiguration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlantConfiguration"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replay_api_v1_plants__plant_id__replay_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Incident-ID"?: string | null;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplayRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calculate_api_v1_plants__plant_id__calculate_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalculationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approval_api_v1_plants__plant_id__approve_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+                "idempotency-key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceApproval"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrder"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_api_v1_plants__plant_id__reject_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reopen_api_v1_plants__plant_id__reopen_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    begin_repair_api_v1_plants__plant_id__repair_start_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    complete_repair_api_v1_plants__plant_id__repair_complete_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepairRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    continue_repair_api_v1_plants__plant_id__repair_reopen_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_api_v1_plants__plant_id__investigation_retry_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-Incident-ID": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_api_v1_plants__plant_id__monitoring_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitoringView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    configure_api_v1_plants__plant_id__monitoring_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MonitoringUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitoringView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    control_api_v1_plants__plant_id__monitoring_clock_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MonitoringControl"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitoringView"];
                 };
             };
             /** @description Validation Error */

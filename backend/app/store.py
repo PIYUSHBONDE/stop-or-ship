@@ -25,10 +25,15 @@ class Store:
                 db.execute("PRAGMA journal_mode=WAL")
                 db.execute("CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, owner TEXT, data TEXT)")
                 db.execute("CREATE TABLE IF NOT EXISTS budgets (day TEXT PRIMARY KEY, calls INTEGER)")
+                from .events import now
+                from .workspace_schema import migrate
+
+                migrate(db, now())
 
     @contextmanager
     def connection(self):
         db = sqlite3.connect(self.path, timeout=20)
+        db.execute("PRAGMA foreign_keys=ON")
         try:
             yield db
             db.commit()
@@ -49,6 +54,12 @@ class Store:
                 )
 
     def read(self, id, owner):
+        if not self.cloud:
+            from .workspace_store import read_runtime
+
+            runtime = read_runtime(self, id, owner)
+            if runtime is not None:
+                return runtime
         if self.cloud:
             s = self.client.collection("sessions").document(id).get(timeout=8, retry=None).to_dict()
         else:
@@ -63,7 +74,13 @@ class Store:
         if not session or session["owner"] != owner:
             raise HTTPException(404, "Session not found")
 
-    def mutate(self, id, owner, fn):
+    def mutate(self, id, owner, fn, *, token=None, permission="plant.read", action="investigation.update"):
+        if not self.cloud:
+            from .workspace_store import mutate_runtime
+
+            found, result = mutate_runtime(self, id, owner, fn, token, permission, action)
+            if found:
+                return result
         if self.cloud:
             from google.cloud import firestore
 

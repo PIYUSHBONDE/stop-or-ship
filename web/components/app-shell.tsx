@@ -11,21 +11,25 @@ import {
   Workflow,
   Radio,
   LoaderCircle,
+  Settings2,
   X,
 } from 'lucide-react';
 import { usePlant } from './session-provider';
 
 const destinations = [
   { href: '/plant', name: 'Plant', icon: Factory },
+  { href: '/monitoring', name: 'Monitor', icon: Radio },
   { href: '/operations', name: 'Operations', icon: Gauge },
   { href: '/incidents', name: 'Incidents', icon: Activity },
   { href: '/maintenance', name: 'Maintenance', icon: Wrench },
   { href: '/memory', name: 'Memory', icon: BookOpen },
+  { href: '/plant-setup', name: 'Setup', icon: Settings2 },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { state, connected, error, busy, dismissError } = usePlant();
+  if (pathname === '/evidence-preview' || pathname === '/workspace') return children;
   if (!state)
     return (
       <main className="boot">
@@ -35,6 +39,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {error ? (
           <>
             <p role="alert">{error}</p>
+            <Link className="secondary" href="/workspace">
+              Sign in to your plant
+            </Link>
             <button className="primary" onClick={() => location.reload()}>
               Retry connection
             </button>
@@ -56,7 +63,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {destinations.map(({ href, name, icon: Icon }) => (
           <Link
             key={href}
-            href={href}
+            href={
+              state.workspace && state.incident ? `${href}?incident=${state.incident.id}` : href
+            }
             className={`rail-button ${pathname.startsWith(href) ? 'active' : ''}`}
             aria-current={pathname.startsWith(href) ? 'page' : undefined}
           >
@@ -68,17 +77,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         ))}
         <div className="rail-bottom">
-          <span className="avatar">NP</span>
+          <Link href="/workspace" className="rail-button" aria-label="Staff and plant access">
+            <span className="avatar">
+              {state.workspace?.user.display_name.slice(0, 2).toUpperCase() || 'NP'}
+            </span>
+            <span>Access</span>
+          </Link>
         </div>
       </nav>
       <div className="workspace v2-workspace">
         <header className="topbar">
           <div className="wordmark">
             PlantSense<span> / </span>
-            <small>NARMADA PRECISION WORKS</small>
+            <small>{state.plant.name.toUpperCase()}</small>
           </div>
           <div className="topbar-right">
             <span className="demo-pill">SIMULATED DEMO PLANT</span>
+            {state.workspace && (
+              <span className="connection">
+                {state.workspace.user.display_name} · {state.workspace.role}
+              </span>
+            )}
             <span className="connection">
               <Radio size={13} />
               {connected ? 'API connected' : 'Reconnecting…'}

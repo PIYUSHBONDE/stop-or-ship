@@ -36,7 +36,11 @@ def local_search(query, memory):
         ),
         reverse=True,
     )
-    return [Evidence.model_validate(d).model_dump() for d in docs[:5]]
+    # Preserve procedure context as confirmed history grows; cases cannot crowd out all references.
+    cases = [doc for doc in docs if doc["id"].startswith("case-")]
+    references = [doc for doc in docs if not doc["id"].startswith("case-")]
+    selected = cases[:3] + references[: max(2, 5 - min(3, len(cases)))]
+    return [Evidence.model_validate(d).model_dump() for d in selected[:5]]
 
 
 def cloud_search(query, memory):
@@ -75,7 +79,7 @@ def cloud_search(query, memory):
     ]
     # Session-scoped verified cases are prioritized without exposing another judge's repair memory.
     verified = [d for d in local_search(query, memory) if d["id"].startswith("case-")]
-    return (verified + found)[:6]
+    return verified[:2] + found[:4]
 
 
 def search(query, memory):

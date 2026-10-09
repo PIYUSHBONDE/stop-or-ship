@@ -20,6 +20,9 @@ TASK_REGION = os.getenv("TASK_REGION", "us-central1")
 TASK_QUEUE = os.getenv("TASK_QUEUE", "plantsense-investigations")
 TASK_ACCOUNT = os.getenv("TASK_SERVICE_ACCOUNT", "")
 SERVICE_ROLE = os.getenv("SERVICE_ROLE", "api")
+STAFF_WEB_ORIGINS = tuple(
+    os.getenv("PLANTSENSE_STAFF_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+)
 if SERVICE_ROLE not in {"api", "worker"}:
     raise RuntimeError("SERVICE_ROLE must be api or worker")
 if DAILY_LIMIT < 0:

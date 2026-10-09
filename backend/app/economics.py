@@ -26,7 +26,13 @@ def rounded(value):
     return int(Decimal(str(value)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def calculate(risk_multiplier=1.0, safety_stop=False, profile: EquipmentProfile | None = None, lines=None):
+def calculate(
+    risk_multiplier=1.0,
+    safety_stop=False,
+    profile: EquipmentProfile | None = None,
+    lines=None,
+    capacities=None,
+):
     a = {**ASSUMPTIONS}
     lines = lines if lines is not None else ["line-a"]
     if profile:
@@ -37,7 +43,15 @@ def calculate(risk_multiplier=1.0, safety_stop=False, profile: EquipmentProfile 
             derated_line_units_per_hour=profile.derated_rate,
         )
     a["affected_lines"] = list(lines)
-    line_count = len(set(lines))
+    capacities = capacities if capacities is not None else {line: 100 for line in set(lines)}
+    nominal_rate = sum(capacities[line] for line in set(lines))
+    a["line_capacities_units_per_hour"] = {line: capacities[line] for line in sorted(set(lines))}
+    a["affected_nominal_units_per_hour"] = nominal_rate
+    a["affected_delivery_target_units"] = rounded(Decimal(a["delivery_target_units"]) * nominal_rate / 100)
+    a["production_scaling"] = (
+        "Configured line capacities; degraded and derated rates are percentages of each line's nominal output. "
+        "Delivery target units are scaled from the reference capacity of 100 parts/h. Integer quantities use half-up rounding."
+    )
     repair_minutes = a["planned_repair_minutes"]
     plans = [
         ("stop", "Stop & repair now", repair_minutes, 0, 100),
@@ -50,14 +64,17 @@ def calculate(risk_multiplier=1.0, safety_stop=False, profile: EquipmentProfile 
     for id, name, downtime, delay, run_rate in plans:
         lost = rounded(
             (Decimal(downtime) * Decimal(100) / 60 + Decimal(delay) * Decimal(100 - run_rate) / 60)
-            * line_count
+            * Decimal(nominal_rate)
+            / 100
         )
-        output = 800 * line_count - lost
+        output = rounded(Decimal(a["horizon_minutes"]) * nominal_rate / 60) - lost
         planned_margin = lost * a["margin_per_unit_paise"]
-        target = a["delivery_target_units"] * line_count
+        target = a["affected_delivery_target_units"]
         planned_penalty = max(0, target - output) * a["penalty_per_missing_unit_paise"]
         p = min(0.95, a["failure_probabilities"][id] * risk_multiplier)
-        additional_lost = min(output, rounded(a["failure_extra_downtime_minutes"] * 100 * line_count / 60))
+        additional_lost = min(
+            output, rounded(Decimal(a["failure_extra_downtime_minutes"]) * nominal_rate / 60)
+        )
         # Only incremental failure loss is charged; planned downtime is already accounted for.
         extra_penalty = (
             max(0, target - (output - additional_lost)) * a["penalty_per_missing_unit_paise"]
@@ -100,7 +117,7 @@ def calculate(risk_multiplier=1.0, safety_stop=False, profile: EquipmentProfile 
             {
                 "multiplier": m,
                 "recommended": min(
-                    calculate(m, safety_stop, profile, lines)["options"],
+                    calculate(m, safety_stop, profile, lines, capacities)["options"],
                     key=lambda o: o["total_paise"] if o["feasible"] else float("inf"),
                 )["id"],
             }

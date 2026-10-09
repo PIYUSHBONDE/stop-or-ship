@@ -21,7 +21,7 @@ type Props = SessionActions & {
 };
 export function WorkOrderPanel({
   state,
-  busy,
+  busy: saving,
   act,
   cause,
   setCause,
@@ -36,7 +36,23 @@ export function WorkOrderPanel({
   setTab,
 }: Props) {
   const incident = state.incident;
+  const busy =
+    saving || (!!state.workspace && !state.workspace.permissions.includes('repair.write'));
   const isResolved = incident?.state === 'resolved';
+  const source = state.monitoring?.enabled
+    ? state.monitoring.health.find((item) => item.asset_id === incident?.asset_id)
+    : undefined;
+  const qualityBlocked = !!source && source.quality !== 'fresh';
+  const delay = incident?.work_order
+    ? { stop: 0, derate: 180, defer: 180, continue: 480 }[
+        incident.work_order.approval.option_id as 'stop' | 'derate' | 'defer' | 'continue'
+      ]
+    : 0;
+  const dueTick =
+    state.monitoring?.enabled && incident?.work_order?.approved_tick != null
+      ? incident.work_order.approved_tick + delay
+      : null;
+  const waiting = dueTick !== null && (state.monitoring?.tick ?? -1) < dueTick;
   return !incident?.work_order ? (
     <Empty
       icon={<FileCheck2 size={32} />}
@@ -63,10 +79,25 @@ export function WorkOrderPanel({
         <p>{incident.work_order.procedure}</p>
       </div>
       {incident.state === 'approved' && (
-        <button className="primary full" disabled={busy} onClick={() => act('/repair/start')}>
+        <button
+          className="primary full"
+          disabled={busy || qualityBlocked || waiting}
+          onClick={() => act('/repair/start')}
+        >
           Start approved repair
           <ArrowRight size={14} />
         </button>
+      )}
+      {incident.state === 'approved' && qualityBlocked && (
+        <p className="context-note">
+          {source?.reason}. Fresh monitoring evidence is required to start repair.
+        </p>
+      )}
+      {incident.state === 'approved' && waiting && (
+        <p className="context-note">
+          The approved maintenance window begins at plant tick {dueTick}. Advance the shared clock
+          in Monitoring.
+        </p>
       )}
       {incident.state === 'repairing' && (
         <>
@@ -75,6 +106,7 @@ export function WorkOrderPanel({
             Observed root cause
             <input
               aria-label="Observed root cause"
+              disabled={busy}
               value={cause}
               onChange={(e) => setCause(e.target.value)}
               maxLength={500}
@@ -84,6 +116,7 @@ export function WorkOrderPanel({
             Repair performed
             <textarea
               aria-label="Repair performed"
+              disabled={busy}
               value={fix}
               onChange={(e) => setFix(e.target.value)}
               maxLength={1000}
@@ -93,6 +126,7 @@ export function WorkOrderPanel({
             Parts used
             <input
               aria-label="Parts used"
+              disabled={busy}
               value={parts}
               onChange={(e) => setParts(e.target.value)}
               maxLength={500}
@@ -102,6 +136,7 @@ export function WorkOrderPanel({
             Observed outcome
             <textarea
               aria-label="Observed outcome"
+              disabled={busy}
               value={outcome}
               onChange={(e) => setOutcome(e.target.value)}
               maxLength={500}
@@ -111,6 +146,7 @@ export function WorkOrderPanel({
             Simulated post-repair telemetry
             <select
               aria-label="Post-repair telemetry"
+              disabled={busy}
               value={recovery}
               onChange={(e) =>
                 setRecovery(e.target.value as CommandBodies['/repair/complete']['recovery'])

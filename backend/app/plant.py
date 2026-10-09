@@ -2,8 +2,8 @@ from .models import Area, Asset, Dependency, Plant
 
 PLANT = Plant(id="plant-01", name="Narmada Precision Works")
 AREAS = [
-    Area(id="line-a", name="Line A", purpose="Hydraulic forming"),
-    Area(id="line-b", name="Line B", purpose="Parallel forming"),
+    Area(id="line-a", name="Line A", purpose="Hydraulic forming", nominal_units_per_hour=100),
+    Area(id="line-b", name="Line B", purpose="Parallel forming", nominal_units_per_hour=100),
     Area(id="utilities", name="Utilities", purpose="Shared services"),
     Area(id="dispatch", name="Dispatch", purpose="Finished production"),
 ]
@@ -51,12 +51,16 @@ DEPENDENCIES = [
 ]
 
 
-def downstream(asset_id):
-    result, queue = [], [asset_id]
-    while queue:
-        source = queue.pop(0)
-        for edge in DEPENDENCIES:
-            if edge.source == source and edge.target not in result:
-                result.append(edge.target)
-                queue.append(edge.target)
-    return result
+def catalog(session):
+    return session.get("_catalog") or {
+        "name": PLANT.name,
+        "areas": [area.model_dump() for area in AREAS],
+        "assets": [asset.model_dump() for asset in ASSETS],
+        "dependencies": [edge.model_dump() for edge in DEPENDENCIES],
+    }
+
+
+def downstream(asset_id, configuration=None):
+    from .plant_configuration import downstream as trace
+
+    return trace(asset_id, configuration or catalog({}))

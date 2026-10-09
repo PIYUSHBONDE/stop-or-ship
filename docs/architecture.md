@@ -1,5 +1,39 @@
 # Architecture and implementation boundaries
 
+The 9 October configuration milestone adds administrator-reviewed revisions, two-to-eight-line hydraulic templates, scalable scene bounds, configured production capacities, diagnostic replay bindings, and frozen historical incident topology. See [plant configuration](plant-configuration.md) for the contract, review steps, and supported limits.
+
+The coordinated monitoring iteration adds a persisted plant clock, one reviewed source binding per asset, shared observation timestamps, explicit quality states, transactional incident ingestion and versioned evidence for investigation. See [monitoring](monitoring.md) for the data path and local boundaries. Independent diagnostic replay remains available when coordinated monitoring is disabled.
+
+## Current local shared plant foundation
+
+```mermaid
+flowchart LR
+  Staff[Named staff browser] --> WebLocal[Next.js same-origin API proxy]
+  WebLocal --> StaffAccess[Staff identity and plant permissions]
+  StaffAccess --> APIlocal[Thin shared plant API]
+  APIlocal --> StoreLocal[("SQLite: organization, plant, equipment,<br/>memberships, incidents, orders, cases and audit")]
+  APIlocal --> Workflow[Per-incident workflow and deterministic costs]
+  Runtime[Server-owned local replay loop] --> Clock[Persisted plant clock and source mappings]
+  Clock --> Quality[Aligned observations and data quality]
+  Quality --> Workflow
+  Runtime --> Investigator[Bounded investigation and specialist stages]
+  Investigator --> Evidence[Read-only evidence and scoped repair memory]
+  Workflow --> StoreLocal
+  Investigator --> StoreLocal
+```
+
+`/workspace` handles initial local setup, staff sign-in, invitations, permissions and audit review. The browser carries an eight-hour HttpOnly cookie; only its hash is stored. The API loads current membership for reads and rechecks it inside every human workflow write transaction. Shared approval requests contain option/version only; the server records actor ID and display name from the authenticated account.
+
+An additive SQLite migration introduces organization, plant, plant-scoped area/asset/dependency catalogs, staff, membership, incident, order, verified case and audit tables. Equipment is seeded from the reviewed twelve-asset template; existing catalog records are not overwritten on restart. Asset editing and alternate layouts require a subsequent configuration contract. Private replay execution state is stored separately for each incident workflow; raw signals remain in replay files. Existing isolated demo records are retained separately and are not promoted into authenticated approvals.
+
+Distinct assets can have concurrent incidents. Duplicate open sources on the same asset are rejected transactionally. Current plant status merges affected dependencies; output uses the minimum available capacity per affected line to avoid double-counting overlapping loss. Calculations cover one incident at a time, so simultaneous work-order scheduling still requires operator review.
+
+Shared polling reads snapshots every two seconds; an API-owned scheduler advances replay even with no browser open. Local investigation leases and fencing remain authoritative. Detection committed before a dispatch interruption can be rediscovered; interrupted claimed execution can surface failure for review/retry. This local loop is not a durable production queue, and the shared cloud storage/identity adapter is not implemented. The shared access API fails closed in cloud mode.
+
+Audit entries preserve actor, time, plant, incident and calculation version. Human transitions and their audit events commit together. SQLite triggers reject audit update/deletion through application SQL; database administrators and filesystem owners remain trusted. The UI's last forty events are a compact view; cursor-based audit history retains older entries.
+
+## Existing cloud adapter for the isolated demo
+
 ```mermaid
 flowchart LR
   Browser[Next.js / 3D plant] --> Web[Cloud Run web proxy]
@@ -19,7 +53,7 @@ flowchart LR
   Repair --> State
 ```
 
-Locally, SQLite replaces Firestore and FastAPI background tasks run the explicitly scripted investigator. This local shortcut is not used in cloud mode; Cloud Tasks dispatches the private worker. ADK's in-memory conversation is disposable execution state; the workflow, collected evidence, approval and repair memory are persisted separately.
+For the isolated demo, SQLite replaces Firestore locally and FastAPI background tasks run the explicitly scripted investigator. Cloud Tasks dispatches the private worker in cloud mode. Shared local workflows additionally use the server scheduler described above. ADK's in-memory conversation is disposable execution state; workflow records remain persisted separately.
 
 ## Plant and replay
 
@@ -27,7 +61,7 @@ The dedicated `/plant` route has a procedural cutaway factory, orbit/close-up ca
 
 The canonical plant has twelve asset IDs and typed dependencies. The scene uses IDs to select assets and highlight consequences; meshes are presentation only. Shared electricity and cooling relationships are represented without automatically stopping the parallel line for a single pump incident.
 
-The server owns replay time. One measured cycle is 60 simulated seconds; one five-second wall interval advances a cycle (12×). POST `/advance` catches up bounded windows. A paused replay can be stepped explicitly. GET reads do not change the workflow.
+The server owns replay time. One measured cycle is 60 simulated seconds; one five-second wall interval advances a cycle (12×). The shared plant scheduler catches up bounded windows independently. The isolated demo uses POST `/advance`. A paused replay can be stepped explicitly. GET reads do not change the workflow.
 
 UCI sensor matrices produce cycle means, standard deviations and 95th percentiles (27 features over nine signals). The persisted Isolation Forest and RobustScaler score each replay window at runtime. An incident requires three consecutive abnormal windows. Prepared files preserve cycle IDs, model parameters, attribution, split assignments, and transformations. Fault labels select scenarios but are not sent to the investigator.
 
@@ -56,6 +90,18 @@ All cost calculations use integer paise over an eight-hour horizon. The model in
 The additional failure downtime is incremental to planned loss; remaining output caps further loss. Safety constraints precede cost ranking. A configured demo oil-temperature limit of 85°C forces the stop option. This is illustrative configuration, not a manufacturer limit or certified safety system.
 
 Approval requires an exact calculation version and an idempotency key. Recalculation supersedes a work order and requires renewed approval. Agent tools cannot approve actions or write work orders.
+
+### Incident workspace and authorization revisions
+
+The dedicated Incidents route selects a persisted case through `?incident=<id>`. Archived or resolved cases are read-only. The page has separate investigation and intervention sections, with canonical dependency branches and a cost table from the backend. Evidence is normalized centrally from the saved investigation snapshot into a readonly `EvidenceView`; live telemetry never silently replaces cited readings. Original excerpts, document identity and provenance remain inspectable. Retrieved document JSON cannot classify itself as a measured signal record.
+
+`decision_rules.py` checks the configured 85 °C demo limit on each replay window and before approval or repair start. The first breach is latched for the current incident, including its signal, timestamp, unit and provenance. Before execution it creates a new calculation revision and retires an existing work order as superseded. The original approval and calculation snapshot remain in the superseded-order history. Revision events preserve the old and new version IDs and the reason. Specialist positions retain the version they considered, so the UI labels them stale after a change.
+
+A rejected stale command can still discover a new constraint. `persist_decision_transition` commits that constraint in the same ownership-checked transaction before returning HTTP 409; the client then reloads current state. Old idempotency receipts may be returned for exact retries but cannot reactivate a superseded order. The client verifies the current incident, order status and calculation version before presenting the Maintenance handoff, and Maintenance checks its incident deep link again.
+
+The latch also sets affected-line capacity to zero in the simulated plant. Once a repair is being executed, its authorization snapshot stays immutable; a later breach records the constraint without rewriting executed work. Verification cannot count a window above the limit as healthy. Three healthy windows resolve the case and release the latch, while retaining the triggering evidence for review. These are demonstration workflow rules, not industrial control or manufacturer safety limits.
+
+The `/evidence-preview` route runs only the evidence components with labelled synthetic fixtures. It disables session bootstrap and polling, supporting isolated component review without Python, data downloads or model credentials.
 
 Diagnosis references are checked against returned evidence IDs. Generated currency claims are rejected. Documents and notes are untrusted evidence. Citation existence does not establish that a claim is scientifically correct; live-model grounding quality must be evaluated separately.
 

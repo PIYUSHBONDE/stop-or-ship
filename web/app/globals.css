@@ -1868,7 +1868,7 @@ option {
 }
 .factory-stats {
   position: absolute;
-  top: 114px;
+  top: 130px;
   left: 28px;
   display: flex;
   gap: 24px;
@@ -2335,4 +2335,14 @@ option {
   .factory-stats {
     top: 140px;
   }
+}
+
+.dot.unknown {
+  background: #91a0b5;
+}
+.asset-state.unknown {
+  color: #b6c1cf;
+}
+.plan-asset.unknown {
+  border-color: #91a0b5;
 }
