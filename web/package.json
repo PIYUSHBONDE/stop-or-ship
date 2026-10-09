@@ -6,12 +6,14 @@
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "node scripts/start.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint .",
-    "generate:api": "openapi-typescript openapi.json -o lib/api-schema.ts",
-    "test:e2e": "playwright test",
-    "format": "prettier --write app components hooks lib tests scripts *.ts *.mjs *.json",
-    "format:check": "prettier --check app components hooks lib tests scripts *.ts *.mjs *.json"
+    "generate:api": "openapi-typescript contracts/openapi.json -o src/lib/generated/api-schema.ts",
+    "test:e2e": "playwright test tests/e2e",
+    "format": "prettier --write src contracts tests scripts *.ts *.mjs *.json",
+    "format:check": "prettier --check src contracts tests scripts *.ts *.mjs *.json",
+    "check:api": "npm run generate:api -- --check",
+    "test:unit": "playwright test tests/unit"
   },
   "dependencies": {
     "@firebase/app": "0.16.2",

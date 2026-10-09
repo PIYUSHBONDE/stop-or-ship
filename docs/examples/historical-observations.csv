@@ -1,0 +1,3 @@
+asset_id,record_id,window_start,observed_at,signal_id,value,unit,std,p95
+P-107,example-1,,,pressure,165,bar,,
+P-107,example-2,,,pressure,125,bar,,

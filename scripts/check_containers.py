@@ -129,23 +129,12 @@ def check_http(base: str) -> None:
             return content
 
     require(request("/health")["status"] == "ok", "Web health response is invalid")
-    first = request("/api/v1/local-identity", body={})["token"]
-    second = request("/api/v1/local-identity", body={})["token"]
-    session = request("/api/v1/sessions", body={}, token=first)
-    require(
-        request("/api/v1/sessions/" + session["id"], token=first)["id"]
-        == session["id"],
-        "Owner read failed",
-    )
-    request("/api/v1/sessions/" + session["id"], token=second, expected=404)
+    request("/api/v1/access/state")
+    request("/api/v1/local-identity", body={}, expected=404)
+    request("/api/v1/plants/unselected/snapshot", expected=401)
+    request("/api/v1/plants/unselected/sources", expected=401)
     request(
-        "/api/v1/sessions/" + session["id"] + "/reset",
-        body={},
-        token=second,
-        expected=404,
-    )
-    request(
-        "/api/v1/local-identity",
+        "/api/v1/access/sign-out",
         body={},
         origin="https://external.invalid",
         expected=403,
@@ -172,7 +161,7 @@ def main() -> None:
     require(1 <= port <= 65535, "Invalid configured web port")
     check_http(f"http://127.0.0.1:{port}")
     print(
-        "Container users, isolation, storage, health, headers and session ownership passed"
+        "Container users, isolation, storage, health, headers and unauthenticated access boundaries passed"
     )
 
 

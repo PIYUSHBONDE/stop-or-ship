@@ -1,0 +1,212 @@
+.page {
+  max-width: 1400px;
+  margin: auto;
+  padding: 32px;
+  color: var(--text);
+}
+.heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.heading h1 {
+  font-size: 32px;
+  margin: 8px 0;
+}
+.page p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.metrics > div,
+.source,
+.editor,
+.empty {
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.metrics small {
+  display: block;
+  color: var(--muted);
+}
+.metrics strong {
+  display: block;
+  font-size: 30px;
+  margin-top: 8px;
+}
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: start;
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.notice svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.notice p {
+  margin: 0;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.sourceList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.source {
+  min-width: 0;
+}
+.source h2 {
+  margin: 8px 0;
+  font-size: 20px;
+}
+.metadata {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 12px;
+}
+.metadata dt {
+  color: var(--muted);
+}
+.metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 20px 0;
+}
+.values small {
+  display: block;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+.editor {
+  margin: 24px 0;
+}
+.editor h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.page input,
+.page select,
+.page textarea {
+  width: 100%;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font: inherit;
+}
+.page textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.page :focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.rule {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+.csv {
+  font-family: monospace !important;
+  min-height: 160px !important;
+}
+.preview {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 20px;
+}
+.previewRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 0;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+}
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+@media (max-width: 900px) {
+  .sourceList,
+  .fields {
+    grid-template-columns: 1fr;
+  }
+  .rule {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 550px) {
+  .page {
+    padding: 16px;
+  }
+  .heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+  .metrics > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .metrics strong {
+    margin: 0;
+  }
+  .source,
+  .editor {
+    padding: 16px;
+  }
+  .metadata {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+}

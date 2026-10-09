@@ -1,6 +1,6 @@
 # PlantSense development instructions
 
-Read `README.md`, `docs/status.md`, `docs/architecture.md`, and `docs/engineering.md` before changing the application.
+Read `README.md`, `docs/status.md`, `docs/architecture/overview.md`, and `docs/engineering/conventions.md` before changing the application.
 
 - Develop locally until the user explicitly resumes cloud deployment. Preserve truthful labels for measured replay, synthetic assumptions, and the scripted investigator.
 - Keep the HTTP layer thin. Authentication and persistence are injected dependencies; workflow transitions belong in the engine or workflow module; model tools remain read-only.

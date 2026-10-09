@@ -1,6 +1,8 @@
 * text=auto
 *.py text eol=lf
 *.ts text eol=lf
+*.mjs text eol=lf
+*.toml text eol=lf
 *.tsx text eol=lf
 *.css text eol=lf
 *.json text eol=lf
@@ -16,3 +18,4 @@
 *.webm binary
 *.mp4 binary
 *.woff2 binary
+*.csv text eol=lf

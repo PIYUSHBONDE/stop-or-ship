@@ -1,1 +1,1 @@
-{"firestore":{"rules":"infra/firestore.rules","indexes":"infra/firestore.indexes.json"}}
+{"firestore":{"rules":"infra/firebase/firestore.rules","indexes":"infra/firebase/firestore.indexes.json"}}
