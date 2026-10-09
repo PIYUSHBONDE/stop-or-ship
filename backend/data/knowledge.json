@@ -41,9 +41,9 @@
     "id": "sop-production-01",
     "source": "PlantSense demo planning note",
     "section": "Production / dependency model",
-    "version": "1.0",
+    "version": "2.0",
     "provenance": "Synthetic plant configuration",
-    "text": "Pump P-107 supplies Press PR-101, which feeds Conveyor CV-101 and finished goods FG-001. Line B is independently driven. Reduced Line A capacity affects half of nominal whole-plant production; the parallel line is not automatically stopped.",
+    "text": "Trace the incident asset through the directed dependencies in the incident's versioned plant model. Count each affected production area once, even when paths converge at dispatch. Use configured line capacities rather than assuming a fixed number of lines or fraction of whole-plant output. Equipment outside the affected dependency paths is not automatically stopped; shared utilities can constrain multiple lines.",
     "equipment_families": [
       "pump",
       "cooler",
@@ -68,9 +68,9 @@
     "id": "sop-cooler-01",
     "source": "PlantSense demo SOP",
     "section": "cooler / diagnostic checks",
-    "version": "2.0",
+    "version": "3.0",
     "provenance": "Synthetic demo procedure; not a manufacturer instruction",
-    "text": "Reduced cooling performance may be consistent with fouling, low cooling flow, excess heat load or temperature instrumentation. Compare cooling efficiency, cooling power, temperature and flow; independently inspect the shared circuit. Both production lines depend on cooling.",
+    "text": "Reduced cooling performance may be consistent with fouling, low cooling flow, excess heat load or temperature instrumentation. Compare cooling efficiency, cooling power, temperature and flow; independently inspect the shared circuit. Trace the incident's versioned dependency graph to identify every line supplied by the cooling unit.",
     "equipment_families": [
       "cooler"
     ]

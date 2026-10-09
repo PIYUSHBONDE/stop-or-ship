@@ -1868,7 +1868,7 @@ option {
 }
 .factory-stats {
   position: absolute;
-  top: 114px;
+  top: 130px;
   left: 28px;
   display: flex;
   gap: 24px;

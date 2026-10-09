@@ -59,6 +59,13 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     const value = request.headers.get(name);
     if (value) headers[name] = value;
   }
+  const staffRoute = path[1] === 'access' || path[1] === 'plants';
+  if (staffRoute) {
+    if (origin) headers.origin = origin;
+    const staffCookie = request.cookies.get('plantsense_staff');
+    if (staffCookie && /^[A-Za-z0-9_-]{32,100}$/.test(staffCookie.value))
+      headers.cookie = `plantsense_staff=${staffCookie.value}`;
+  }
   try {
     const base = new URL(process.env.API_BASE_URL || 'http://127.0.0.1:8000');
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password)
@@ -73,6 +80,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       return Response.json({ detail: 'Expected application/json' }, { status: 415 });
     }
     const endpoint = new URL(`/api/${path.map(encodeURIComponent).join('/')}`, base);
+    endpoint.search = request.nextUrl.search;
     const response = await fetch(endpoint, {
       method: request.method,
       headers,
@@ -81,9 +89,14 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       cache: 'no-store',
       signal: AbortSignal.timeout(60000),
     });
+    const responseHeaders: Record<string, string> = {};
+    const setCookie = response.headers.get('set-cookie');
+    if (staffRoute && setCookie?.startsWith('plantsense_staff='))
+      responseHeaders['Set-Cookie'] = setCookie;
     return new Response(await response.text(), {
       status: response.status,
       headers: {
+        ...responseHeaders,
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
         'X-Content-Type-Options': 'nosniff',

@@ -11,7 +11,7 @@ async function advance(page: Page, count: number) {
 test('dedicated factory and cross-workspace approval, repair and memory', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/plant');
   await expect(page.getByRole('heading', { name: 'Your plant, in context.' })).toBeVisible();
   const browser = page.getByRole('complementary', { name: 'Select plant equipment' });
   await expect(browser.getByRole('button')).toHaveCount(12);

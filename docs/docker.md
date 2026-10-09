@@ -8,7 +8,11 @@ Use Docker Desktop with Linux containers on Windows/macOS, or Docker Engine with
 docker compose up --build --wait
 ```
 
-Open **http://127.0.0.1:3000**. The web service proxies requests to the private API container. Both services must be healthy before startup completes. If the existing native frontend already uses port 3000, choose another port:
+Open **http://127.0.0.1:3000**. The web service proxies requests to the private API container. Both services must be healthy before startup completes.
+
+The entry page is now `/workspace`. Set up the initial local administrator/plant, or sign in to an existing staff account. Shared plant history has no reset action. See [shared plant review](shared-plant-review.md) for roles and a separate acceptance stack.
+
+If the existing native frontend already uses port 3000, choose another port:
 
 ```powershell
 $env:PLANTSENSE_WEB_PORT = '3010'
@@ -23,7 +27,7 @@ PLANTSENSE_WEB_PORT=3010 docker compose up --build --wait
 
 Inspect startup problems with `docker compose ps` and `docker compose logs --tail=100`. Stop with `docker compose down`. The named `plant-data` volume retains sessions and repair records across restarts. `docker compose down --volumes` permanently deletes that container stack's saved sessions; use it only when intentionally clearing that data.
 
-The stack uses local persistence and the scripted investigator by default. It requires no cloud credentials. Local identity is intended for localhost development. Public or real-plant deployment requires verified operator identity, authorization roles and a separate deployment review.
+The stack uses local persistence and the scripted investigator by default. It requires no cloud credentials. Named staff identity and roles are enforced locally; this identity adapter is intended for localhost development. Public or real-plant deployment requires managed identity, TLS and a separate deployment review. Compose derives allowed staff web origins from `PLANTSENSE_WEB_PORT`.
 
 ## Data and repeatable builds
 

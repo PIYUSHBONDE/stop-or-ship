@@ -97,6 +97,16 @@ export default function OperationsWorkspace({
     const id = state?.incident?.id;
     if (id && id !== focusedIncident.current) {
       focusedIncident.current = id;
+      setCause('');
+      setFix('');
+      setParts('None recorded');
+      setOutcome(
+        state.workspace ? '' : 'Simulated repair completed; telemetry verification pending',
+      );
+      setRecovery('healthy');
+      setOption('');
+      setEvidence(null);
+      setAnswer(null);
       setSelected(state?.incident?.asset_id || 'P-107');
       setFocusRequest((n) => n + 1);
     }
@@ -172,32 +182,34 @@ export default function OperationsWorkspace({
               <Clock3 size={14} />
               Shift A · {state.simulated_minutes} simulated min
             </span>
-            <button
-              className="icon-button"
-              aria-label="Reset demo plant"
-              onClick={() => {
-                act('/reset');
-                setOption('');
-                setAnswer(null);
-              }}
-              disabled={busy}
-            >
-              <RotateCcw size={17} />
-            </button>
+            {!state.workspace && (
+              <button
+                className="icon-button"
+                aria-label="Reset demo plant"
+                onClick={() => {
+                  act('/reset');
+                  setOption('');
+                  setAnswer(null);
+                }}
+                disabled={busy}
+              >
+                <RotateCcw size={17} />
+              </button>
+            )}
           </div>
         </div>
         <section className="metrics" aria-label="Plant metrics">
           <Metric
             label="ASSET HEALTH"
             value={`${healthy}`}
-            unit="/ 12 healthy"
+            unit={`/ ${state.assets.length} healthy`}
             icon={<ShieldCheck size={18} />}
             note={
-              healthy === 12
+              healthy === state.assets.length
                 ? 'All systems within normal state'
-                : `${12 - healthy} assets need attention`
+                : `${state.assets.length - healthy} assets need attention`
             }
-            tone={healthy === 12 ? 'green' : 'amber'}
+            tone={healthy === state.assets.length ? 'green' : 'amber'}
           />
           <Metric
             label="PLANT OUTPUT"
@@ -234,31 +246,33 @@ export default function OperationsWorkspace({
                 <Box size={16} />
                 Plant assets
               </h2>
-              <span className="count">12</span>
+              <span className="count">{state.assets.length}</span>
             </div>
             <div className="asset-groups">
-              {['line-a', 'line-b', 'utilities', 'dispatch'].map((group) => (
-                <div key={group}>
-                  <div className="group-label">{group.replace('-', ' ').toUpperCase()}</div>
-                  {state.assets
-                    .filter((a) => a.area_id === group)
-                    .map((a) => (
-                      <button
-                        className={`asset-row ${selected === a.id ? 'selected' : ''}`}
-                        key={a.id}
-                        onClick={() => setSelected(a.id)}
-                        aria-pressed={selected === a.id}
-                      >
-                        <span className={`dot ${a.status}`} />
-                        <span>
-                          <strong>{a.id}</strong>
-                          <small>{a.name}</small>
-                        </span>
-                        <ChevronRight size={13} />
-                      </button>
-                    ))}
-                </div>
-              ))}
+              {state.areas
+                .map((area) => area.id)
+                .map((group) => (
+                  <div key={group}>
+                    <div className="group-label">{group.replace('-', ' ').toUpperCase()}</div>
+                    {state.assets
+                      .filter((a) => a.area_id === group)
+                      .map((a) => (
+                        <button
+                          className={`asset-row ${selected === a.id ? 'selected' : ''}`}
+                          key={a.id}
+                          onClick={() => setSelected(a.id)}
+                          aria-pressed={selected === a.id}
+                        >
+                          <span className={`dot ${a.status}`} />
+                          <span>
+                            <strong>{a.id}</strong>
+                            <small>{a.name}</small>
+                          </span>
+                          <ChevronRight size={13} />
+                        </button>
+                      ))}
+                  </div>
+                ))}
             </div>
             <div className="asset-footer">
               <span className="dot healthy" />
@@ -327,7 +341,10 @@ export default function OperationsWorkspace({
                     className="icon-button"
                     aria-label={state.running ? 'Pause replay' : 'Play replay'}
                     onClick={() => act('/replay', { action: state.running ? 'pause' : 'play' })}
-                    disabled={busy}
+                    disabled={
+                      busy ||
+                      (!!state.workspace && !state.workspace.permissions.includes('plant.manage'))
+                    }
                   >
                     {state.running ? <Pause size={15} /> : <Play size={15} />}
                   </button>
@@ -335,7 +352,10 @@ export default function OperationsWorkspace({
                     className="icon-button"
                     aria-label="Advance one telemetry window"
                     onClick={() => act('/replay', { action: 'step' })}
-                    disabled={busy}
+                    disabled={
+                      busy ||
+                      (!!state.workspace && !state.workspace.permissions.includes('plant.manage'))
+                    }
                   >
                     <StepForward size={16} />
                   </button>
@@ -368,7 +388,11 @@ export default function OperationsWorkspace({
               </select>
               <button
                 className="primary compact"
-                disabled={busy || (!!incident && !isResolved)}
+                disabled={
+                  busy ||
+                  (!!state.workspace && !state.workspace.permissions.includes('plant.manage')) ||
+                  (!state.workspace && !!incident && !isResolved)
+                }
                 onClick={() => {
                   setSelected(state.scenarios.find((s) => s.id === scenario)?.asset_id || 'P-107');
                   setTab('Investigation');
@@ -547,7 +571,12 @@ export default function OperationsWorkspace({
                 />
                 <button
                   aria-label="Ask plant question"
-                  disabled={busy || question.trim().length < 3 || state.quotas.questions >= 5}
+                  disabled={
+                    !!state.workspace ||
+                    busy ||
+                    question.trim().length < 3 ||
+                    state.quotas.questions >= 5
+                  }
                   onClick={ask}
                 >
                   <ArrowRight size={17} />

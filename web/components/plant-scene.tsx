@@ -6,6 +6,9 @@ import { Component, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { Asset, State } from '@/lib/types';
 import { FactoryEnvironment } from './factory-environment';
+import { ConfiguredEnvironment } from './configured-environment';
+import { plantBounds, planPosition } from '@/lib/plant-layout';
+import styles from './plant-plan.module.css';
 
 const [BoxInstances, BoxInstance] = createInstances();
 const [CylinderInstances, CylinderInstance] = createInstances();
@@ -268,24 +271,28 @@ function CameraFocus({
   reduced: boolean;
 }) {
   const { camera, controls } = useThree();
-  const asset = state.assets.find((a) => a.id === selected)!;
+  const asset = state.assets.find((a) => a.id === selected) || state.assets[0];
   const [x, y, z] = asset.position;
+  const bounds = plantBounds(state.assets);
+  const group = state.assets.filter((item) => item.area_id === preset);
+  const targetX = group.length
+    ? group.reduce((sum, item) => sum + item.position[0], 0) / group.length
+    : bounds.x;
+  const targetZ = group.length
+    ? group.reduce((sum, item) => sum + item.position[2], 0) / group.length
+    : bounds.z;
+  const overviewDistance = Math.max(bounds.width, bounds.depth) * 0.95;
   const destination = useRef<{ position: THREE.Vector3; target: THREE.Vector3 } | null>(null);
   useEffect(() => {
     if (!focusRequest || !controls) return;
     const orbit = controls as unknown as { target: THREE.Vector3; update: () => void };
-    const target =
-      preset === 'asset'
-        ? [x, y + 0.8, z]
-        : preset === 'line-a'
-          ? [-2, 0, -2]
-          : preset === 'line-b'
-            ? [-2, 0, 4]
-            : preset === 'utilities'
-              ? [-2, 0, -7]
-              : [0, 0, 0];
+    const target = preset === 'asset' ? [x, y + 0.8, z] : [targetX, 0, targetZ];
     const offset =
-      preset === 'asset' ? [5, 4, 6] : preset === 'overview' ? [23, 22, 26] : [10, 11, 14];
+      preset === 'asset'
+        ? [5, 4, 6]
+        : preset === 'overview'
+          ? [overviewDistance, overviewDistance, overviewDistance]
+          : [10, 11, 14];
     const position = new THREE.Vector3(
       target[0] + offset[0],
       target[1] + offset[1],
@@ -298,7 +305,20 @@ function CameraFocus({
       orbit.update();
       destination.current = null;
     }
-  }, [camera, controls, focusRequest, selected, x, y, z, preset, reduced]);
+  }, [
+    camera,
+    controls,
+    focusRequest,
+    selected,
+    x,
+    y,
+    z,
+    preset,
+    reduced,
+    targetX,
+    targetZ,
+    overviewDistance,
+  ]);
   useFrame((_, delta) => {
     if (!destination.current || !controls) return;
     const orbit = controls as unknown as { target: THREE.Vector3; update: () => void };
@@ -348,6 +368,7 @@ function SceneContent({
   onSlowDevice?: () => void;
 }) {
   const { gl } = useThree();
+  const bounds = plantBounds(state.assets);
   useEffect(() => {
     gl.domElement.setAttribute('aria-label', 'Interactive 3D simulated manufacturing plant');
   }, [gl]);
@@ -357,23 +378,28 @@ function SceneContent({
       <ambientLight intensity={0.9} />
       <hemisphereLight args={['#e7f3fa', '#687976', 1.5]} />
       <directionalLight
-        position={[4, 16, 8]}
+        position={[bounds.x + 4, Math.max(16, bounds.depth), bounds.z + 8]}
         intensity={2.8}
         castShadow
         shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-16}
-        shadow-camera-right={16}
-        shadow-camera-top={16}
-        shadow-camera-bottom={-16}
+        shadow-camera-left={-Math.max(bounds.width, bounds.depth)}
+        shadow-camera-right={Math.max(bounds.width, bounds.depth)}
+        shadow-camera-top={Math.max(bounds.width, bounds.depth)}
+        shadow-camera-bottom={-Math.max(bounds.width, bounds.depth)}
+        shadow-camera-far={1000}
         shadow-bias={-0.0005}
         shadow-autoUpdate={false}
         shadow-needsUpdate
       />
       <directionalLight position={[-10, 5, -3]} intensity={0.8} color="#8eb9d0" />
-      <FactoryEnvironment />
+      {(state.configuration_version || 1) > 1 ? (
+        <ConfiguredEnvironment key={state.configuration_version} state={state} />
+      ) : (
+        <FactoryEnvironment />
+      )}
       <RenderBudget onSlowDevice={onSlowDevice} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.06, 0]} receiveShadow>
-        <planeGeometry args={[23, 21]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[bounds.x, -0.4, bounds.z]} receiveShadow>
+        <planeGeometry args={[bounds.width, bounds.depth]} />
         <meshStandardMaterial color="#293c46" roughness={0.9} />
       </mesh>
       {state.dependencies
@@ -401,10 +427,10 @@ function SceneContent({
             />
           );
         })}
-      <BoxInstances limit={160} castShadow receiveShadow>
+      <BoxInstances limit={Math.max(160, state.assets.length * 20)} castShadow receiveShadow>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial metalness={0.35} roughness={0.48} />
-        <CylinderInstances limit={100} castShadow receiveShadow>
+        <CylinderInstances limit={Math.max(100, state.assets.length * 12)} castShadow receiveShadow>
           <cylinderGeometry args={[1, 1, 1, 20]} />
           <meshStandardMaterial metalness={0.5} roughness={0.5} />
           {state.assets.map((a) => (
@@ -422,10 +448,10 @@ function SceneContent({
         makeDefault
         enablePan
         minDistance={3}
-        maxDistance={55}
+        maxDistance={Math.max(55, bounds.depth * 3, bounds.width * 3)}
         minPolarAngle={0.3}
         maxPolarAngle={Math.PI / 2.3}
-        target={[0, 0, 0]}
+        target={[bounds.x, 0, bounds.z]}
       />
       <CameraFocus
         state={state}
@@ -474,6 +500,8 @@ export default function PlantScene({
 }) {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [reduced, setReduced] = useState(false);
+  const bounds = plantBounds(state.assets);
+  const distance = Math.max(bounds.width, bounds.depth) * 0.95;
   useEffect(() => {
     const c = document.createElement('canvas');
     // Browser-only capability and preference detection; no subscription feedback loop.
@@ -488,35 +516,44 @@ export default function PlantScene({
   }, []);
   const fallback = (
     <div className="plan-view" role="region" aria-label="Accessible plant plan">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        {state.dependencies.map((d) => {
-          const a = state.assets.find((a) => a.id === d.source)!;
-          const b = state.assets.find((a) => a.id === d.target)!;
-          return (
-            <line
-              key={d.source + d.target}
-              x1={(a.position[0] + 11) * 4.3}
-              y1={(a.position[2] + 10) * 4.6}
-              x2={(b.position[0] + 11) * 4.3}
-              y2={(b.position[2] + 10) * 4.6}
-              stroke={state.affected.includes(d.target) ? '#dba062' : '#355362'}
-              strokeWidth=".35"
-            />
-          );
-        })}
-      </svg>
-      {state.assets.map((a) => (
-        <button
-          key={a.id}
-          style={{ left: `${(a.position[0] + 11) * 4.3}%`, top: `${(a.position[2] + 10) * 4.6}%` }}
-          className={`plan-asset ${selected === a.id ? 'selected' : ''}`}
-          onClick={() => onSelect(a.id)}
-        >
-          <span className={`dot ${a.status}`} />
-          <strong>{a.id}</strong>
-          <small>{a.name}</small>
-        </button>
-      ))}
+      <div className={styles.viewport}>
+        <div className={styles.board}>
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            {state.dependencies.map((d) => {
+              const a = state.assets.find((a) => a.id === d.source)!;
+              const b = state.assets.find((a) => a.id === d.target)!;
+              return (
+                <line
+                  key={d.source + d.target}
+                  x1={planPosition(a, bounds).x}
+                  y1={planPosition(a, bounds).y}
+                  x2={planPosition(b, bounds).x}
+                  y2={planPosition(b, bounds).y}
+                  stroke={state.affected.includes(d.target) ? '#dba062' : '#355362'}
+                  strokeWidth={d.source === selected || d.target === selected ? 2 : 1}
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            })}
+          </svg>
+          {state.assets.map((a) => (
+            <button
+              key={a.id}
+              aria-label={`${a.id} ${a.name}`}
+              style={{
+                left: `${planPosition(a, bounds).x}%`,
+                top: `${planPosition(a, bounds).y}%`,
+              }}
+              className={`plan-asset ${selected === a.id ? 'selected' : ''}`}
+              onClick={() => onSelect(a.id)}
+            >
+              <span className={`dot ${a.status}`} />
+              <strong>{a.id}</strong>
+              <small>{a.name}</small>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
   if (planView || !supported) return fallback;
@@ -524,7 +561,13 @@ export default function PlantScene({
     <SceneBoundary fallback={fallback}>
       <Canvas
         shadows={quality === 'detail'}
-        camera={{ position: [23, 22, 26], fov: 42, near: 0.1, far: 150 }}
+        key={state.configuration_version || 'demo'}
+        camera={{
+          position: [bounds.x + distance, distance, bounds.z + distance],
+          fov: 42,
+          near: 0.1,
+          far: 1000,
+        }}
         dpr={quality === 'detail' ? [1, 1.5] : 0.7}
         gl={{ antialias: false }}
         onCreated={({ gl }) => {

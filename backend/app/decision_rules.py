@@ -7,6 +7,8 @@ import json
 from .economics import ASSUMPTIONS, calculate
 from .events import event, now
 from .models import Signal
+from .plant import catalog
+from .plant_configuration import affected_capacities
 from .profiles import affected_lines, session_profile
 
 
@@ -87,7 +89,8 @@ def refresh_constraints(session):
         incident["calculation"]["risk_multiplier"],
         safety_stop=True,
         profile=session_profile(session),
-        lines=affected_lines(incident["asset_id"]),
+        lines=affected_lines(incident["asset_id"], catalog(session)),
+        capacities=affected_capacities(incident["asset_id"], catalog(session)),
     )
     replace_calculation(session, calculation, reason)
     return True

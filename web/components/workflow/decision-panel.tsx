@@ -34,6 +34,8 @@ export function DecisionPanel({
   const incident = state.incident;
   const calc = incident?.calculation;
   const dirty = !!calc && risk !== calc.risk_multiplier;
+  const canReview = !state.workspace || state.workspace.permissions.includes('incident.review');
+  const canApprove = !state.workspace || state.workspace.permissions.includes('incident.approve');
   return !calc ? (
     <Empty
       icon={<Layers3 size={32} />}
@@ -126,7 +128,9 @@ export function DecisionPanel({
       </label>
       <button
         className="secondary full"
-        disabled={busy || !['awaiting_approval', 'approved'].includes(incident!.state)}
+        disabled={
+          !canReview || busy || !['awaiting_approval', 'approved'].includes(incident!.state)
+        }
         onClick={() => {
           setOption('');
           act('/calculate', { risk_multiplier: risk });
@@ -149,10 +153,11 @@ export function DecisionPanel({
         </>
       )}
       <label className="field-label">
-        Approver
+        {state.workspace ? 'Authenticated approver' : 'Approver'}
         <input
           aria-label="Approver"
-          value={approver}
+          value={state.workspace?.user.display_name || approver}
+          readOnly={!!state.workspace}
           maxLength={80}
           onChange={(e) => setApprover(e.target.value)}
         />
@@ -162,6 +167,7 @@ export function DecisionPanel({
         onClick={approve}
         disabled={
           busy ||
+          !canApprove ||
           dirty ||
           !chosen?.feasible ||
           incident?.state !== 'awaiting_approval' ||
@@ -173,13 +179,17 @@ export function DecisionPanel({
       </button>
       <button
         className="text-button full"
-        disabled={busy || incident?.state !== 'awaiting_approval'}
+        disabled={!canApprove || busy || incident?.state !== 'awaiting_approval'}
         onClick={() => act('/reject')}
       >
         Reject proposal
       </button>
       {incident?.state === 'proposal_rejected' && (
-        <button className="secondary full" onClick={() => act('/reopen')}>
+        <button
+          className="secondary full"
+          disabled={!canApprove || busy}
+          onClick={() => act('/reopen')}
+        >
           Reopen for review
         </button>
       )}

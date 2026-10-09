@@ -6,10 +6,11 @@ from fastapi import HTTPException
 
 from .decision_rules import calc_version as calc_version
 from .decision_rules import refresh_constraints, temperature_triggers
-from .economics import calculate
+from .economics import calculate, rounded
 from .events import event as event
 from .events import now as now
-from .plant import AREAS, ASSETS, DEPENDENCIES, PLANT, downstream
+from .plant import PLANT, catalog, downstream
+from .plant_configuration import affected_capacities, line_capacities
 from .profiles import SCENARIOS, affected_lines, profile_for, session_profile
 from .telemetry import asset_signals, replay_data, sample
 
@@ -91,6 +92,9 @@ def advance(s, step=False):
             recovering,
             failed,
         )
+        # Map a measured test-rig record to configured equipment without changing its values or source IDs.
+        for signal in row["signals"]:
+            signal["asset_id"] = profile.asset_id
         s["history"] = (s["history"] + [row])[-80:]
         if (
             not i
@@ -103,14 +107,20 @@ def advance(s, step=False):
                 "id": str(uuid.uuid4()),
                 "asset_id": profile.asset_id,
                 "profile_id": profile.id,
-                "affected_lines": affected_lines(profile.asset_id),
+                "affected_lines": affected_lines(profile.asset_id, catalog(s)),
+                "plant_configuration_version": s.get("_configuration_version"),
+                "plant_context": json.loads(json.dumps(catalog(s))),
                 "state": "detected",
                 "severity": "warning",
                 "created_at": now(),
                 "evidence": [],
                 "diagnosis": None,
                 "progress": [],
-                "calculation": calculate(profile=profile, lines=affected_lines(profile.asset_id)),
+                "calculation": calculate(
+                    profile=profile,
+                    lines=affected_lines(profile.asset_id, catalog(s)),
+                    capacities=affected_capacities(profile.asset_id, catalog(s)),
+                ),
                 "safety_stop": False,
                 "safety_evidence": [],
                 "calculation_revision": 1,
@@ -178,9 +188,11 @@ def approve(s, request, key):
     if not option["feasible"]:
         raise HTTPException(409, option["constraint"])
     approval = {**request.model_dump(), "timestamp": now()}
+    if s.get("_actor"):
+        approval.update(actor_id=s["_actor"]["id"], approver=s["_actor"]["display_name"])
     i["state"] = "approved"
     i["work_order"] = {
-        "id": "WO-" + i["id"][:8].upper(),
+        "id": "WO-" + (i["id"] if s.get("_plant_id") else i["id"][:8]).upper(),
         "incident_id": i["id"],
         "approval": approval,
         "status": "approved",
@@ -197,8 +209,10 @@ def snapshot(s):
     i = s["incident"]
     profile = session_profile(s)
     active = bool(i and i["state"] != "resolved")
-    affected = downstream(i["asset_id"]) if active else []
-    lines = affected_lines(i["asset_id"]) if active else []
+    configuration = catalog(s)
+    capacities = line_capacities(configuration)
+    affected = downstream(i["asset_id"], configuration) if active else []
+    lines = affected_lines(i["asset_id"], configuration) if active else []
     stopped = bool(
         i
         and (
@@ -207,10 +221,10 @@ def snapshot(s):
             or (i["state"] == "approved" and i["work_order"]["approval"]["option_id"] == "stop")
         )
     )
-    assets = [a.model_dump() for a in ASSETS]
+    assets = [dict(asset, status="healthy") for asset in configuration["assets"]]
     for a in assets:
         if a["id"] in affected:
-            a["status"] = "stopped" if stopped and a["id"] != "FG-001" else "affected"
+            a["status"] = "stopped" if stopped and a["type"] != "goods" else "affected"
         if i and a["id"] == i["asset_id"]:
             a["status"] = {
                 "detected": "degrading",
@@ -241,7 +255,13 @@ def snapshot(s):
         and i["work_order"]["approval"]["option_id"] == "derate"
     ):
         rate = profile.derated_rate
-    output = 200 - len(lines) * (100 - rate)
+    rates = {
+        line: rounded(capacity * (rate if line in lines else 100) / 100)
+        for line, capacity in capacities.items()
+    }
+    output = sum(rates.values())
+    for signal in row["signals"]:
+        signal["asset_id"] = profile.asset_id
     signals = {
         a["id"]: row["signals"] if a["id"] == profile.asset_id else asset_signals(a, s["window"])
         for a in assets
@@ -250,14 +270,15 @@ def snapshot(s):
         if asset["type"] == "goods":
             signals[asset["id"]][0]["value"] = output
         elif asset["type"] == "press" and asset["id"] != profile.asset_id:
-            signals[asset["id"]][0]["value"] = rate if asset["area_id"] in lines else 100
+            signals[asset["id"]][0]["value"] = rates.get(asset["area_id"], 0)
     return {
         "id": s["id"],
         "generation": s["generation"],
         "plant": PLANT.model_dump(),
-        "areas": [a.model_dump() for a in AREAS],
+        "areas": configuration["areas"],
         "assets": assets,
-        "dependencies": [d.model_dump() for d in DEPENDENCIES],
+        "dependencies": configuration["dependencies"],
+        "configuration_version": s.get("_configuration_version"),
         "signals": signals,
         "scenario": s["scenario"],
         "window": s["window"],
@@ -271,7 +292,8 @@ def snapshot(s):
         "events": s["events"],
         "quotas": s["quotas"],
         "output_per_hour": output,
-        "nominal_output_per_hour": 200,
+        "line_output_per_hour": rates,
+        "nominal_output_per_hour": sum(capacities.values()),
         "data_mode": ("IMS measured bearing replay" if profile.id == "bearing" else "UCI measured replay")
         if row["provenance"] == "measured_replay"
         else "Synthetic fallback · dataset not prepared",

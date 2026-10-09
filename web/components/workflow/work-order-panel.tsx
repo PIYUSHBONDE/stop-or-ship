@@ -21,7 +21,7 @@ type Props = SessionActions & {
 };
 export function WorkOrderPanel({
   state,
-  busy,
+  busy: saving,
   act,
   cause,
   setCause,
@@ -36,6 +36,8 @@ export function WorkOrderPanel({
   setTab,
 }: Props) {
   const incident = state.incident;
+  const busy =
+    saving || (!!state.workspace && !state.workspace.permissions.includes('repair.write'));
   const isResolved = incident?.state === 'resolved';
   return !incident?.work_order ? (
     <Empty
@@ -75,6 +77,7 @@ export function WorkOrderPanel({
             Observed root cause
             <input
               aria-label="Observed root cause"
+              disabled={busy}
               value={cause}
               onChange={(e) => setCause(e.target.value)}
               maxLength={500}
@@ -84,6 +87,7 @@ export function WorkOrderPanel({
             Repair performed
             <textarea
               aria-label="Repair performed"
+              disabled={busy}
               value={fix}
               onChange={(e) => setFix(e.target.value)}
               maxLength={1000}
@@ -93,6 +97,7 @@ export function WorkOrderPanel({
             Parts used
             <input
               aria-label="Parts used"
+              disabled={busy}
               value={parts}
               onChange={(e) => setParts(e.target.value)}
               maxLength={500}
@@ -102,6 +107,7 @@ export function WorkOrderPanel({
             Observed outcome
             <textarea
               aria-label="Observed outcome"
+              disabled={busy}
               value={outcome}
               onChange={(e) => setOutcome(e.target.value)}
               maxLength={500}
@@ -111,6 +117,7 @@ export function WorkOrderPanel({
             Simulated post-repair telemetry
             <select
               aria-label="Post-repair telemetry"
+              disabled={busy}
               value={recovery}
               onChange={(e) =>
                 setRecovery(e.target.value as CommandBodies['/repair/complete']['recovery'])

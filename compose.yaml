@@ -9,6 +9,7 @@ services:
       PLANTSENSE_AI_PROVIDER: scripted
       SERVICE_ROLE: api
       PLANTSENSE_DB: /var/lib/plantsense/local.db
+      PLANTSENSE_STAFF_WEB_ORIGINS: http://localhost:${PLANTSENSE_WEB_PORT:-3000},http://127.0.0.1:${PLANTSENSE_WEB_PORT:-3000}
       DAILY_AI_LIMIT: "60"
       PORT: "8080"
     volumes:

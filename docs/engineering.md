@@ -7,6 +7,13 @@
 | `backend/app/main.py` | App factory, lifecycle, worker entry point, error boundary |
 | `backend/app/api.py` | Versioned HTTP handlers and response contracts |
 | `backend/app/dependencies.py` | Identity validation and request-scoped store injection |
+| `backend/app/workspace_api.py` | Shared staff/plant HTTP contracts and dispatch |
+| `backend/app/staff_access.py` | Enrollment, invitations, memberships and transaction-local permissions |
+| `backend/app/staff_security.py` | Password derivation, token hashes and role permissions |
+| `backend/app/workspace_schema.py` | Additive versioned SQLite migrations |
+| `backend/app/workspace_catalog.py` | Plant-scoped catalog seeding and reads |
+| `backend/app/workspace_store.py` | Per-incident persistence, plant projections and retained audit |
+| `backend/app/local_runtime.py` | Local browser-independent replay and investigation scheduling |
 | `backend/app/middleware.py` | Request size/time bounds and request IDs |
 | `backend/app/engine.py` | Replay, detection, approval and recovery state machine |
 | `backend/app/workflow.py` | Human-controlled calculation and repair transitions |
@@ -17,6 +24,7 @@
 | `backend/app/agent.py` | Read-only evidence tools, bounded investigation and claim ownership |
 | `backend/app/questions.py` | Bounded session questions and source validation |
 | `web/lib/api.ts` | Identity/bootstrap coordination, typed requests and deadlines |
+| `web/lib/staff-api.ts` | Generated staff contracts and cookie-authenticated requests |
 | `web/hooks/use-plant-session.ts` | Serialized polling/actions, reconnect state and approval retry keys |
 | `web/components/` | Scene and reusable presentation components |
 | `web/components/session-provider.tsx` | Shared session lifetime and selected equipment |
@@ -29,15 +37,17 @@ Stores are created at application startup rather than import time. Trusted repla
 
 ## Security and reliability boundaries
 
-Requests are limited to 64 KiB and backend body reads time out after ten seconds of inactivity. Request models reject unknown fields, trim surrounding whitespace, and reject invalid numbers. API responses are uncached and carry generated request IDs. Error responses omit exception details and credentials.
+Requests are limited to 64 KiB and backend body reads time out after ten seconds of inactivity. Request models reject unknown fields and invalid numbers. Text fields are normalized explicitly; passwords preserve every character. Validation errors omit supplied input, including passwords and invitation tokens. API responses are uncached and carry generated request IDs. Error responses omit exception details and credentials.
 
 The frontend proxy forwards only the versioned API path and required headers to a configured backend. It rejects cross-origin writes, malformed paths, oversized bodies and non-JSON request bodies, and refuses backend redirects. Frontend headers prevent framing and object embedding. These controls complement bearer authentication; they do not replace it.
 
-Cloud identity checks revocation. Local identity is a demonstration token and local services bind to loopback. Broader network exposure of local mode requires a separate authentication design.
+Shared local access uses named staff, hashed expiring cookies and active plant memberships. Membership revocation is checked on each protected request and again inside workflow write transactions. Never accept approver identity from a shared request body. Keep private worker ownership separate from browser credentials. Local services bind to loopback; production exposure requires managed identity, TLS and its own deployment gate. Isolated demo tokens and its existing Firebase anonymous adapter remain separate.
 
 An investigation claim has a unique token. Progress, budget reservation, completion and failure must belong to that claim. Reset, timeout, or replacement invalidates old writes. A queued job that does not start becomes explicitly retryable. Local background tasks remain a prototype shortcut: they do not provide a durable queue or automatic restart recovery.
 
 Polling and user actions share a single client request queue. Duplicate clicks are blocked immediately; approval retries reuse the same key for the same session, generation and payload. The server remains authoritative for ownership, transitions and approval versions.
+
+Navigation changes the controller context. A response from the prior plant or incident must not publish into the new context. Shared polling is read-only; replay writes come from authorized controls or the server scheduler. Do not add independent mutation requests to presentation components.
 
 Questions are read-only and session-scoped. Local answers use deterministic context; cloud answers use a structured schema with checked source IDs. Citation existence is validated; semantic support still needs live-model evaluation.
 

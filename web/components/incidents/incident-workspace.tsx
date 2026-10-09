@@ -32,9 +32,18 @@ function IncidentDetail({
   incident: Incident;
   readOnly: boolean;
 }) {
-  const { busy, connected, actForIncident, selectAsset } = usePlant();
+  const { busy: saving, connected, actForIncident, selectAsset, can } = usePlant();
+  const busy = saving || !can('incident.review');
   const [sourceId, setSourceId] = useState<string | null>(null);
-  const asset = state.assets.find((candidate) => candidate.id === incident.asset_id);
+  const contextState = incident.plant_context
+    ? {
+        ...state,
+        areas: incident.plant_context.areas,
+        assets: incident.plant_context.assets,
+        dependencies: incident.plant_context.dependencies,
+      }
+    : state;
+  const asset = contextState.assets.find((candidate) => candidate.id === incident.asset_id);
   const evidence = incident.evidence.map(toEvidenceView);
   const source = evidence.find((candidate) => candidate.id === sourceId) || null;
   const pending = ['detected', 'investigating'].includes(incident.state);
@@ -77,6 +86,12 @@ function IncidentDetail({
             {incident.asset_id} · {asset?.name || 'Equipment deviation'}
           </h2>
           <p>{asset?.purpose}</p>
+          {incident.plant_configuration_version && (
+            <p>
+              Plant configuration v{incident.plant_configuration_version} · recorded incident
+              context
+            </p>
+          )}
         </div>
         <div className={styles.caseActions}>
           <span className={styles.status} data-state={incident.state}>
@@ -86,7 +101,10 @@ function IncidentDetail({
             Compare interventions
             <ArrowRight size={15} />
           </button>
-          <Link href="/plant" onClick={() => selectAsset(incident.asset_id)}>
+          <Link
+            href={state.workspace ? `/plant?incident=${incident.id}` : '/plant'}
+            onClick={() => selectAsset(incident.asset_id)}
+          >
             View equipment in Plant
             <ArrowRight size={13} />
           </Link>
@@ -103,7 +121,7 @@ function IncidentDetail({
         </span>
         <span>
           {incident.affected_lines
-            .map((line) => state.areas.find((area) => area.id === line)?.name || line)
+            .map((line) => contextState.areas.find((area) => area.id === line)?.name || line)
             .join(' + ')}{' '}
           affected
         </span>
@@ -223,7 +241,7 @@ function IncidentDetail({
           <h3>Production impact</h3>
           <span className={styles.meta}>Synthetic plant configuration</span>
         </div>
-        <DependencyImpact state={state} assetId={incident.asset_id} />
+        <DependencyImpact state={contextState} assetId={incident.asset_id} />
         <details className={styles.evidenceLibrary}>
           <summary>Browse all {evidence.length} saved evidence records</summary>
           <div className={styles.evidenceGrid}>
@@ -269,7 +287,7 @@ export default function IncidentWorkspace() {
     <div className={styles.workspace}>
       <header className={styles.pageHeader}>
         <div>
-          <span className={styles.eyebrow}>NARMADA PRECISION WORKS / RELIABILITY</span>
+          <span className={styles.eyebrow}>{state.plant.name.toUpperCase()} / RELIABILITY</span>
           <h1>Incidents</h1>
           <p>Understand the evidence. Choose an intervention. Keep human control.</p>
         </div>

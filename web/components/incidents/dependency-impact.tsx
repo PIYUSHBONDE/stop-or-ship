@@ -5,12 +5,17 @@ import styles from './incidents.module.css';
 export function DependencyImpact({ state, assetId }: { state: State; assetId: string }) {
   const source = state.assets.find((asset) => asset.id === assetId);
   const branches = state.dependencies.filter((edge) => edge.source === assetId);
+  const expanded = new Set<string>();
 
   function node(id: string, visited: Set<string>): React.ReactNode {
     const asset = state.assets.find((candidate) => candidate.id === id);
     if (visited.has(id)) return <span className={styles.node}>Dependency cycle · {id}</span>;
     const path = new Set([...visited, id]);
-    const children = state.dependencies.filter((edge) => edge.source === id);
+    const downstream = state.dependencies.filter((edge) => edge.source === id);
+    // Custom DAGs can have many converging paths. Expand each asset once per render.
+    const sharedPath = expanded.has(id) && downstream.length > 0;
+    expanded.add(id);
+    const children = sharedPath ? [] : downstream;
     return (
       <div className={styles.dependencyNode}>
         <span className={styles.node} data-testid={`dependency-node-${id}`}>
@@ -18,6 +23,7 @@ export function DependencyImpact({ state, assetId }: { state: State; assetId: st
           <small>
             {asset?.name || 'Equipment'}
             {asset?.type === 'goods' ? ' · shared destination' : ''}
+            {sharedPath ? ' · downstream path shown above' : ''}
           </small>
         </span>
         {children.length > 0 && (
@@ -68,7 +74,7 @@ export function DependencyImpact({ state, assetId }: { state: State; assetId: st
         <p className="muted">No downstream dependencies are configured for this equipment.</p>
       )}
       <p className={styles.note}>
-        Configured plant dependencies. Shared destinations collect both branches; each affected
+        Configured plant dependencies. Shared destinations collect connected branches; each affected
         production line is counted once.
       </p>
     </div>

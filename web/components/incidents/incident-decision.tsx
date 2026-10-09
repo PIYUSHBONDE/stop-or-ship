@@ -10,21 +10,40 @@ import styles from './incidents.module.css';
 
 function assumptionRows(calculation: Calculation): { label: string; value: string }[] {
   const values = calculation.assumptions;
+  const configured = typeof values.production_scaling === 'string';
   const definitions = [
     ['horizon_minutes', 'Comparison horizon', 'min'],
-    ['line_units_per_hour', 'Nominal capacity per line', 'parts / h'],
-    ['degraded_line_units_per_hour', 'Degraded capacity per line', 'parts / h'],
-    ['derated_line_units_per_hour', 'Derated capacity per line', 'parts / h'],
+    ['affected_nominal_units_per_hour', 'Total affected rated capacity', 'parts / h'],
+    ['affected_delivery_target_units', 'Delivery target across affected lines', 'parts'],
+    [
+      'line_units_per_hour',
+      configured ? 'Reference capacity for scaling' : 'Nominal capacity per line',
+      'parts / h',
+    ],
+    [
+      'degraded_line_units_per_hour',
+      configured ? 'Degraded output per affected line' : 'Degraded capacity per line',
+      configured ? '%' : 'parts / h',
+    ],
+    [
+      'derated_line_units_per_hour',
+      configured ? 'Derated output per affected line' : 'Derated capacity per line',
+      configured ? '%' : 'parts / h',
+    ],
     ['margin_per_unit_paise', 'Contribution margin per part', 'INR'],
     ['repair_cost_paise', 'Planned repair expense', 'INR'],
     ['planned_repair_minutes', 'Planned repair duration', 'min'],
     ['window_in_minutes', 'Configured maintenance window', 'min from decision'],
-    ['delivery_target_units', 'Delivery target per affected line', 'parts'],
+    [
+      'delivery_target_units',
+      configured ? 'Delivery target at reference capacity' : 'Delivery target per affected line',
+      'parts',
+    ],
     ['penalty_per_missing_unit_paise', 'Penalty per missing part', 'INR'],
     ['failure_extra_downtime_minutes', 'Additional failure downtime', 'min'],
     ['failure_damage_paise', 'Configured failure damage expense', 'INR'],
   ];
-  return definitions.flatMap(([key, label, unit]) => {
+  const rows = definitions.flatMap(([key, label, unit]) => {
     const value = values[key];
     return typeof value === 'number'
       ? [
@@ -35,6 +54,22 @@ function assumptionRows(calculation: Calculation): { label: string; value: strin
         ]
       : [];
   });
+  const capacities = values.line_capacities_units_per_hour;
+  if (capacities && typeof capacities === 'object' && !Array.isArray(capacities)) {
+    rows.push(
+      ...Object.entries(capacities).flatMap(([line, capacity]) =>
+        typeof capacity === 'number'
+          ? [
+              {
+                label: `Rated capacity · ${line}`,
+                value: `${capacity.toLocaleString('en-IN')} parts / h`,
+              },
+            ]
+          : [],
+      ),
+    );
+  }
+  return rows;
 }
 
 export function IncidentDecision({
@@ -44,7 +79,7 @@ export function IncidentDecision({
   incident: Incident;
   readOnly: boolean;
 }) {
-  const { busy, connected, actForIncident, approve } = usePlant();
+  const { busy, connected, actForIncident, approve, can, state } = usePlant();
   const calculation = incident.calculation;
   const version = incident.calculation_version;
   const [draft, setDraft] = useState({ version, risk: calculation.risk_multiplier });
@@ -61,7 +96,10 @@ export function IncidentDecision({
       ? selection.id
       : incident.work_order?.approval.option_id || calculation.recommended;
   const selected = calculation.options.find((option) => option.id === selectedId);
-  const editable = !readOnly && ['awaiting_approval', 'approved'].includes(incident.state);
+  const editable =
+    !readOnly &&
+    can('incident.review') &&
+    ['awaiting_approval', 'approved'].includes(incident.state);
   const unavailable = busy || !connected;
   const rolesStale = incident.roles_calculation_version !== version;
   const authorized =
@@ -72,6 +110,7 @@ export function IncidentDecision({
     incident.work_order.approval.calculation_version === version;
   const ready =
     !readOnly &&
+    can('incident.approve') &&
     !unavailable &&
     !dirty &&
     incident.state === 'awaiting_approval' &&
@@ -104,6 +143,13 @@ export function IncidentDecision({
           {Number(calculation.assumptions.horizon_minutes) / 60}-hour comparison · INR
         </span>
       </div>
+      {state?.workspace &&
+        state.incidents.filter((item) => item.state !== 'resolved').length > 1 && (
+          <p className={styles.note}>
+            This comparison covers this incident. Other open cases can affect shared production
+            capacity; review them before scheduling work.
+          </p>
+        )}
       <p className={styles.intro}>
         Compare the same operating horizon. Apply hard constraints first, then consider the lowest
         configured expected cost.
@@ -236,6 +282,9 @@ export function IncidentDecision({
           calibrated predictions. Each affected line is counted once; failure exposure includes only
           additional loss.
         </p>
+        {typeof calculation.assumptions.production_scaling === 'string' && (
+          <p className={styles.note}>{calculation.assumptions.production_scaling}</p>
+        )}
         <dl>
           {assumptionRows(calculation).map((row) => (
             <div key={row.label}>
@@ -329,10 +378,11 @@ export function IncidentDecision({
                 </p>
               </div>
               <label className="field-label">
-                Approver
+                {state?.workspace ? 'Authenticated approver' : 'Approver'}
                 <input
                   aria-label="Approver"
-                  value={approver}
+                  value={state?.workspace?.user.display_name || approver}
+                  readOnly={!!state?.workspace}
                   maxLength={80}
                   disabled={readOnly || unavailable || incident.state !== 'awaiting_approval'}
                   onChange={(event) => setApprover(event.target.value)}
@@ -345,7 +395,11 @@ export function IncidentDecision({
                 </button>
                 <button
                   className="text-button"
-                  disabled={unavailable || incident.state !== 'awaiting_approval'}
+                  disabled={
+                    !can('incident.approve') ||
+                    unavailable ||
+                    incident.state !== 'awaiting_approval'
+                  }
                   onClick={() => actForIncident(incident.id, '/reject')}
                 >
                   Reject proposal
@@ -354,7 +408,7 @@ export function IncidentDecision({
               {incident.state === 'proposal_rejected' && (
                 <button
                   className="secondary"
-                  disabled={unavailable}
+                  disabled={!can('incident.approve') || unavailable}
                   onClick={() => actForIncident(incident.id, '/reopen')}
                 >
                   Reopen for review
@@ -375,6 +429,8 @@ export function IncidentDecision({
             </p>
           )}
           <p className={styles.note}>
+            {!can('incident.approve') &&
+              'Your plant role can inspect this comparison but cannot approve it. '}
             Approval authorizes simulated maintenance only. Calculations and workflow transitions
             are controlled by the application.
           </p>

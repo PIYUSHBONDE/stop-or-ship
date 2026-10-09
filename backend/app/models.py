@@ -31,6 +31,7 @@ class Area(BaseModel):
     id: str
     name: str
     purpose: str
+    nominal_units_per_hour: int = 0
 
 
 class Asset(BaseModel):
@@ -41,6 +42,7 @@ class Asset(BaseModel):
     purpose: str
     position: list[float] = Field(min_length=3, max_length=3)
     status: Status = Status.HEALTHY
+    diagnostic_profile: Literal["pump", "bearing", "valve", "cooler"] | None = None
 
 
 class Signal(BaseModel):
@@ -122,6 +124,7 @@ class Approval(BaseModel):
     calculation_version: str
     approver: str
     timestamp: str
+    actor_id: str | None = None
 
 
 class WorkOrder(BaseModel):
@@ -225,7 +228,16 @@ class ProgressRecord(BaseModel):
     status: Literal["running", "completed", "unavailable"] = "completed"
 
 
+class IncidentPlantContext(BaseModel):
+    name: str
+    areas: list[Area]
+    assets: list[Asset]
+    dependencies: list[Dependency]
+
+
 class RuntimeIncident(Incident):
+    plant_configuration_version: int | None = None
+    plant_context: IncidentPlantContext | None = None
     profile_id: str = "pump"
     affected_lines: list[str] = []
     progress: list[ProgressRecord]
@@ -275,6 +287,8 @@ class AuditEvent(BaseModel):
 
 
 class PlantSnapshot(BaseModel):
+    configuration_version: int | None = None
+    active_source_count: int = 0
     id: str
     generation: str
     plant: Plant
@@ -295,6 +309,7 @@ class PlantSnapshot(BaseModel):
     quotas: dict[str, int]
     output_per_hour: int
     nominal_output_per_hour: int
+    line_output_per_hour: dict[str, int] = {}
     data_mode: str
     simulated_minutes: int
 
@@ -307,3 +322,8 @@ class ScenarioDefinition(BaseModel):
     provenance: str
     measured_available: bool
     requires_memory: bool = False
+
+
+# Resolve forward references before other contract modules subclass these models.
+RuntimeIncident.model_rebuild()
+PlantSnapshot.model_rebuild()

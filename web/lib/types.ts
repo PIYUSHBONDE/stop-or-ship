@@ -8,4 +8,6 @@ export type Calculation = components['schemas']['Calculation'];
 export type WorkOrder = components['schemas']['WorkOrder'];
 export type Incident = components['schemas']['RuntimeIncident'];
 export type Case = components['schemas']['VerifiedCase'];
-export type State = components['schemas']['PlantSnapshot'];
+export type State = components['schemas']['PlantSnapshot'] & {
+  workspace?: components['schemas']['WorkspaceContext'];
+};

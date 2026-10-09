@@ -17,6 +17,7 @@ test-results/
 playwright-report/
 *.log
 .gcloud/
+.runtime/
 
 # Private identity material belongs outside the repository.
 secrets/

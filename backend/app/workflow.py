@@ -9,6 +9,8 @@ from .decision_rules import refresh_constraints, replace_calculation
 from .economics import calculate
 from .engine import event, guard_incident, require_incident
 from .models import CalculationRequest, RepairRequest
+from .plant import catalog
+from .plant_configuration import affected_capacities
 from .profiles import affected_lines, session_profile
 
 
@@ -18,7 +20,7 @@ class CommittedConflict:
     detail: str
 
 
-def persist_decision_transition(store, sid, owner, expected_incident, operation):
+def persist_decision_transition(store, sid, owner, expected_incident, operation, **access):
     """Commit newly observed constraints even when they invalidate the requested action."""
 
     def transition(session):
@@ -30,7 +32,7 @@ def persist_decision_transition(store, sid, owner, expected_incident, operation)
                 return CommittedConflict(error.status_code, error.detail)
             raise
 
-    result = store.mutate(sid, owner, guard_incident(expected_incident, transition))
+    result = store.mutate(sid, owner, guard_incident(expected_incident, transition), **access)
     if isinstance(result, CommittedConflict):
         raise HTTPException(result.status_code, result.detail)
     return result
@@ -43,7 +45,8 @@ def recalculate_decision(session: dict, request: CalculationRequest) -> None:
         request.risk_multiplier,
         incident.get("safety_stop", False),
         session_profile(session),
-        affected_lines(incident["asset_id"]),
+        affected_lines(incident["asset_id"], catalog(session)),
+        affected_capacities(incident["asset_id"], catalog(session)),
     )
     replace_calculation(session, calculation, "Risk assumption changed; renewed human approval required")
     incident["state"] = "awaiting_approval"
