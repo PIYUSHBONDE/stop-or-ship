@@ -2694,6 +2694,200 @@
         }
       }
     },
+    "/api/v1/plants/{plant_id}/monitoring": {
+      "get": {
+        "summary": "Read",
+        "operationId": "read_api_v1_plants__plant_id__monitoring_get",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Configure",
+        "operationId": "configure_api_v1_plants__plant_id__monitoring_post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitoringUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/monitoring/clock": {
+      "post": {
+        "summary": "Control",
+        "operationId": "control_api_v1_plants__plant_id__monitoring_clock_post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitoringControl"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -3811,6 +4005,164 @@
         ],
         "title": "MemoryResponse"
       },
+      "MonitoringControl": {
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Version"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "play",
+              "pause",
+              "step"
+            ],
+            "title": "Action"
+          },
+          "expected_tick": {
+            "type": "integer",
+            "minimum": -1.0,
+            "title": "Expected Tick"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_version",
+          "action",
+          "expected_tick"
+        ],
+        "title": "MonitoringControl"
+      },
+      "MonitoringUpdate": {
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected Version"
+          },
+          "plant_configuration_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Plant Configuration Version"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceBinding"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Sources"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_version",
+          "plant_configuration_version",
+          "enabled",
+          "sources"
+        ],
+        "title": "MonitoringUpdate"
+      },
+      "MonitoringView": {
+        "properties": {
+          "investigations_remaining_today": {
+            "type": "integer",
+            "title": "Investigations Remaining Today",
+            "default": 3
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "plant_configuration_version": {
+            "type": "integer",
+            "title": "Plant Configuration Version"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "tick": {
+            "type": "integer",
+            "title": "Tick"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "title": "Interval Seconds",
+            "default": 5
+          },
+          "simulated_minutes_per_tick": {
+            "type": "integer",
+            "title": "Simulated Minutes Per Tick",
+            "default": 1
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceBinding"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "health": {
+            "items": {
+              "$ref": "#/components/schemas/SourceHealth"
+            },
+            "type": "array",
+            "title": "Health"
+          },
+          "output_basis": {
+            "type": "string",
+            "title": "Output Basis",
+            "default": "Configured production estimate; generated supporting signals"
+          },
+          "quality_issue_count": {
+            "type": "integer",
+            "title": "Quality Issue Count",
+            "default": 0
+          },
+          "clock_label": {
+            "type": "string",
+            "title": "Clock Label",
+            "default": "Backend-owned replay clock; accelerated simulation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "plant_configuration_version",
+          "enabled",
+          "running",
+          "tick",
+          "observed_at",
+          "sources",
+          "health"
+        ],
+        "title": "MonitoringView"
+      },
       "Plant": {
         "properties": {
           "id": {
@@ -4335,6 +4687,39 @@
               }
             ]
           },
+          "monitoring_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monitoring Version"
+          },
+          "detection_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detection Tick"
+          },
+          "detection_observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detection Observed At"
+          },
           "plant_configuration_version": {
             "anyOf": [
               {
@@ -4824,6 +5209,16 @@
             "type": "integer",
             "title": "Simulated Minutes"
           },
+          "monitoring": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MonitoringView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "workspace": {
             "$ref": "#/components/schemas/WorkspaceContext"
           }
@@ -4929,6 +5324,141 @@
         ],
         "title": "Signal"
       },
+      "SourceBinding": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Asset Id"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degradation"
+            ],
+            "title": "Mode",
+            "default": "healthy"
+          },
+          "quality_mode": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "missing",
+              "stale",
+              "conflicting"
+            ],
+            "title": "Quality Mode",
+            "default": "fresh"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "asset_id"
+        ],
+        "title": "SourceBinding"
+      },
+      "SourceHealth": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Id"
+          },
+          "source_label": {
+            "type": "string",
+            "title": "Source Label"
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "missing",
+              "stale",
+              "conflicting",
+              "not_started"
+            ],
+            "title": "Quality"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/Signal"
+            },
+            "type": "array",
+            "title": "Signals",
+            "default": []
+          },
+          "workflow_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Id"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "profile_id",
+          "source_label",
+          "quality",
+          "reason"
+        ],
+        "title": "SourceHealth"
+      },
       "StaffUser": {
         "properties": {
           "id": {
@@ -4956,6 +5486,7 @@
       "Status": {
         "type": "string",
         "enum": [
+          "unknown",
           "healthy",
           "degrading",
           "investigating",
@@ -4968,6 +5499,44 @@
       },
       "TelemetryWindow": {
         "properties": {
+          "plant_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plant Tick"
+          },
+          "monitoring_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monitoring Version"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "quality": {
+            "type": "string",
+            "title": "Quality",
+            "default": "fresh"
+          },
           "window": {
             "type": "integer",
             "title": "Window"
@@ -5167,6 +5736,17 @@
       },
       "WorkOrder": {
         "properties": {
+          "approved_tick": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Tick"
+          },
           "id": {
             "type": "string",
             "title": "Id"

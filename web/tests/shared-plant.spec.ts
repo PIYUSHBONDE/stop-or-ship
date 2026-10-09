@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { State } from '@/lib/types';
+import type { components } from '@/lib/api-schema';
 
 const password = 'testing-only strong passphrase!';
 const ownerEmail = 'browser-owner@example.test';
@@ -351,5 +352,148 @@ test('plant configuration: reviewed eight-line template, scalable plan and mobil
     await expect(page.getByText(/downstream path shown above/)).toHaveCount(1);
     await page.unrouteAll({ behavior: 'wait' });
   }
+  expect(errors).toEqual([]);
+});
+
+test('coordinated monitoring: source quality, automatic evidence, approval and verified recovery', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const plantId = await owner(page);
+  await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  const base = `/api/v1/plants/${plantId}`;
+  const originalConfiguration = (await (
+    await page.context().request.get(base + '/configuration')
+  ).json()) as components['schemas']['ConfigurationView'];
+  const template = await page.context().request.post(base + '/configuration/template', {
+    data: { lines: 8, name: originalConfiguration.configuration.name },
+  });
+  expect(template.status()).toBe(200);
+  expect(
+    (
+      await page.context().request.post(base + '/configuration', {
+        data: {
+          expected_version: originalConfiguration.version,
+          configuration: await template.json(),
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  const snapshot = (await (await page.context().request.get(base + '/snapshot')).json()) as State;
+  expect(snapshot.assets).toHaveLength(36);
+  const pump = snapshot.assets.find((asset) => asset.diagnostic_profile === 'pump')!;
+  const monitoring = (await (
+    await page.context().request.get(base + '/monitoring')
+  ).json()) as components['schemas']['MonitoringView'];
+  expect(
+    (
+      await page.context().request.post(base + '/monitoring', {
+        data: {
+          expected_version: monitoring.version,
+          plant_configuration_version: snapshot.configuration_version,
+          enabled: false,
+          sources: monitoring.sources.map((source) => ({
+            ...source,
+            mode: 'healthy',
+            quality_mode: 'fresh',
+          })),
+        },
+      })
+    ).status(),
+  ).toBe(200);
+  await page.goto('/monitoring');
+  await expect(page.getByRole('heading', { name: 'One plant. One clock.' })).toBeVisible();
+  await page.getByLabel(`${pump.id} replay condition`).selectOption('degradation');
+  await page.getByRole('button', { name: 'Enable plant monitoring' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  for (let index = 0; index < 6; index++) {
+    await page.getByRole('button', { name: 'Advance plant window' }).click();
+    await expect(page.getByRole('status')).toHaveCount(0);
+  }
+  await expect
+    .poll(async () => {
+      const state = (await (await page.context().request.get(base + '/snapshot')).json()) as State;
+      return state.incidents.find((item) => item.asset_id === pump.id && item.state !== 'resolved')
+        ?.state;
+    })
+    .toBe('awaiting_approval');
+  const state = (await (await page.context().request.get(base + '/snapshot')).json()) as State;
+  const incident = state.incidents.find(
+    (item) => item.asset_id === pump.id && item.state !== 'resolved',
+  )!;
+  expect(incident.detection_tick).not.toBeNull();
+  const tick = await page.getByTestId('plant-tick').textContent();
+  await page.reload();
+  await expect(page.getByTestId('plant-tick')).toHaveText(tick!);
+  await page.getByLabel(`${pump.id} data availability`).selectOption('missing');
+  await expect(page.getByRole('button', { name: 'Advance plant window' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Save source mappings' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Advance plant window' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(
+    page
+      .getByRole('article', { name: `${pump.id} telemetry source`, exact: true })
+      .getByText('No values available'),
+  ).toBeVisible();
+  await page.goto(`/incidents?incident=${incident.id}`);
+  await expect(page.getByRole('button', { name: 'Approve selected intervention' })).toBeDisabled();
+  await expect(page.getByText(/Restore valid monitoring evidence/)).toBeVisible();
+  await page.goto('/monitoring');
+  await page.getByLabel(`${pump.id} data availability`).selectOption('fresh');
+  await page.getByRole('button', { name: 'Save source mappings' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Advance plant window' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.screenshot({ path: '../docs/artifacts/monitoring-desktop.png', fullPage: true });
+  await page.goto(`/incidents?incident=${incident.id}`);
+  await page.getByRole('radio', { name: 'Stop & repair now', exact: true }).check();
+  await page.getByRole('button', { name: 'Approve selected intervention' }).click();
+  await page.getByRole('link', { name: 'Open authorized work order' }).click();
+  await page.getByRole('button', { name: 'Start approved repair' }).click();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByLabel('Observed root cause').fill('Coordinated pump seal leakage');
+  await page
+    .getByLabel('Repair performed')
+    .fill('Replace the seal and validate aligned pressure and flow');
+  await page.getByLabel('Parts used').fill('Pump seal kit');
+  await page.getByLabel('Observed outcome').fill('Operating envelope restored on the shared clock');
+  await page.getByRole('button', { name: 'Complete repair & verify' }).click();
+  await expect(page.getByRole('heading', { name: 'Checking recovery' })).toBeVisible();
+  await page.goto('/monitoring');
+  for (let index = 0; index < 3; index++) {
+    await page.getByRole('button', { name: 'Advance plant window' }).click();
+    await expect(page.getByRole('status')).toHaveCount(0);
+  }
+  const recovered = (await (await page.context().request.get(base + '/snapshot')).json()) as State;
+  expect(recovered.incidents.find((item) => item.id === incident.id)?.state).toBe('resolved');
+  expect(recovered.memory.some((item) => item.incident_id === incident.id)).toBe(true);
+  await page.goto('/operations');
+  await expect(page.getByRole('link', { name: 'Manage plant monitoring' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start scenario', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Play replay', exact: true })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Manage plant monitoring' }).click();
+  await page.getByLabel('Find telemetry equipment').fill(pump.id);
+  await page.setViewportSize({ width: 430, height: 900 });
+  await page.screenshot({ path: '../docs/artifacts/monitoring-mobile.png', fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
+  await page.getByRole('button', { name: 'Disable monitoring' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Monitoring disabled' })).toBeVisible();
+  const currentConfiguration = (await (
+    await page.context().request.get(base + '/configuration')
+  ).json()) as components['schemas']['ConfigurationView'];
+  expect(
+    (
+      await page.context().request.post(base + '/configuration', {
+        data: {
+          expected_version: currentConfiguration.version,
+          configuration: originalConfiguration.configuration,
+        },
+      })
+    ).status(),
+  ).toBe(200);
   expect(errors).toEqual([]);
 });

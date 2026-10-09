@@ -702,6 +702,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plants/{plant_id}/monitoring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read */
+        get: operations["read_api_v1_plants__plant_id__monitoring_get"];
+        put?: never;
+        /** Configure */
+        post: operations["configure_api_v1_plants__plant_id__monitoring_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/monitoring/clock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Control */
+        post: operations["control_api_v1_plants__plant_id__monitoring_clock_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1108,6 +1143,78 @@ export interface components {
             /** Cases */
             cases: components["schemas"]["VerifiedCase"][];
         };
+        /** MonitoringControl */
+        MonitoringControl: {
+            /** Expected Version */
+            expected_version: number;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "play" | "pause" | "step";
+            /** Expected Tick */
+            expected_tick: number;
+        };
+        /** MonitoringUpdate */
+        MonitoringUpdate: {
+            /** Expected Version */
+            expected_version: number;
+            /** Plant Configuration Version */
+            plant_configuration_version: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Sources */
+            sources: components["schemas"]["SourceBinding"][];
+        };
+        /** MonitoringView */
+        MonitoringView: {
+            /**
+             * Investigations Remaining Today
+             * @default 3
+             */
+            investigations_remaining_today: number;
+            /** Version */
+            version: number;
+            /** Plant Configuration Version */
+            plant_configuration_version: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Running */
+            running: boolean;
+            /** Tick */
+            tick: number;
+            /** Observed At */
+            observed_at: string | null;
+            /**
+             * Interval Seconds
+             * @default 5
+             */
+            interval_seconds: number;
+            /**
+             * Simulated Minutes Per Tick
+             * @default 1
+             */
+            simulated_minutes_per_tick: number;
+            /** Sources */
+            sources: components["schemas"]["SourceBinding"][];
+            /** Health */
+            health: components["schemas"]["SourceHealth"][];
+            /**
+             * Output Basis
+             * @default Configured production estimate; generated supporting signals
+             */
+            output_basis: string;
+            /**
+             * Quality Issue Count
+             * @default 0
+             */
+            quality_issue_count: number;
+            /**
+             * Clock Label
+             * @default Backend-owned replay clock; accelerated simulation
+             */
+            clock_label: string;
+        };
         /** Plant */
         Plant: {
             /** Id */
@@ -1304,6 +1411,12 @@ export interface components {
             /** Evidence */
             evidence: components["schemas"]["Evidence"][];
             diagnosis?: components["schemas"]["InvestigationResult"] | null;
+            /** Monitoring Version */
+            monitoring_version?: number | null;
+            /** Detection Tick */
+            detection_tick?: number | null;
+            /** Detection Observed At */
+            detection_observed_at?: string | null;
             /** Plant Configuration Version */
             plant_configuration_version?: number | null;
             plant_context?: components["schemas"]["IncidentPlantContext"] | null;
@@ -1495,6 +1608,7 @@ export interface components {
             data_mode: string;
             /** Simulated Minutes */
             simulated_minutes: number;
+            monitoring?: components["schemas"]["MonitoringView"] | null;
             workspace: components["schemas"]["WorkspaceContext"];
         };
         /** Signal */
@@ -1521,6 +1635,52 @@ export interface components {
             /** Source Record Id */
             source_record_id?: string | null;
         };
+        /** SourceBinding */
+        SourceBinding: {
+            /** Asset Id */
+            asset_id: string;
+            /**
+             * Mode
+             * @default healthy
+             * @enum {string}
+             */
+            mode: "healthy" | "degradation";
+            /**
+             * Quality Mode
+             * @default fresh
+             * @enum {string}
+             */
+            quality_mode: "fresh" | "missing" | "stale" | "conflicting";
+        };
+        /** SourceHealth */
+        SourceHealth: {
+            /** Asset Id */
+            asset_id: string;
+            /** Profile Id */
+            profile_id: string | null;
+            /** Source Label */
+            source_label: string;
+            /**
+             * Quality
+             * @enum {string}
+             */
+            quality: "fresh" | "missing" | "stale" | "conflicting" | "not_started";
+            /** Reason */
+            reason: string;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Received At */
+            received_at?: string | null;
+            /**
+             * Signals
+             * @default []
+             */
+            signals: components["schemas"]["Signal"][];
+            /** Workflow Id */
+            workflow_id?: string | null;
+            /** Incident Id */
+            incident_id?: string | null;
+        };
         /** StaffUser */
         StaffUser: {
             /** Id */
@@ -1534,9 +1694,20 @@ export interface components {
          * Status
          * @enum {string}
          */
-        Status: "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
+        Status: "unknown" | "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
         /** TelemetryWindow */
         TelemetryWindow: {
+            /** Plant Tick */
+            plant_tick?: number | null;
+            /** Monitoring Version */
+            monitoring_version?: number | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /**
+             * Quality
+             * @default fresh
+             */
+            quality: string;
             /** Window */
             window: number;
             /** Signals */
@@ -1609,6 +1780,8 @@ export interface components {
         };
         /** WorkOrder */
         WorkOrder: {
+            /** Approved Tick */
+            approved_tick?: number | null;
             /** Id */
             id: string;
             /** Incident Id */
@@ -3131,6 +3304,115 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SharedPlantSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_api_v1_plants__plant_id__monitoring_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitoringView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    configure_api_v1_plants__plant_id__monitoring_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MonitoringUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitoringView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    control_api_v1_plants__plant_id__monitoring_clock_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MonitoringControl"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitoringView"];
                 };
             };
             /** @description Validation Error */

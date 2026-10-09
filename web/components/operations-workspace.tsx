@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
   Activity,
@@ -216,7 +217,7 @@ export default function OperationsWorkspace({
             value={`${state.output_per_hour}`}
             unit="parts / h"
             icon={<Gauge size={18} />}
-            note={`Nominal capacity ${state.nominal_output_per_hour} parts / h`}
+            note={`${state.monitoring?.enabled ? 'Configured estimate · ' : ''}Nominal capacity ${state.nominal_output_per_hour} parts / h`}
             tone="green"
           />
           <Metric
@@ -336,31 +337,37 @@ export default function OperationsWorkspace({
                     Telemetry replay<small>{state.data_mode}</small>
                   </span>
                 </div>
-                <div className="replay-controls">
-                  <button
-                    className="icon-button"
-                    aria-label={state.running ? 'Pause replay' : 'Play replay'}
-                    onClick={() => act('/replay', { action: state.running ? 'pause' : 'play' })}
-                    disabled={
-                      busy ||
-                      (!!state.workspace && !state.workspace.permissions.includes('plant.manage'))
-                    }
-                  >
-                    {state.running ? <Pause size={15} /> : <Play size={15} />}
-                  </button>
-                  <button
-                    className="icon-button"
-                    aria-label="Advance one telemetry window"
-                    onClick={() => act('/replay', { action: 'step' })}
-                    disabled={
-                      busy ||
-                      (!!state.workspace && !state.workspace.permissions.includes('plant.manage'))
-                    }
-                  >
-                    <StepForward size={16} />
-                  </button>
-                  <span>12×</span>
-                </div>
+                {state.monitoring?.enabled ? (
+                  <Link className="secondary compact" href="/monitoring">
+                    Manage plant monitoring
+                  </Link>
+                ) : (
+                  <div className="replay-controls">
+                    <button
+                      className="icon-button"
+                      aria-label={state.running ? 'Pause replay' : 'Play replay'}
+                      onClick={() => act('/replay', { action: state.running ? 'pause' : 'play' })}
+                      disabled={
+                        busy ||
+                        (!!state.workspace && !state.workspace.permissions.includes('plant.manage'))
+                      }
+                    >
+                      {state.running ? <Pause size={15} /> : <Play size={15} />}
+                    </button>
+                    <button
+                      className="icon-button"
+                      aria-label="Advance one telemetry window"
+                      onClick={() => act('/replay', { action: 'step' })}
+                      disabled={
+                        busy ||
+                        (!!state.workspace && !state.workspace.permissions.includes('plant.manage'))
+                      }
+                    >
+                      <StepForward size={16} />
+                    </button>
+                    <span>12×</span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="scenario-bar">
@@ -368,41 +375,53 @@ export default function OperationsWorkspace({
                 <Sparkles size={17} />
                 <span>Explore a scenario</span>
               </div>
-              <select
-                aria-label="Demo scenario"
-                value={scenario}
-                onChange={(e) =>
-                  setScenario(e.target.value as CommandBodies['/scenarios']['scenario'])
-                }
-              >
-                {state.scenarios.map((scenario) => (
-                  <option
-                    key={scenario.id}
-                    value={scenario.id}
-                    disabled={scenario.requires_memory && !state.memory.length}
+              {state.monitoring?.enabled ? (
+                <p>
+                  Sources use the shared plant clock.{' '}
+                  <Link href="/monitoring">Open source mappings →</Link>
+                </p>
+              ) : (
+                <>
+                  <select
+                    aria-label="Demo scenario"
+                    value={scenario}
+                    onChange={(e) =>
+                      setScenario(e.target.value as CommandBodies['/scenarios']['scenario'])
+                    }
                   >
-                    {scenario.name}
-                    {!scenario.measured_available ? ' · synthetic' : ''}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="primary compact"
-                disabled={
-                  busy ||
-                  (!!state.workspace && !state.workspace.permissions.includes('plant.manage')) ||
-                  (!state.workspace && !!incident && !isResolved)
-                }
-                onClick={() => {
-                  setSelected(state.scenarios.find((s) => s.id === scenario)?.asset_id || 'P-107');
-                  setTab('Investigation');
-                  setOption('');
-                  act('/scenarios', { scenario });
-                }}
-              >
-                Start scenario
-                <ArrowRight size={14} />
-              </button>
+                    {state.scenarios.map((scenario) => (
+                      <option
+                        key={scenario.id}
+                        value={scenario.id}
+                        disabled={scenario.requires_memory && !state.memory.length}
+                      >
+                        {scenario.name}
+                        {!scenario.measured_available ? ' · synthetic' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="primary compact"
+                    disabled={
+                      busy ||
+                      (!!state.workspace &&
+                        !state.workspace.permissions.includes('plant.manage')) ||
+                      (!state.workspace && !!incident && !isResolved)
+                    }
+                    onClick={() => {
+                      setSelected(
+                        state.scenarios.find((s) => s.id === scenario)?.asset_id || 'P-107',
+                      );
+                      setTab('Investigation');
+                      setOption('');
+                      act('/scenarios', { scenario });
+                    }}
+                  >
+                    Start scenario
+                    <ArrowRight size={14} />
+                  </button>
+                </>
+              )}
             </div>
             <div className="telemetry-panel panel">
               <div className="panel-title">
@@ -607,7 +626,9 @@ export default function OperationsWorkspace({
         <footer className="page-footer">
           <span>
             <span className="dot healthy" />
-            System online · isolated demo session
+            {state.workspace
+              ? 'Shared plant workspace · backend-owned state'
+              : 'System online · isolated demo session'}
           </span>
           <span>PlantSense / Evidence-backed reliability</span>
         </footer>

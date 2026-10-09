@@ -18,6 +18,7 @@ import { usePlant } from './session-provider';
 
 const destinations = [
   { href: '/plant', name: 'Plant', icon: Factory },
+  { href: '/monitoring', name: 'Monitor', icon: Radio },
   { href: '/operations', name: 'Operations', icon: Gauge },
   { href: '/incidents', name: 'Incidents', icon: Activity },
   { href: '/maintenance', name: 'Maintenance', icon: Wrench },

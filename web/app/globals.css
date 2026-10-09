@@ -2336,3 +2336,13 @@ option {
     top: 140px;
   }
 }
+
+.dot.unknown {
+  background: #91a0b5;
+}
+.asset-state.unknown {
+  color: #b6c1cf;
+}
+.plan-asset.unknown {
+  border-color: #91a0b5;
+}

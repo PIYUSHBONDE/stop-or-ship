@@ -14,6 +14,7 @@ from .api import router
 from .dependencies import Storage
 from .middleware import RequestBoundary
 from .models import InvestigationJob
+from .monitoring_api import router as monitoring_router
 from .store import Store
 from .telemetry import sample
 from .workspace_api import router as workspace_router
@@ -44,6 +45,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True) -> FastAPI:
     application.add_middleware(RequestBoundary)
     application.include_router(router)
     application.include_router(workspace_router)
+    application.include_router(monitoring_router)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_input(request: Request, exc: RequestValidationError):

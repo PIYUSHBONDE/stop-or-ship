@@ -7,6 +7,7 @@ authorize these records. All projections and audit writes share one transaction.
 
 import json
 import time
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
@@ -41,6 +42,15 @@ def load_runtime(db, row):
             "SELECT data FROM plant_cases WHERE plant_id=? ORDER BY verified_at,id", (row[1],)
         )
     ]
+    if state.get("_monitoring") and state["history"]:
+        monitor = db.execute("SELECT data FROM plant_monitoring WHERE plant_id=?", (row[1],)).fetchone()
+        if monitor and json.loads(monitor[0])["running"]:
+            received = state["history"][-1].get("received_at")
+            if (
+                received
+                and (datetime.now(timezone.utc) - datetime.fromisoformat(received)).total_seconds() > 15
+            ):
+                state["_monitoring_quality"] = "stale"
     return state
 
 
@@ -132,10 +142,14 @@ def mutate_runtime(
 
 
 def start_source(store, token, plant_id, scenario, asset_id=None):
+    from .monitoring import is_enabled
+
     available(store)
     with store.connection() as db:
         db.execute("BEGIN IMMEDIATE")
         actor = authorize(db, token, plant_id, "plant.manage")["user"]
+        if is_enabled(db, plant_id):
+            raise HTTPException(409, "Use coordinated monitoring controls while plant monitoring is enabled")
         state = fresh(internal_owner(plant_id))
         state["_plant_id"] = plant_id
         state["_actor"] = actor
@@ -306,6 +320,21 @@ def plant_snapshot(store, token, plant_id, incident_id=None):
                     output = asset_signals(asset, result["window"])[0]
                     result["signals"][asset["id"]].append(output)
                 output["value"] = rates.get(asset["area_id"], 0)
+        from .monitoring import view as monitoring_view
+
+        monitoring = monitoring_view(db, plant_id, configuration, rates)
+        result["monitoring"] = monitoring
+        if monitoring["enabled"]:
+            result.update(
+                window=monitoring["tick"],
+                running=monitoring["running"],
+                simulated_minutes=max(0, monitoring["tick"] + 1),
+                active_source_count=len(monitoring["sources"]),
+            )
+            for source in monitoring["health"]:
+                result["signals"][source["asset_id"]] = source["signals"]
+                if source["quality"] != "fresh" and assets[source["asset_id"]]["status"] == "healthy":
+                    assets[source["asset_id"]]["status"] = "unknown"
         return result
 
 
@@ -361,7 +390,7 @@ def advance_all(store):
                 store.mutate(workflow_id, internal_owner(plant_id), close_completed, action="source.closed")
             continue
         timestamp = time.time()
-        due = state["running"] and timestamp - state["last_tick"] >= 5
+        due = not state.get("_monitoring") and state["running"] and timestamp - state["last_tick"] >= 5
         expired = incident and (
             (incident["state"] == "investigating" and incident["lease_until"] < timestamp)
             or (incident["state"] == "detected" and timestamp - incident.get("queued_at", timestamp) > 90)

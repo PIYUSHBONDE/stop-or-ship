@@ -150,6 +150,10 @@ async def investigate(store, job):
                     "deviations": row["deviations"],
                     "sensor_disagreement": row["sensor_disagreement"],
                     "plant_configuration_version": s.get("_configuration_version"),
+                    "monitoring_version": row.get("monitoring_version"),
+                    "plant_tick": row.get("plant_tick"),
+                    "observed_at": row.get("observed_at"),
+                    "quality": row.get("quality", "fresh"),
                     "mapping": "Test-rig measurements mapped to fictional configured equipment; not a live sensor",
                     "feature_deviations": row.get("feature_deviations", {}),
                     "source_records": [
@@ -261,6 +265,7 @@ async def investigate(store, job):
             await search_knowledge(profile.id + " diagnostic checks independent sensor repair")
             decision_context()
             uncertain = s["scenario"] == "sensor_uncertainty"
+            procedure = "sop-sensor-01" if uncertain else "sop-" + profile.id + "-01"
             cases = [d for d in evidence.values() if d["id"].startswith("case-")]
             result = {
                 "summary": "Independent signals disagree. Confirm instrumentation before assigning a mechanical cause."
@@ -274,7 +279,7 @@ async def investigate(store, job):
                         "confidence": "low" if uncertain else "medium",
                         "supporting_evidence": [
                             "telemetry-current",
-                            "sop-sensor-01" if uncertain else "sop-" + profile.id + "-01",
+                            *([procedure] if procedure in evidence else []),
                         ],
                         "conflicting_evidence": ["telemetry-current"] if uncertain else [],
                     },
@@ -309,6 +314,10 @@ async def investigate(store, job):
                     " A previously verified repair is available as context, not proof of the current cause."
                 )
                 result["hypotheses"][0]["supporting_evidence"].append(cases[0]["id"])
+            if procedure not in evidence:
+                raise ValueError(
+                    "Reviewed equipment procedure was not retrieved; collected evidence retained"
+                )
             update_progress(
                 "Scripted Reliability and Production positions completed; shared cost table retained"
             )

@@ -72,3 +72,9 @@ Use `PLANTSENSE_AI_PROVIDER` to choose scripted, Gemini API or Vertex identity i
 Risk controls derive from the saved calculation. Unapplied edits block approval and require explicit recalculation or discard. Incident actions carry the displayed case ID through the shared controller; historical cases must not dispatch mutations against the active case. Specialist explanations carry their source calculation version and never determine feasibility or cost. A HTTP 409 triggers a serialized refresh so newly committed constraints become visible immediately.
 
 Keep superseded authorizations inactive, retain their original approval/cost snapshot, and record why their version changed. Never allow retry receipts to create or reactivate work. Constraint changes discovered during approval must persist even when approval is rejected. Executed repair snapshots remain immutable; temperature and anomaly checks still gate recovery.
+
+## Coordinated monitoring
+
+`monitoring.py` owns the transactional clock/source checkpoints, `telemetry_quality.py` owns trusted local source adaptation, and `monitoring_api.py` owns thin HTTP contracts. Mapping changes are versioned, permission checked and audited. Observe original values and source IDs alongside replay timestamps; label any overridden values synthetic. Invalid observations cannot count toward detection or recovery and block new approval or repair start.
+
+Use shared `usePlantSession` operations for monitoring settings and clock commands. All monitoring reads, polling and human mutations remain serialized. While monitoring is enabled, presentation directs users to the coordinated clock instead of issuing independent scenario/replay commands. Deferred repairs wait on that shared clock; no asset may advance it independently.

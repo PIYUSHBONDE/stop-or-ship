@@ -11,6 +11,7 @@ class RequestModel(BaseModel):
 
 
 class Status(StrEnum):
+    UNKNOWN = "unknown"
     HEALTHY = "healthy"
     DEGRADING = "degrading"
     INVESTIGATING = "investigating"
@@ -128,6 +129,7 @@ class Approval(BaseModel):
 
 
 class WorkOrder(BaseModel):
+    approved_tick: int | None = None
     id: str
     incident_id: str
     approval: Approval
@@ -236,6 +238,9 @@ class IncidentPlantContext(BaseModel):
 
 
 class RuntimeIncident(Incident):
+    monitoring_version: int | None = None
+    detection_tick: int | None = None
+    detection_observed_at: str | None = None
     plant_configuration_version: int | None = None
     plant_context: IncidentPlantContext | None = None
     profile_id: str = "pump"
@@ -269,6 +274,10 @@ class DecisionChange(BaseModel):
 
 
 class TelemetryWindow(BaseModel):
+    plant_tick: int | None = None
+    monitoring_version: int | None = None
+    observed_at: str | None = None
+    quality: str = "fresh"
     window: int
     signals: list[Signal]
     baseline: dict[str, float]

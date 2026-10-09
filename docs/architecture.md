@@ -2,6 +2,8 @@
 
 The 9 October configuration milestone adds administrator-reviewed revisions, two-to-eight-line hydraulic templates, scalable scene bounds, configured production capacities, diagnostic replay bindings, and frozen historical incident topology. See [plant configuration](plant-configuration.md) for the contract, review steps, and supported limits.
 
+The coordinated monitoring iteration adds a persisted plant clock, one reviewed source binding per asset, shared observation timestamps, explicit quality states, transactional incident ingestion and versioned evidence for investigation. See [monitoring](monitoring.md) for the data path and local boundaries. Independent diagnostic replay remains available when coordinated monitoring is disabled.
+
 ## Current local shared plant foundation
 
 ```mermaid
@@ -11,7 +13,9 @@ flowchart LR
   StaffAccess --> APIlocal[Thin shared plant API]
   APIlocal --> StoreLocal[("SQLite: organization, plant, equipment,<br/>memberships, incidents, orders, cases and audit")]
   APIlocal --> Workflow[Per-incident workflow and deterministic costs]
-  Runtime[Server-owned local replay loop] --> Workflow
+  Runtime[Server-owned local replay loop] --> Clock[Persisted plant clock and source mappings]
+  Clock --> Quality[Aligned observations and data quality]
+  Quality --> Workflow
   Runtime --> Investigator[Bounded investigation and specialist stages]
   Investigator --> Evidence[Read-only evidence and scoped repair memory]
   Workflow --> StoreLocal

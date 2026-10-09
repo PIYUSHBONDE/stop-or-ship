@@ -7,7 +7,7 @@ from fastapi import HTTPException
 
 from .decision_rules import refresh_constraints, replace_calculation
 from .economics import calculate
-from .engine import event, guard_incident, require_incident
+from .engine import event, guard_incident, require_current_telemetry, require_incident
 from .models import CalculationRequest, RepairRequest
 from .plant import catalog
 from .plant_configuration import affected_capacities
@@ -54,6 +54,7 @@ def recalculate_decision(session: dict, request: CalculationRequest) -> None:
 
 def start_repair(session: dict) -> None:
     refresh_constraints(session)
+    require_current_telemetry(session)
     incident = require_incident(session, {"approved"})
     order = incident["work_order"]
     if (
@@ -62,14 +63,20 @@ def start_repair(session: dict) -> None:
         or order["approval"]["calculation_version"] != incident["calculation_version"]
     ):
         raise HTTPException(409, "Review and approve the current decision before starting repair")
-    incident["state"] = "repairing"
-    incident["work_order"]["status"] = "repairing"
     delay = {"stop": 0, "derate": 180, "defer": 180, "continue": 480}[
         incident["work_order"]["approval"]["option_id"]
     ]
-    session["window"] += delay
+    if (
+        session.get("_monitoring")
+        and session["window"] < order.get("approved_tick", session["window"]) + delay
+    ):
+        raise HTTPException(409, "The approved maintenance window has not arrived on the shared plant clock")
+    incident["state"] = "repairing"
+    incident["work_order"]["status"] = "repairing"
+    if not session.get("_monitoring"):
+        session["window"] += delay
     session["last_tick"] = time.time()
-    if delay:
+    if delay and not session.get("_monitoring"):
         event(session, f"Simulation advanced to the approved maintenance window ({delay} minutes)")
     event(
         session,

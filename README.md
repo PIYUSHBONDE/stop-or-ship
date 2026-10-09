@@ -2,6 +2,8 @@
 
 The shared plant now has a versioned configuration editor under **Setup**. Preview an eight-line, 36-asset hydraulic facility, then apply it as a plant administrator after resolving open cases. See [plant configuration](docs/plant-configuration.md) for the workflow and supported limits.
 
+**Monitor** coordinates all configured equipment on one backend replay clock, with versioned source mappings, explicit data quality, automatic incident investigation and verified recovery. See [coordinated monitoring](docs/monitoring.md) for the local walkthrough and limits.
+
 Plant intelligence with shared equipment records, named staff access, evidence-backed reliability investigation, deterministic INR option comparisons, human approval, repair verification and plant-scoped repair memory.
 
 **Local mode is a functional prototype with an explicitly scripted investigator.** Cloud mode wires Google ADK/Gemini, Firestore, Firebase identity, and Cloud Tasks. Cloud deployment and live model evaluation require an authenticated Google Cloud project; they are not claimed as completed.

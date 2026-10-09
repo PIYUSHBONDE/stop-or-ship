@@ -39,6 +39,20 @@ export function WorkOrderPanel({
   const busy =
     saving || (!!state.workspace && !state.workspace.permissions.includes('repair.write'));
   const isResolved = incident?.state === 'resolved';
+  const source = state.monitoring?.enabled
+    ? state.monitoring.health.find((item) => item.asset_id === incident?.asset_id)
+    : undefined;
+  const qualityBlocked = !!source && source.quality !== 'fresh';
+  const delay = incident?.work_order
+    ? { stop: 0, derate: 180, defer: 180, continue: 480 }[
+        incident.work_order.approval.option_id as 'stop' | 'derate' | 'defer' | 'continue'
+      ]
+    : 0;
+  const dueTick =
+    state.monitoring?.enabled && incident?.work_order?.approved_tick != null
+      ? incident.work_order.approved_tick + delay
+      : null;
+  const waiting = dueTick !== null && (state.monitoring?.tick ?? -1) < dueTick;
   return !incident?.work_order ? (
     <Empty
       icon={<FileCheck2 size={32} />}
@@ -65,10 +79,25 @@ export function WorkOrderPanel({
         <p>{incident.work_order.procedure}</p>
       </div>
       {incident.state === 'approved' && (
-        <button className="primary full" disabled={busy} onClick={() => act('/repair/start')}>
+        <button
+          className="primary full"
+          disabled={busy || qualityBlocked || waiting}
+          onClick={() => act('/repair/start')}
+        >
           Start approved repair
           <ArrowRight size={14} />
         </button>
+      )}
+      {incident.state === 'approved' && qualityBlocked && (
+        <p className="context-note">
+          {source?.reason}. Fresh monitoring evidence is required to start repair.
+        </p>
+      )}
+      {incident.state === 'approved' && waiting && (
+        <p className="context-note">
+          The approved maintenance window begins at plant tick {dueTick}. Advance the shared clock
+          in Monitoring.
+        </p>
       )}
       {incident.state === 'repairing' && (
         <>

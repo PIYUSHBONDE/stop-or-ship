@@ -34,6 +34,10 @@ export function DecisionPanel({
   const incident = state.incident;
   const calc = incident?.calculation;
   const dirty = !!calc && risk !== calc.risk_multiplier;
+  const source = state.monitoring?.enabled
+    ? state.monitoring.health.find((item) => item.asset_id === incident?.asset_id)
+    : undefined;
+  const qualityBlocked = !!source && source.quality !== 'fresh';
   const canReview = !state.workspace || state.workspace.permissions.includes('incident.review');
   const canApprove = !state.workspace || state.workspace.permissions.includes('incident.approve');
   return !calc ? (
@@ -168,6 +172,7 @@ export function DecisionPanel({
         disabled={
           busy ||
           !canApprove ||
+          qualityBlocked ||
           dirty ||
           !chosen?.feasible ||
           incident?.state !== 'awaiting_approval' ||
@@ -194,6 +199,9 @@ export function DecisionPanel({
         </button>
       )}
       <p className="fine-print">
+        {qualityBlocked && (
+          <span>{source?.reason}. Restore valid monitoring evidence before approval. </span>
+        )}
         Human approval authorizes simulated work only. Financial risk is an assumption, not a
         predicted probability.
       </p>

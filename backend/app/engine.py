@@ -76,7 +76,7 @@ def advance(s, step=False):
         )
         event(s, "Investigation dispatch interrupted; retry remains available")
     elapsed = time.time() - s["last_tick"]
-    count = 1 if step else min(12, int(elapsed / 5)) if s["running"] else 0
+    count = 0 if s.get("_monitoring") else 1 if step else min(12, int(elapsed / 5)) if s["running"] else 0
     if not count:
         return None
     s["last_tick"] = time.time() if step else s["last_tick"] + count * 5
@@ -95,83 +95,108 @@ def advance(s, step=False):
         # Map a measured test-rig record to configured equipment without changing its values or source IDs.
         for signal in row["signals"]:
             signal["asset_id"] = profile.asset_id
-        s["history"] = (s["history"] + [row])[-80:]
-        if (
-            not i
-            and s["scenario"]
-            and len(s["history"]) >= 3
-            and all(r["anomaly"] for r in s["history"][-3:])
-        ):
-            s["quotas"]["investigations"] += 1
-            i = {
-                "id": str(uuid.uuid4()),
-                "asset_id": profile.asset_id,
-                "profile_id": profile.id,
-                "affected_lines": affected_lines(profile.asset_id, catalog(s)),
-                "plant_configuration_version": s.get("_configuration_version"),
-                "plant_context": json.loads(json.dumps(catalog(s))),
-                "state": "detected",
-                "severity": "warning",
-                "created_at": now(),
-                "evidence": [],
-                "diagnosis": None,
-                "progress": [],
-                "calculation": calculate(
-                    profile=profile,
-                    lines=affected_lines(profile.asset_id, catalog(s)),
-                    capacities=affected_capacities(profile.asset_id, catalog(s)),
-                ),
-                "safety_stop": False,
-                "safety_evidence": [],
-                "calculation_revision": 1,
-                "work_order": None,
-                "verification_windows": 0,
-                "lease_until": 0,
-                "attempts": 0,
-                "queued_at": time.time(),
-            }
-            s["incident"] = i
-            i["calculation_version"] = calc_version(s)
-            event(s, f"Persistent anomaly detected on {profile.asset_id}; investigation queued")
-            job = {
-                "session_id": s["id"],
-                "owner": s["owner"],
-                "generation": s["generation"],
-                "incident_id": i["id"],
-            }
-        refresh_constraints(s)
-        if i and i["state"] == "verifying":
-            temperature_breach = bool(temperature_triggers(s, row))
-            i["verification_windows"] = (
-                0 if row["anomaly"] or temperature_breach else i["verification_windows"] + 1
-            )
-            if i["verification_windows"] >= 3:
-                i["state"] = "resolved"
-                i["safety_stop"] = False
-                i["work_order"]["status"] = "verified"
-                repair = i["repair"]
-                s["memory"].append(
-                    {
-                        "id": "case-" + i["id"],
-                        "asset_id": i["asset_id"],
-                        "incident_id": i["id"],
-                        "observed_cause": repair["observed_cause"],
-                        "fix": repair["fix"],
-                        "parts": repair["parts"],
-                        "outcome": repair["outcome"],
-                        "verified_at": now(),
-                        "original_diagnosis": i["diagnosis"],
-                        "provenance": "Verified in simulated plant",
-                    }
-                )
-                event(s, "Three healthy windows verified; confirmed repair stored in reliability memory")
-            elif row["anomaly"]:
-                i["verification_message"] = "Recovery not established: abnormal telemetry persists"
-            elif temperature_breach:
-                i["verification_message"] = (
-                    "Recovery not established: temperature exceeds the configured demo limit"
-                )
+        job = ingest_window(s, row) or job
     return job
+
+
+def ingest_window(s, row):
+    """Apply one aligned, quality-labelled window to the incident lifecycle."""
+    profile = session_profile(s)
+    i = s["incident"]
+    job = None
+    s["history"] = (s["history"] + [row])[-80:]
+    if (
+        not i
+        and s["scenario"]
+        and len(s["history"]) >= 3
+        and all(r["anomaly"] and r.get("quality", "fresh") == "fresh" for r in s["history"][-3:])
+    ):
+        s["quotas"]["investigations"] += 1
+        i = {
+            "id": str(uuid.uuid4()),
+            "asset_id": profile.asset_id,
+            "profile_id": profile.id,
+            "monitoring_version": row.get("monitoring_version"),
+            "detection_tick": row.get("plant_tick"),
+            "detection_observed_at": row.get("observed_at"),
+            "affected_lines": affected_lines(profile.asset_id, catalog(s)),
+            "plant_configuration_version": s.get("_configuration_version"),
+            "plant_context": json.loads(json.dumps(catalog(s))),
+            "state": "detected",
+            "severity": "warning",
+            "created_at": now(),
+            "evidence": [],
+            "diagnosis": None,
+            "progress": [],
+            "calculation": calculate(
+                profile=profile,
+                lines=affected_lines(profile.asset_id, catalog(s)),
+                capacities=affected_capacities(profile.asset_id, catalog(s)),
+            ),
+            "safety_stop": False,
+            "safety_evidence": [],
+            "calculation_revision": 1,
+            "work_order": None,
+            "verification_windows": 0,
+            "lease_until": 0,
+            "attempts": 0,
+            "queued_at": time.time(),
+        }
+        s["incident"] = i
+        i["calculation_version"] = calc_version(s)
+        event(s, f"Persistent anomaly detected on {profile.asset_id}; investigation queued")
+        job = {
+            "session_id": s["id"],
+            "owner": s["owner"],
+            "generation": s["generation"],
+            "incident_id": i["id"],
+        }
+    refresh_constraints(s)
+    if i and i["state"] == "verifying":
+        temperature_breach = bool(temperature_triggers(s, row))
+        i["verification_windows"] = (
+            0
+            if row["anomaly"] or temperature_breach or row.get("quality", "fresh") != "fresh"
+            else i["verification_windows"] + 1
+        )
+        if i["verification_windows"] >= 3:
+            i["state"] = "resolved"
+            i["safety_stop"] = False
+            i["work_order"]["status"] = "verified"
+            repair = i["repair"]
+            s["memory"].append(
+                {
+                    "id": "case-" + i["id"],
+                    "asset_id": i["asset_id"],
+                    "incident_id": i["id"],
+                    "observed_cause": repair["observed_cause"],
+                    "fix": repair["fix"],
+                    "parts": repair["parts"],
+                    "outcome": repair["outcome"],
+                    "verified_at": now(),
+                    "original_diagnosis": i["diagnosis"],
+                    "provenance": "Verified in simulated plant",
+                }
+            )
+            event(s, "Three healthy windows verified; confirmed repair stored in reliability memory")
+        elif row.get("quality", "fresh") != "fresh":
+            i["verification_message"] = "Recovery not established: fresh, consistent telemetry is required"
+        elif row["anomaly"]:
+            i["verification_message"] = "Recovery not established: abnormal telemetry persists"
+        elif temperature_breach:
+            i["verification_message"] = (
+                "Recovery not established: temperature exceeds the configured demo limit"
+            )
+    return job
+
+
+def require_current_telemetry(s):
+    if s.get("_monitoring") and (
+        not s["history"] or s.get("_monitoring_quality", s["history"][-1].get("quality")) != "fresh"
+    ):
+        raise HTTPException(
+            409, "Fresh, consistent monitoring evidence is required before authorization or repair"
+        )
 
 
 def approve(s, request, key):
@@ -181,6 +206,7 @@ def approve(s, request, key):
         if prior["request"] != request.model_dump():
             raise HTTPException(409, "Idempotency key was already used for a different approval")
         return prior["response"]
+    require_current_telemetry(s)
     i = require_incident(s, {"awaiting_approval"})
     if request.calculation_version != i["calculation_version"]:
         raise HTTPException(409, "Decision changed; review the current calculation before approving")
@@ -194,6 +220,7 @@ def approve(s, request, key):
     i["work_order"] = {
         "id": "WO-" + (i["id"] if s.get("_plant_id") else i["id"][:8]).upper(),
         "incident_id": i["id"],
+        "approved_tick": s["window"],
         "approval": approval,
         "status": "approved",
         "procedure": session_profile(s).procedure,

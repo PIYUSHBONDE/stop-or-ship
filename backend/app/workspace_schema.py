@@ -3,6 +3,15 @@
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS workspace_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS plant_monitoring (
+ plant_id TEXT PRIMARY KEY REFERENCES plants(id), data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS monitoring_revisions (
+ plant_id TEXT NOT NULL REFERENCES plants(id), version INTEGER NOT NULL,
+ created_at TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(plant_id,version));
+CREATE TRIGGER IF NOT EXISTS monitoring_revision_no_update BEFORE UPDATE ON monitoring_revisions
+ BEGIN SELECT RAISE(ABORT,'Monitoring mapping history cannot be updated'); END;
+CREATE TRIGGER IF NOT EXISTS monitoring_revision_no_delete BEFORE DELETE ON monitoring_revisions
+ BEGIN SELECT RAISE(ABORT,'Monitoring mapping history cannot be deleted'); END;
 CREATE TABLE IF NOT EXISTS plants (
  id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), name TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS plant_configurations (
@@ -73,3 +82,4 @@ def migrate(db, at):
         seed_catalog(db, plant_id)
     db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (2, ?)", (at,))
     db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (3, ?)", (at,))
+    db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (4, ?)", (at,))

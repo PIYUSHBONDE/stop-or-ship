@@ -200,6 +200,8 @@ def replay(
     workflow, _ = workspace_store.workflow_for(store, token, plant_id, incident, "plant.manage")
 
     def transition(state):
+        if state.get("_monitoring"):
+            raise HTTPException(409, "Use the shared plant clock in Monitoring")
         if state["incident"] and state["incident"]["state"] == "resolved":
             raise HTTPException(
                 409, "This diagnostic replay is complete; start a new source or verified recurrence"

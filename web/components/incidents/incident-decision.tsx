@@ -101,6 +101,10 @@ export function IncidentDecision({
     can('incident.review') &&
     ['awaiting_approval', 'approved'].includes(incident.state);
   const unavailable = busy || !connected;
+  const source = state?.monitoring?.enabled
+    ? state.monitoring.health.find((item) => item.asset_id === incident.asset_id)
+    : undefined;
+  const qualityBlocked = !!source && source.quality !== 'fresh';
   const rolesStale = incident.roles_calculation_version !== version;
   const authorized =
     !readOnly &&
@@ -112,6 +116,7 @@ export function IncidentDecision({
     !readOnly &&
     can('incident.approve') &&
     !unavailable &&
+    !qualityBlocked &&
     !dirty &&
     incident.state === 'awaiting_approval' &&
     selected?.feasible &&
@@ -132,6 +137,11 @@ export function IncidentDecision({
 
   return (
     <section id="decision-section" className={styles.section} aria-labelledby="decision-heading">
+      {qualityBlocked && (
+        <p className="context-note">
+          {source?.reason}. Restore valid monitoring evidence before approval or repair start.
+        </p>
+      )}
       <div className={styles.sectionHeading}>
         <div>
           <span className={styles.eyebrow}>02 / INTERVENTION</span>

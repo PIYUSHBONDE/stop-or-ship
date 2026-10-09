@@ -100,12 +100,15 @@ def read_configuration(store, token, plant_id):
 
 
 def activate_configuration(store, token, plant_id, request):
+    from .monitoring import is_enabled
     from .staff_access import audit, authorize, available
 
     available(store)
     with store.connection() as db:
         db.execute("BEGIN IMMEDIATE")
         actor = authorize(db, token, plant_id, "plant.configure")["user"]
+        if is_enabled(db, plant_id):
+            raise HTTPException(409, "Pause and disable plant monitoring before changing the plant layout")
         current = configuration_view(db, plant_id)
         if request.expected_version != current["version"]:
             raise HTTPException(409, "Plant configuration changed; reload before applying your draft")

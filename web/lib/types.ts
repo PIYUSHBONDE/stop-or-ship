@@ -10,4 +10,5 @@ export type Incident = components['schemas']['RuntimeIncident'];
 export type Case = components['schemas']['VerifiedCase'];
 export type State = components['schemas']['PlantSnapshot'] & {
   workspace?: components['schemas']['WorkspaceContext'];
+  monitoring?: components['schemas']['MonitoringView'] | null;
 };

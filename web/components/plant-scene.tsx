@@ -14,6 +14,7 @@ const [BoxInstances, BoxInstance] = createInstances();
 const [CylinderInstances, CylinderInstance] = createInstances();
 
 const statusColors: Record<string, string> = {
+  unknown: '#91a0b5',
   healthy: '#63d9ad',
   degrading: '#ffb05c',
   investigating: '#8daeff',

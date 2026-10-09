@@ -8,6 +8,7 @@ import asyncio
 import logging
 
 from .agent import investigate
+from .monitoring import advance_plants
 from .workspace_store import advance_all
 
 log = logging.getLogger("plantsense.local_runtime")
@@ -25,7 +26,8 @@ async def run(store):
     try:
         while True:
             try:
-                jobs = await asyncio.to_thread(advance_all, store)
+                jobs = await asyncio.to_thread(advance_plants, store)
+                jobs.extend(await asyncio.to_thread(advance_all, store))
                 for job in jobs:
                     task = asyncio.create_task(execute(job))
                     pending.add(task)

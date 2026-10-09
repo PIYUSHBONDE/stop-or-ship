@@ -281,6 +281,32 @@ export function usePlantSession(
     });
   }
 
+  async function saveMonitoring(body: components['schemas']['MonitoringUpdate']) {
+    return perform((session) => {
+      if (!session.workspace) throw new ApiError('Monitoring requires staff access.', 403);
+      return staffRequest<components['schemas']['MonitoringView']>(
+        `/plants/${session.workspace.id}/monitoring`,
+        body,
+      );
+    });
+  }
+
+  async function controlMonitoring(action: components['schemas']['MonitoringControl']['action']) {
+    return perform((session) => {
+      if (!session.workspace || !session.monitoring)
+        throw new ApiError('Monitoring requires staff access.', 403);
+      return staffRequest<components['schemas']['MonitoringView']>(
+        `/plants/${session.workspace.id}/monitoring/clock`,
+        {
+          action,
+          expected_tick: session.monitoring.tick,
+          expected_version: session.monitoring.version,
+        },
+        crypto.randomUUID(),
+      );
+    });
+  }
+
   return {
     state,
     error,
@@ -294,6 +320,8 @@ export function usePlantSession(
     configurationTemplate,
     saveConfiguration,
     validateConfiguration,
+    saveMonitoring,
+    controlMonitoring,
     can: (permission: string) =>
       !state?.workspace || state.workspace.permissions.includes(permission),
     dismissError: () => setError(''),
