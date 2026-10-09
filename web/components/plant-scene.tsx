@@ -110,7 +110,7 @@ function Equipment({
   onSelect: (id: string) => void;
   reduced: boolean;
 }) {
-  const color = statusColors[asset.status] || statusColors.healthy;
+  const color = statusColors[asset.status] || statusColors.unknown;
   const moving = useRef<THREE.Group>(null);
   const ram = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
@@ -371,7 +371,7 @@ function SceneContent({
   const { gl } = useThree();
   const bounds = plantBounds(state.assets);
   useEffect(() => {
-    gl.domElement.setAttribute('aria-label', 'Interactive 3D simulated manufacturing plant');
+    gl.domElement.setAttribute('aria-label', 'Interactive 3D manufacturing plant');
   }, [gl]);
   return (
     <>
@@ -440,7 +440,7 @@ function SceneContent({
               asset={a}
               selected={selected === a.id}
               onSelect={onSelect}
-              reduced={reduced}
+              reduced={reduced || !!state.workspace || a.status === 'unknown'}
             />
           ))}
         </CylinderInstances>

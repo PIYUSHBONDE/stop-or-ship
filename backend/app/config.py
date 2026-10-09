@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+INTERNAL_TEST_MODE = os.getenv("PLANTSENSE_INTERNAL_TEST_MODE", "false").lower() == "true"
 MODE = os.getenv("PLANTSENSE_MODE", "local")
 if MODE not in {"local", "cloud"}:
     raise RuntimeError("PLANTSENSE_MODE must be local or cloud")

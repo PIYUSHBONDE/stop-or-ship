@@ -2,15 +2,21 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
 
-from . import monitoring
+from . import config, monitoring
 from .dependencies import Storage
 from .dispatch import dispatch
 from .monitoring_models import MonitoringControl, MonitoringUpdate, MonitoringView
 from .workspace_api import StaffToken, check_origin
 
-router = APIRouter(dependencies=[Depends(check_origin)])
+
+def internal_only():
+    if not config.INTERNAL_TEST_MODE:
+        raise HTTPException(404, "Replay monitoring is disabled in the product")
+
+
+router = APIRouter(dependencies=[Depends(check_origin), Depends(internal_only)])
 CommandKey = Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=100)]
 
 

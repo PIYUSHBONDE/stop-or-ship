@@ -33,11 +33,14 @@
   width: fit-content;
 }
 .kind[data-kind='measured'],
+.kind[data-kind='operational'],
 .kind[data-kind='verified'] {
   color: var(--green);
   border-color: #386653;
 }
 .kind[data-kind='synthetic'],
+.kind[data-kind='historical'],
+.kind[data-kind='configured'],
 .kind[data-kind='mixed'] {
   color: var(--amber);
   border-color: #755a3d;

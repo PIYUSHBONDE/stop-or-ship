@@ -307,6 +307,41 @@ export function usePlantSession(
     });
   }
 
+  async function saveSource(body: components['schemas']['SourceConfiguration'], sourceId?: string) {
+    return perform((session) => {
+      if (!session.workspace) throw new ApiError('Staff access required.', 403);
+      return staffRequest<components['schemas']['SourceView']>(
+        `/plants/${session.workspace.id}/sources${sourceId ? '/' + encodeURIComponent(sourceId) : ''}`,
+        body,
+      );
+    });
+  }
+
+  async function previewImport(sourceId: string, body: components['schemas']['ImportRequest']) {
+    return perform((session) => {
+      if (!session.workspace) throw new ApiError('Staff access required.', 403);
+      return staffRequest<components['schemas']['ImportPreview']>(
+        `/plants/${session.workspace.id}/sources/${encodeURIComponent(sourceId)}/imports/preview`,
+        body,
+      );
+    });
+  }
+
+  async function commitImport(
+    sourceId: string,
+    body: components['schemas']['ImportRequest'],
+    key: string,
+  ) {
+    return perform((session) => {
+      if (!session.workspace) throw new ApiError('Staff access required.', 403);
+      return staffRequest<components['schemas']['IngestionResult']>(
+        `/plants/${session.workspace.id}/sources/${encodeURIComponent(sourceId)}/imports/commit`,
+        body,
+        key,
+      );
+    });
+  }
+
   return {
     state,
     error,
@@ -322,6 +357,9 @@ export function usePlantSession(
     validateConfiguration,
     saveMonitoring,
     controlMonitoring,
+    saveSource,
+    previewImport,
+    commitImport,
     can: (permission: string) =>
       !state?.workspace || state.workspace.permissions.includes(permission),
     dismissError: () => setError(''),

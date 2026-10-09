@@ -2,6 +2,7 @@
 
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
@@ -57,6 +58,13 @@ def start_repair(session: dict) -> None:
     require_current_telemetry(session)
     incident = require_incident(session, {"approved"})
     order = incident["work_order"]
+    if session.get("record_origin") == "plant_observation":
+        if (
+            not order
+            or not order.get("eligible_at")
+            or datetime.now(timezone.utc) < datetime.fromisoformat(order["eligible_at"])
+        ):
+            raise HTTPException(409, "The approved UTC maintenance eligibility time has not arrived")
     if (
         not order
         or order["status"] != "approved"
@@ -68,6 +76,7 @@ def start_repair(session: dict) -> None:
     ]
     if (
         session.get("_monitoring")
+        and session.get("record_origin") != "plant_observation"
         and session["window"] < order.get("approved_tick", session["window"]) + delay
     ):
         raise HTTPException(409, "The approved maintenance window has not arrived on the shared plant clock")
@@ -80,15 +89,18 @@ def start_repair(session: dict) -> None:
         event(session, f"Simulation advanced to the approved maintenance window ({delay} minutes)")
     event(
         session,
-        f"Approved repair started; {incident['asset_id']} and dependent production isolated in simulation",
+        f"Authorized repair started for {incident['asset_id']}; physical isolation must be performed under the reviewed procedure",
     )
 
 
 def finish_repair(session: dict, request: RepairRequest) -> None:
     incident = require_incident(session, {"repairing"})
     incident.update(repair=request.model_dump(), state="verifying", verification_windows=0)
+    incident["repair_completed_at"] = datetime.now(timezone.utc).isoformat()
     incident["work_order"]["status"] = "completed_unverified"
-    session.update(running=True, last_tick=time.time())
+    session.update(
+        running=not bool(session.get("record_origin") == "plant_observation"), last_tick=time.time()
+    )
     event(session, "Technician outcome captured; telemetry recovery verification started")
 
 

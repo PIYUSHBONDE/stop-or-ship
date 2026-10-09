@@ -1,3 +1,4 @@
+// Archived replay UI coverage; backend adapters retain regression coverage.
 import { test, expect, type Page } from '@playwright/test';
 import type { State } from '@/lib/types';
 import type { components } from '@/lib/api-schema';
@@ -497,3 +498,8 @@ test('coordinated monitoring: source quality, automatic evidence, approval and v
   ).toBe(200);
   expect(errors).toEqual([]);
 });
+
+test.skip(
+  true,
+  'Replay UI is intentionally absent from the operational product; use product-telemetry.spec.ts',
+);

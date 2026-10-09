@@ -49,10 +49,12 @@ class Asset(BaseModel):
 class Signal(BaseModel):
     asset_id: str
     signal_id: str
-    timestamp: str
+    timestamp: str | None
     value: float
     unit: str
-    provenance: Literal["measured_replay", "synthetic"]
+    provenance: Literal["measured_replay", "synthetic", "historical_import", "operational_observation"]
+    source_id: str | None = None
+    source_version: int | None = None
     source_cycle_id: int | None = None
     source_dataset_id: str | None = None
     source_record_id: str | None = None
@@ -66,6 +68,7 @@ class Dependency(BaseModel):
 
 
 class Evidence(BaseModel):
+    record_origin: str = "reference"
     id: str
     source: str
     section: str
@@ -129,6 +132,8 @@ class Approval(BaseModel):
 
 
 class WorkOrder(BaseModel):
+    record_origin: str = "legacy_replay"
+    eligible_at: str | None = None
     approved_tick: int | None = None
     id: str
     incident_id: str
@@ -142,6 +147,8 @@ class WorkOrder(BaseModel):
 
 
 class VerifiedCase(BaseModel):
+    record_origin: str = "legacy_replay"
+    provenance: str = ""
     id: str
     asset_id: str
     incident_id: str
@@ -238,6 +245,12 @@ class IncidentPlantContext(BaseModel):
 
 
 class RuntimeIncident(Incident):
+    triggering_windows: list["TelemetryWindow"] = []
+    record_origin: str = "legacy_replay"
+    source_id: str | None = None
+    source_version: int | None = None
+    repair_completed_at: str | None = None
+    authorization_blocked_reason: str | None = None
     monitoring_version: int | None = None
     detection_tick: int | None = None
     detection_observed_at: str | None = None
@@ -274,6 +287,11 @@ class DecisionChange(BaseModel):
 
 
 class TelemetryWindow(BaseModel):
+    source_id: str | None = None
+    source_version: int | None = None
+    received_at: str | None = None
+    window_start: str | None = None
+    analysis_available: bool = True
     plant_tick: int | None = None
     monitoring_version: int | None = None
     observed_at: str | None = None

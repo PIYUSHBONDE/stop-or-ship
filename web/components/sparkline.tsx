@@ -7,7 +7,8 @@ export default function Sparkline({
   color?: string;
   label: string;
 }) {
-  if (values.length < 2) return <div className="chart-placeholder">Awaiting replay samples</div>;
+  if (values.length < 2)
+    return <div className="chart-placeholder">Awaiting observation history</div>;
   const low = Math.min(...values) * 0.95;
   const high = Math.max(...values) * 1.05;
   const points = values

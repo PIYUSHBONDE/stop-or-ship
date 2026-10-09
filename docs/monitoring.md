@@ -1,5 +1,7 @@
 # Coordinated plant monitoring
 
+**Implementation history:** the replay controls described below have been removed from the normal product. Use [plant observations and historical imports](telemetry-sources.md) for the current Monitor workspace. The adapter remains only for internal automated regression tests.
+
 This local iteration connects configured equipment to a single backend replay clock. No PLC hardware is required. Hydraulic and bearing features come from the prepared, attributed datasets when available; other signals and replay failures are generated examples. Reused test-rig records do not establish independent measurements from multiple plant assets.
 
 ## Use it

@@ -10,6 +10,8 @@ from .store import Store
 
 
 def session_owner(authorization: Annotated[str | None, Header()] = None) -> str:
+    if not config.INTERNAL_TEST_MODE:
+        raise HTTPException(404, "Isolated test endpoints are disabled; sign in to a plant workspace")
     if config.SERVICE_ROLE != "api":
         raise HTTPException(404, "Endpoint unavailable")
     if not authorization or not authorization.startswith("Bearer "):

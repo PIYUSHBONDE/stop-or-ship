@@ -25,6 +25,7 @@ def local_search(query, memory):
                 "section": case["asset_id"] + " / confirmed outcome",
                 "version": "1.0",
                 "provenance": case["provenance"],
+                "record_origin": case.get("record_origin", "legacy_replay"),
                 "text": f"Confirmed cause: {case['observed_cause']}. Fix: {case['fix']}. Outcome: {case['outcome']}",
             }
         )

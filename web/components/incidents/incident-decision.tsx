@@ -104,7 +104,8 @@ export function IncidentDecision({
   const source = state?.monitoring?.enabled
     ? state.monitoring.health.find((item) => item.asset_id === incident.asset_id)
     : undefined;
-  const qualityBlocked = !!source && source.quality !== 'fresh';
+  const qualityBlocked =
+    !!incident.authorization_blocked_reason || (!!source && source.quality !== 'fresh');
   const rolesStale = incident.roles_calculation_version !== version;
   const authorized =
     !readOnly &&
@@ -139,7 +140,8 @@ export function IncidentDecision({
     <section id="decision-section" className={styles.section} aria-labelledby="decision-heading">
       {qualityBlocked && (
         <p className="context-note">
-          {source?.reason}. Restore valid monitoring evidence before approval or repair start.
+          {incident.authorization_blocked_reason || source?.reason}
+          {!readOnly && ' · Restore valid operational evidence before approval or repair start.'}
         </p>
       )}
       <div className={styles.sectionHeading}>
@@ -170,17 +172,15 @@ export function IncidentDecision({
           <div>
             <strong>
               {readOnly || incident.state === 'resolved'
-                ? 'Recorded demo temperature constraint'
-                : 'Demo temperature constraint is latched'}
+                ? 'Recorded operating constraint'
+                : 'Reviewed operating constraint is latched'}
             </strong>
             <p>
               {incident.safety_evidence
                 .map((signal) => `${signal.value} ${signal.unit} on ${signal.asset_id}`)
                 .join('; ') || 'Temperature threshold breached'}{' '}
-              · configured limit{' '}
-              {String(calculation.assumptions.configured_temperature_stop_celsius)} °C.
-              Continued-operation options are unavailable until verified recovery. This is a
-              simulated rule.
+              · reviewed constraint. Continued-operation options are unavailable until verified
+              recovery. Legacy records retain their original demonstration rules.
             </p>
           </div>
         </div>
@@ -441,8 +441,8 @@ export function IncidentDecision({
           <p className={styles.note}>
             {!can('incident.approve') &&
               'Your plant role can inspect this comparison but cannot approve it. '}
-            Approval authorizes simulated maintenance only. Calculations and workflow transitions
-            are controlled by the application.
+            Approval records a maintenance authorization. Personnel perform physical isolation.
+            Calculations and workflow transitions are controlled by the application.
           </p>
         </div>
       )}

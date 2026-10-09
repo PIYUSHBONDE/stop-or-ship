@@ -1,9 +1,11 @@
 import json
 import time
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 
+from . import config
 from .decision_rules import calc_version as calc_version
 from .decision_rules import refresh_constraints, temperature_triggers
 from .economics import calculate, rounded
@@ -113,6 +115,10 @@ def ingest_window(s, row):
     ):
         s["quotas"]["investigations"] += 1
         i = {
+            "record_origin": s.get("record_origin", "legacy_replay"),
+            "source_id": row.get("source_id"),
+            "source_version": row.get("source_version"),
+            "triggering_windows": json.loads(json.dumps(s["history"][-3:])),
             "id": str(uuid.uuid4()),
             "asset_id": profile.asset_id,
             "profile_id": profile.id,
@@ -153,13 +159,24 @@ def ingest_window(s, row):
         }
     refresh_constraints(s)
     if i and i["state"] == "verifying":
+        eligible = True
+        if s.get("record_origin") == "plant_observation":
+            eligible = bool(
+                row.get("analysis_available")
+                and row.get("window_start")
+                and row["window_start"] >= i.get("repair_completed_at", "")
+            )
+            prior = s["history"][-2] if len(s["history"]) >= 2 else None
+            if prior and row.get("window_start") != prior.get("observed_at"):
+                i["verification_windows"] = 0
         temperature_breach = bool(temperature_triggers(s, row))
         i["verification_windows"] = (
             0
-            if row["anomaly"] or temperature_breach or row.get("quality", "fresh") != "fresh"
+            if not eligible or row["anomaly"] or temperature_breach or row.get("quality", "fresh") != "fresh"
             else i["verification_windows"] + 1
         )
         if i["verification_windows"] >= 3:
+            i.pop("verification_message", None)
             i["state"] = "resolved"
             i["safety_stop"] = False
             i["work_order"]["status"] = "verified"
@@ -175,22 +192,42 @@ def ingest_window(s, row):
                     "outcome": repair["outcome"],
                     "verified_at": now(),
                     "original_diagnosis": i["diagnosis"],
-                    "provenance": "Verified in simulated plant",
+                    "provenance": "Verified from post-repair operational observations"
+                    if s.get("record_origin") == "plant_observation"
+                    else "Verified in simulated plant",
+                    "record_origin": s.get("record_origin", "legacy_replay"),
                 }
             )
             event(s, "Three healthy windows verified; confirmed repair stored in reliability memory")
-        elif row.get("quality", "fresh") != "fresh":
-            i["verification_message"] = "Recovery not established: fresh, consistent telemetry is required"
+        elif not eligible or row.get("quality", "fresh") != "fresh":
+            i["verification_message"] = (
+                "Recovery not established: complete valid observations starting after repair completion are required"
+            )
         elif row["anomaly"]:
             i["verification_message"] = "Recovery not established: abnormal telemetry persists"
         elif temperature_breach:
             i["verification_message"] = (
-                "Recovery not established: temperature exceeds the configured demo limit"
+                "Recovery not established: reviewed operating envelope remains breached"
+                if s.get("record_origin") == "plant_observation"
+                else "Recovery not established: temperature exceeds the configured demo limit"
             )
+        else:
+            i.pop("verification_message", None)
     return job
 
 
 def require_current_telemetry(s):
+    if s.get("record_origin") == "plant_observation":
+        latest = s["history"][-1] if s["history"] else None
+        if (
+            not latest
+            or latest.get("source_version") != s.get("_source_version")
+            or not latest.get("analysis_available")
+            or not latest.get("observed_at")
+            or (datetime.now(timezone.utc) - datetime.fromisoformat(latest["observed_at"])).total_seconds()
+            > 180
+        ):
+            raise HTTPException(409, "Current complete telemetry and reviewed diagnostic rules are required")
     if s.get("_monitoring") and (
         not s["history"] or s.get("_monitoring_quality", s["history"][-1].get("quality")) != "fresh"
     ):
@@ -200,6 +237,8 @@ def require_current_telemetry(s):
 
 
 def approve(s, request, key):
+    if s.get("_plant_id") and not config.INTERNAL_TEST_MODE and s.get("record_origin") != "plant_observation":
+        raise HTTPException(409, "Historical and legacy records cannot authorize operational work")
     refresh_constraints(s)
     if key in s["idempotency"]:
         prior = s["idempotency"][key]
@@ -207,6 +246,8 @@ def approve(s, request, key):
             raise HTTPException(409, "Idempotency key was already used for a different approval")
         return prior["response"]
     require_current_telemetry(s)
+    if s.get("record_origin") == "plant_observation" and not s.get("_procedure", "").strip():
+        raise HTTPException(409, "An administrator-reviewed procedure is required before approval")
     i = require_incident(s, {"awaiting_approval"})
     if request.calculation_version != i["calculation_version"]:
         raise HTTPException(409, "Decision changed; review the current calculation before approving")
@@ -223,7 +264,14 @@ def approve(s, request, key):
         "approved_tick": s["window"],
         "approval": approval,
         "status": "approved",
-        "procedure": session_profile(s).procedure,
+        "procedure": s["_procedure"]
+        if s.get("record_origin") == "plant_observation"
+        else session_profile(s).procedure,
+        "record_origin": s.get("record_origin", "legacy_replay"),
+        "eligible_at": (
+            datetime.now(timezone.utc)
+            + timedelta(minutes={"stop": 0, "derate": 180, "defer": 180, "continue": 480}[request.option_id])
+        ).isoformat(),
         "option": option,
         "calculation_snapshot": i["calculation"],
     }
@@ -233,6 +281,7 @@ def approve(s, request, key):
 
 
 def snapshot(s):
+    product = bool(s.get("_plant_id") and not config.INTERNAL_TEST_MODE)
     i = s["incident"]
     profile = session_profile(s)
     active = bool(i and i["state"] != "resolved")
@@ -270,6 +319,8 @@ def snapshot(s):
     row = (
         s["history"][-1]
         if s["history"]
+        else {"signals": [], "provenance": "No data connected"}
+        if product
         else sample(0, profile.id + "_degradation" if s["scenario"] == "memory_recurrence" else s["scenario"])
     )
     rate = profile.degraded_rate if active else 100
@@ -290,10 +341,16 @@ def snapshot(s):
     for signal in row["signals"]:
         signal["asset_id"] = profile.asset_id
     signals = {
-        a["id"]: row["signals"] if a["id"] == profile.asset_id else asset_signals(a, s["window"])
+        a["id"]: row["signals"]
+        if a["id"] == profile.asset_id
+        else []
+        if product
+        else asset_signals(a, s["window"])
         for a in assets
     }
     for asset in assets:
+        if product:
+            continue
         if asset["type"] == "goods":
             signals[asset["id"]][0]["value"] = output
         elif asset["type"] == "press" and asset["id"] != profile.asset_id:
@@ -312,7 +369,7 @@ def snapshot(s):
         "running": s["running"],
         "incident": i,
         "incidents": s.get("incidents", []) + ([i] if i else []),
-        "scenarios": scenario_catalog(s),
+        "scenarios": [] if product else scenario_catalog(s),
         "affected": affected,
         "history": s["history"][-30:],
         "memory": s["memory"],
@@ -321,7 +378,9 @@ def snapshot(s):
         "output_per_hour": output,
         "line_output_per_hour": rates,
         "nominal_output_per_hour": sum(capacities.values()),
-        "data_mode": ("IMS measured bearing replay" if profile.id == "bearing" else "UCI measured replay")
+        "data_mode": row["provenance"]
+        if product
+        else ("IMS measured bearing replay" if profile.id == "bearing" else "UCI measured replay")
         if row["provenance"] == "measured_replay"
         else "Synthetic fallback · dataset not prepared",
         "simulated_minutes": max(0, s["window"] + 1),

@@ -737,6 +737,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plants/{plant_id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read */
+        get: operations["read_api_v1_plants__plant_id__sources_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_api_v1_plants__plant_id__sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Configure */
+        post: operations["configure_api_v1_plants__plant_id__sources__source_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/sources/{source_id}/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Records */
+        get: operations["records_api_v1_plants__plant_id__sources__source_id__records_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/sources/{source_id}/observations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Observations */
+        post: operations["observations_api_v1_plants__plant_id__sources__source_id__observations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/sources/{source_id}/imports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["preview_api_v1_plants__plant_id__sources__source_id__imports_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/sources/{source_id}/imports/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit */
+        post: operations["commit_api_v1_plants__plant_id__sources__source_id__imports_commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1029,6 +1132,11 @@ export interface components {
         };
         /** Evidence */
         Evidence: {
+            /**
+             * Record Origin
+             * @default reference
+             */
+            record_origin: string;
             /** Id */
             id: string;
             /** Source */
@@ -1064,6 +1172,30 @@ export interface components {
              */
             conflicting_evidence: string[];
         };
+        /** ImportPreview */
+        ImportPreview: {
+            /** Checksum */
+            checksum: string;
+            /** Source Version */
+            source_version: number;
+            /** Window Count */
+            window_count: number;
+            /** Signal Count */
+            signal_count: number;
+            /** Missing Timestamp Count */
+            missing_timestamp_count: number;
+            /** Windows */
+            windows: components["schemas"]["ObservationWindow"][];
+        };
+        /** ImportRequest */
+        ImportRequest: {
+            /** Expected Version */
+            expected_version: number;
+            /** Csv */
+            csv: string;
+            /** Preview Checksum */
+            preview_checksum?: string | null;
+        };
         /** IncidentPlantContext */
         IncidentPlantContext: {
             /** Name */
@@ -1074,6 +1206,15 @@ export interface components {
             assets: components["schemas"]["Asset"][];
             /** Dependencies */
             dependencies: components["schemas"]["Dependency"][];
+        };
+        /** IngestionResult */
+        IngestionResult: {
+            /** Accepted */
+            accepted: number;
+            /** Duplicates */
+            duplicates: number;
+            /** Incident Ids */
+            incident_ids: string[];
         };
         /** InvestigationResult */
         InvestigationResult: {
@@ -1214,6 +1355,48 @@ export interface components {
              * @default Backend-owned replay clock; accelerated simulation
              */
             clock_label: string;
+        };
+        /** ObservationBatch */
+        ObservationBatch: {
+            /** Expected Version */
+            expected_version: number;
+            /** Windows */
+            windows: components["schemas"]["ObservationWindow"][];
+        };
+        /** ObservationValue */
+        ObservationValue: {
+            /** Signal Id */
+            signal_id: string;
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+            /** Std */
+            std?: number | null;
+            /** P95 */
+            p95?: number | null;
+        };
+        /** ObservationWindow */
+        ObservationWindow: {
+            /** Record Id */
+            record_id: string;
+            /** Window Start */
+            window_start?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Values */
+            values: components["schemas"]["ObservationValue"][];
+        };
+        /** OperationalRepair */
+        OperationalRepair: {
+            /** Observed Cause */
+            observed_cause: string;
+            /** Fix */
+            fix: string;
+            /** Parts */
+            parts: string;
+            /** Outcome */
+            outcome: string;
         };
         /** Plant */
         Plant: {
@@ -1411,6 +1594,24 @@ export interface components {
             /** Evidence */
             evidence: components["schemas"]["Evidence"][];
             diagnosis?: components["schemas"]["InvestigationResult"] | null;
+            /**
+             * Triggering Windows
+             * @default []
+             */
+            triggering_windows: components["schemas"]["TelemetryWindow"][];
+            /**
+             * Record Origin
+             * @default legacy_replay
+             */
+            record_origin: string;
+            /** Source Id */
+            source_id?: string | null;
+            /** Source Version */
+            source_version?: number | null;
+            /** Repair Completed At */
+            repair_completed_at?: string | null;
+            /** Authorization Blocked Reason */
+            authorization_blocked_reason?: string | null;
             /** Monitoring Version */
             monitoring_version?: number | null;
             /** Detection Tick */
@@ -1608,6 +1809,15 @@ export interface components {
             data_mode: string;
             /** Simulated Minutes */
             simulated_minutes: number;
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["SourceView"][];
+            /** Measured Output Per Hour */
+            measured_output_per_hour?: number | null;
+            /** Estimated Output Per Hour */
+            estimated_output_per_hour?: number | null;
             monitoring?: components["schemas"]["MonitoringView"] | null;
             workspace: components["schemas"]["WorkspaceContext"];
         };
@@ -1618,7 +1828,7 @@ export interface components {
             /** Signal Id */
             signal_id: string;
             /** Timestamp */
-            timestamp: string;
+            timestamp: string | null;
             /** Value */
             value: number;
             /** Unit */
@@ -1627,13 +1837,33 @@ export interface components {
              * Provenance
              * @enum {string}
              */
-            provenance: "measured_replay" | "synthetic";
+            provenance: "measured_replay" | "synthetic" | "historical_import" | "operational_observation";
+            /** Source Id */
+            source_id?: string | null;
+            /** Source Version */
+            source_version?: number | null;
             /** Source Cycle Id */
             source_cycle_id?: number | null;
             /** Source Dataset Id */
             source_dataset_id?: string | null;
             /** Source Record Id */
             source_record_id?: string | null;
+        };
+        /** SignalRule */
+        SignalRule: {
+            /**
+             * Requires Stop
+             * @default false
+             */
+            requires_stop: boolean;
+            /** Signal Id */
+            signal_id: string;
+            /** Unit */
+            unit: string;
+            /** Lower */
+            lower?: number | null;
+            /** Upper */
+            upper?: number | null;
         };
         /** SourceBinding */
         SourceBinding: {
@@ -1651,6 +1881,44 @@ export interface components {
              * @enum {string}
              */
             quality_mode: "fresh" | "missing" | "stale" | "conflicting";
+        };
+        /** SourceConfiguration */
+        SourceConfiguration: {
+            /** Expected Version */
+            expected_version: number;
+            /** Plant Configuration Version */
+            plant_configuration_version: number;
+            /** Name */
+            name: string;
+            /** Asset Id */
+            asset_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "operational" | "historical";
+            /** Rules */
+            rules?: components["schemas"]["SignalRule"][];
+            /**
+             * Procedure
+             * @default
+             */
+            procedure: string;
+            /**
+             * Dataset
+             * @default
+             */
+            dataset: string;
+            /**
+             * Attribution
+             * @default
+             */
+            attribution: string;
+            /**
+             * Transformation
+             * @default
+             */
+            transformation: string;
         };
         /** SourceHealth */
         SourceHealth: {
@@ -1681,6 +1949,41 @@ export interface components {
             /** Incident Id */
             incident_id?: string | null;
         };
+        /** SourceView */
+        SourceView: {
+            /**
+             * Condition
+             * @default unknown
+             * @enum {string}
+             */
+            condition: "within_envelope" | "outside_envelope" | "unknown";
+            /** Id */
+            id: string;
+            /** Version */
+            version: number;
+            configuration: components["schemas"]["SourceConfiguration"];
+            /** Reviewed By */
+            reviewed_by: string;
+            /** Reviewed At */
+            reviewed_at: string;
+            /**
+             * Quality
+             * @enum {string}
+             */
+            quality: "fresh" | "stale" | "missing" | "not_connected" | "historical" | "incomplete";
+            /** Reason */
+            reason: string;
+            /** Diagnostic Ready */
+            diagnostic_ready: boolean;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Received At */
+            received_at?: string | null;
+            /** Signals */
+            signals?: components["schemas"]["Signal"][];
+            /** Incident Id */
+            incident_id?: string | null;
+        };
         /** StaffUser */
         StaffUser: {
             /** Id */
@@ -1697,6 +2000,19 @@ export interface components {
         Status: "unknown" | "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
         /** TelemetryWindow */
         TelemetryWindow: {
+            /** Source Id */
+            source_id?: string | null;
+            /** Source Version */
+            source_version?: number | null;
+            /** Received At */
+            received_at?: string | null;
+            /** Window Start */
+            window_start?: string | null;
+            /**
+             * Analysis Available
+             * @default true
+             */
+            analysis_available: boolean;
             /** Plant Tick */
             plant_tick?: number | null;
             /** Monitoring Version */
@@ -1760,6 +2076,16 @@ export interface components {
         };
         /** VerifiedCase */
         VerifiedCase: {
+            /**
+             * Record Origin
+             * @default legacy_replay
+             */
+            record_origin: string;
+            /**
+             * Provenance
+             * @default
+             */
+            provenance: string;
             /** Id */
             id: string;
             /** Asset Id */
@@ -1780,6 +2106,13 @@ export interface components {
         };
         /** WorkOrder */
         WorkOrder: {
+            /**
+             * Record Origin
+             * @default legacy_replay
+             */
+            record_origin: string;
+            /** Eligible At */
+            eligible_at?: string | null;
             /** Approved Tick */
             approved_tick?: number | null;
             /** Id */
@@ -3223,7 +3556,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RepairRequest"];
+                "application/json": components["schemas"]["OperationalRepair"] | components["schemas"]["RepairRequest"];
             };
         };
         responses: {
@@ -3413,6 +3746,269 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MonitoringView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_api_v1_plants__plant_id__sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_api_v1_plants__plant_id__sources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceConfiguration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    configure_api_v1_plants__plant_id__sources__source_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+                source_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceConfiguration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    records_api_v1_plants__plant_id__sources__source_id__records_get: {
+        parameters: {
+            query?: {
+                before?: number | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                plant_id: string;
+                source_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    observations_api_v1_plants__plant_id__sources__source_id__observations_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                source_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObservationBatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_plants__plant_id__sources__source_id__imports_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+                source_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_api_v1_plants__plant_id__sources__source_id__imports_commit_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                source_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestionResult"];
                 };
             };
             /** @description Validation Error */

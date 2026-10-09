@@ -29,8 +29,8 @@ export function InvestigationPanel({ state, busy, act, setEvidence, setTab }: Pr
           </div>
           <h3>Your plant is in view.</h3>
           <p>
-            Start a scenario. PlantSense will detect a persistent change and investigate it
-            automatically.
+            Connect an observation source. PlantSense will detect a persistent change and
+            investigate it automatically.
           </p>
           <div className="flow-preview">
             <span>Detect</span>
@@ -42,8 +42,8 @@ export function InvestigationPanel({ state, busy, act, setEvidence, setTab }: Pr
           <div className="context-note">
             <Activity size={16} />
             <p>
-              Whole-plant state and dependency effects are simulated. Measured pump replay is
-              attributed separately.
+              Dependencies support configured impact estimates. Telemetry retains its source
+              identity and provenance.
             </p>
           </div>
         </div>

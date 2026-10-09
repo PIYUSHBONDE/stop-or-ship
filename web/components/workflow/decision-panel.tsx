@@ -202,7 +202,7 @@ export function DecisionPanel({
         {qualityBlocked && (
           <span>{source?.reason}. Restore valid monitoring evidence before approval. </span>
         )}
-        Human approval authorizes simulated work only. Financial risk is an assumption, not a
+        Human approval records maintenance authorization. Financial risk is an assumption, not a
         predicted probability.
       </p>
     </>

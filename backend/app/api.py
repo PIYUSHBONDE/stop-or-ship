@@ -4,7 +4,7 @@ import secrets
 import time
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException
 
 from . import config
 from .dependencies import Owner, Storage
@@ -42,7 +42,13 @@ from .workflow import (
     start_repair,
 )
 
-router = APIRouter()
+
+def internal_only():
+    if not config.INTERNAL_TEST_MODE:
+        raise HTTPException(404, "Isolated test endpoints are disabled")
+
+
+router = APIRouter(dependencies=[Depends(internal_only)])
 ExpectedIncident = Annotated[str | None, Header(alias="X-Incident-ID", pattern=r"^[a-f0-9-]{36}$")]
 
 

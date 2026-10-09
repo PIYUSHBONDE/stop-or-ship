@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="boot">
         <Workflow size={38} />
         <h1>PlantSense</h1>
-        <p>Connecting to your demo plant</p>
+        <p>Connecting to your plant workspace</p>
         {error ? (
           <>
             <p role="alert">{error}</p>
@@ -92,7 +92,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <small>{state.plant.name.toUpperCase()}</small>
           </div>
           <div className="topbar-right">
-            <span className="demo-pill">SIMULATED DEMO PLANT</span>
+            <span className="demo-pill">
+              {state.sources?.some(
+                (source) =>
+                  source.configuration.kind === 'operational' && source.quality === 'fresh',
+              )
+                ? 'OBSERVATIONS AVAILABLE'
+                : 'NO CURRENT DATA'}
+            </span>
             {state.workspace && (
               <span className="connection">
                 {state.workspace.user.display_name} · {state.workspace.role}

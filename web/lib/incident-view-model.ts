@@ -1,7 +1,16 @@
 import type { Evidence } from './types';
 
 /** Saved evidence presentation types. Values are strings, never executable source content. */
-export type EvidenceKind = 'measured' | 'synthetic' | 'mixed' | 'document' | 'verified' | 'unknown';
+export type EvidenceKind =
+  | 'measured'
+  | 'synthetic'
+  | 'mixed'
+  | 'document'
+  | 'verified'
+  | 'unknown'
+  | 'operational'
+  | 'historical'
+  | 'configured';
 export type EvidenceValue = Readonly<{
   label: string;
   value: string;
@@ -27,8 +36,11 @@ export const evidenceKindNames: Record<EvidenceKind, string> = {
   synthetic: 'Synthetic context',
   mixed: 'Mixed measured / synthetic',
   document: 'Document',
-  verified: 'Verified demo repair',
+  verified: 'Verified repair case',
   unknown: 'Provenance unavailable',
+  operational: 'Operational observation',
+  historical: 'Historical dataset',
+  configured: 'Configured estimate',
 };
 
 function object(value: unknown): Record<string, unknown> | null {
@@ -91,9 +103,13 @@ export function toEvidenceView(evidence: Evidence): EvidenceView {
         source: [
           provenance === 'measured_replay'
             ? 'Measured replay'
-            : provenance === 'synthetic'
-              ? 'Synthetic signal'
-              : 'Provenance unavailable',
+            : provenance === 'operational_observation'
+              ? 'Submitted operational observation'
+              : provenance === 'historical_import'
+                ? 'Historical dataset'
+                : provenance === 'synthetic'
+                  ? 'Synthetic signal'
+                  : 'Provenance unavailable',
           text(signal.source_dataset_id),
           text(signal.source_record_id) ||
             (number(signal.source_cycle_id) === undefined ? '' : String(signal.source_cycle_id)),
@@ -105,14 +121,18 @@ export function toEvidenceView(evidence: Evidence): EvidenceView {
     kind =
       provenances.size > 1
         ? 'mixed'
-        : provenances.has('measured_replay')
-          ? 'measured'
-          : provenances.has('synthetic')
-            ? 'synthetic'
-            : 'unknown';
+        : provenances.has('operational_observation')
+          ? 'operational'
+          : provenances.has('historical_import')
+            ? 'historical'
+            : provenances.has('measured_replay')
+              ? 'measured'
+              : provenances.has('synthetic')
+                ? 'synthetic'
+                : 'unknown';
     summary = `${values.length} signal readings saved when this investigation collected evidence. Baselines and deviations belong to that same snapshot.`;
   } else if (payload && evidence.id === 'plant-impact') {
-    kind = 'synthetic';
+    kind = evidence.record_origin === 'legacy_replay' ? 'synthetic' : 'configured';
     values.push(
       { label: 'Source equipment', value: text(payload.source, 'Unavailable') },
       {
@@ -121,7 +141,8 @@ export function toEvidenceView(evidence: Evidence): EvidenceView {
       },
       { label: 'Dependent equipment', value: names(payload.affected_assets) || 'None recorded' },
     );
-    summary = 'Production impact follows the fictional plant’s configured equipment dependencies.';
+    summary =
+      'Production impact is an estimate from recorded plant dependencies and rated capacities.';
   } else if (evidence.id.startsWith('case-')) {
     kind = 'verified';
     if (payload) {
@@ -130,8 +151,12 @@ export function toEvidenceView(evidence: Evidence): EvidenceView {
       }
     }
     summary =
-      'A repair verified through simulated telemetry recovery. The technician’s correction is retained.';
+      evidence.record_origin === 'plant_observation'
+        ? 'A repair verified from post-repair operational observations. The technician’s correction is retained.'
+        : 'A legacy repair verified through simulated telemetry recovery. Its original provenance is retained.';
   }
+  if (evidence.id === 'decision-model' && evidence.record_origin !== 'legacy_replay')
+    kind = 'configured';
   return {
     id: evidence.id,
     title: evidence.source.trim() || 'Untitled evidence',

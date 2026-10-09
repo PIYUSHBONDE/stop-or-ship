@@ -5,7 +5,7 @@ import { AppShell } from '@/components/app-shell';
 import { Suspense } from 'react';
 export const metadata: Metadata = {
   title: 'PlantSense · Plant intelligence',
-  description: 'Evidence-backed reliability decisions for a simulated manufacturing plant.',
+  description: 'Plant reliability, evidence-backed investigation and authorized maintenance.',
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

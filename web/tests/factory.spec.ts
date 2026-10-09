@@ -1,3 +1,4 @@
+// Archived replay UI coverage; backend adapters retain regression coverage.
 import { test, expect, type Page } from '@playwright/test';
 import { PerspectiveCamera, Vector3 } from 'three';
 
@@ -116,3 +117,8 @@ test('selecting the 3D equipment surface uses the canonical asset ID', async ({ 
   );
   await expect(page.getByRole('heading', { name: 'Drive motor A', exact: true })).toBeVisible();
 });
+
+test.skip(
+  true,
+  'Replay UI is intentionally absent from the operational product; use product-telemetry.spec.ts',
+);

@@ -31,7 +31,7 @@ The stack uses local persistence and the scripted investigator by default. It re
 
 ## Data and repeatable builds
 
-A fresh clone builds without downloading datasets. Missing measured data is labelled as a synthetic fallback. To use downloaded measured data, follow the preparation steps in the root README before building the API image, then rebuild the stack. Only `replay.json`, `detector.pkl` and `bearing-replay.json` are accepted from the prepared artifact directory. Raw measurements, local databases, environment files and other artifacts are excluded from Docker build contexts.
+A fresh clone builds without downloading datasets. Product equipment starts without readings and remains unknown. Prepared datasets support historical imports and analysis through the source guide; there is no synthetic fallback in product snapshots. Only `replay.json`, `detector.pkl` and `bearing-replay.json` are accepted from the prepared artifact directory. Raw measurements, local databases, environment files and other artifacts are excluded from Docker build contexts.
 
 The backend image owns its packaged knowledge/replay files; the writable database is stored separately at `/var/lib/plantsense/local.db`. A rebuild updates replay artifacts without copying the host's database into the image. Do not mount untrusted pickle files or accept model-artifact uploads.
 
@@ -57,6 +57,6 @@ docker compose up --build --wait --wait-timeout 120
 python scripts/check_containers.py
 ```
 
-The check verifies the runtime user, read-only root, dropped capabilities, privilege restriction, private API, writable data volume, health routes, security headers and session ownership through the proxy. It uses only synthetic test context and creates an isolated session. Set `PLANTSENSE_WEB_PORT` consistently if using another host port.
+The check verifies the runtime user, read-only root, dropped capabilities, privilege restriction, private API, writable data volume, health routes, security headers, disabled anonymous endpoints and unauthenticated staff access boundaries through the proxy. It does not create accounts or modify plant records. Browser and backend tests separately verify authenticated ownership using isolated acceptance data. Set `PLANTSENSE_WEB_PORT` consistently if using another host port.
 
 The CI container job builds from a clean checkout, runs those checks and repeats the browser workflows against Compose. Local results and unavailable checks are recorded in `docs/status.md`; configured CI is not proof of a completed CI run.

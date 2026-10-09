@@ -1,5 +1,17 @@
 # Evaluation and claim boundaries
 
+## Operational product foundation — 9 October 2026
+
+Normal use now requires staff access and explicit plant selection. Equipment without current operational observations remains unknown. Historical imports and retained legacy cases cannot authorize current work or establish current equipment health. Model evaluation below describes historical datasets; it does not calibrate operational envelopes.
+
+The current backend suite covers additive migration with populated accounts/history, read-only import preview, source permissions/versioning, immutable observation records, duplicate and stale/reordered submissions, reviewed constraints/procedures, authorization invalidation and post-repair verification. Five successive operational workflows are tested with a controlled UTC clock and isolated databases. This is a workflow test, not physical equipment validation.
+
+The operational browser suite replaces the retired replay UI checks. Twenty-eight replay-dependent browser tests are explicitly skipped because their controls no longer exist; they are not reported as passing product checks. The active checks cover staff-only entry, 36 unknown assets, separate measured/rated/estimated output, historical preview/confirmation, citation details and focus return, narrow screens, dirty risk edits, refresh, approval, technician completion and three incoming 60-second post-repair windows. Final observed counts and durations are recorded in `docs/status.md`.
+
+Dataset conversion was exercised against prepared artifacts: 19 UCI hydraulic records and 18 IMS records passed the strict CSV parser and compatible historical analysis. Original record IDs and features are retained; acquisition timestamps remain missing. This is a converter smoke check, not an independent detector evaluation.
+
+Live hardware ingestion, live Gemini quality, distributed deployment and plant model accuracy remain unverified. Source connections currently mean authenticated submitted observations or imported files. See [telemetry source boundaries](telemetry-sources.md).
+
 ## Measured data
 
 The preparation script validates 2,205 complete cycles, sensor shapes, finite values, component labels, and the stable-condition flag. There are 1,449 stable cycles, only ten fully healthy stable cycles, and twenty stable isolated pump-fault cycles with the other components nominal.
@@ -12,7 +24,7 @@ Replay examples are selected separately from model evaluation. Three-window inci
 
 ## Software acceptance
 
-Backend tests cover authenticated ownership, staff permissions, illegal transitions, schema validation, stale approvals, idempotent retries, shared cost arithmetic, hard constraints, superseded workers, sensor uncertainty, rejection/reopening, failed recovery, concurrent cases and confirmed-case retrieval. Configuration coverage includes graph validation, immutable revisions, stale/concurrent activation, configured equipment mapping, historical topology, consistent capacity rounding and scheduler write guards. Browser tests exercise the visible workflow, repeated complete runs, staff access, delayed-polling races, question source inspection, proxy boundaries and the enlarged configurable plant. The current local suite has 71 backend and 32 browser tests; observed results and environment limits are recorded in `docs/status.md`.
+Backend tests cover authenticated ownership, staff permissions, illegal transitions, schema validation, stale approvals, idempotent retries, shared cost arithmetic, hard constraints, superseded workers, sensor uncertainty, rejection/reopening, failed recovery, concurrent cases and confirmed-case retrieval. Configuration coverage includes graph validation, immutable revisions, stale/concurrent activation, configured equipment mapping, historical topology, consistent capacity rounding and scheduler write guards. Older browser results below describe the retired replay interface. Current operational results and environment limits are recorded in `docs/status.md`.
 
 Run instructions are in `README.md`. Browser results are emitted to `web/test-results/results.json`; preview artifacts are in `docs/artifacts/`. Final observed validation results are recorded in `docs/status.md`.
 
@@ -38,10 +50,10 @@ All selected records belong to one experiment. There is no independent-experimen
 
 The software suite now covers the equipment-specific approval-to-recovery loops, recurrence on each profile, archived case ownership, stale incident actions, failed-repair continuation and independent specialist failures. Specialist tests inject controlled model responses; they verify orchestration and validation, not actual Gemini behaviour.
 
-## Configured plant boundaries
+## Previous coordinated replay acceptance
 
 The 9 October coordinated monitoring release passed 86 backend tests and 33 browser checks. A subsequent focused browser check also passed with 36 configured assets, aligned monitoring, missing-data blocking, approved repair and verified memory. These are software acceptance results using prepared replay and generated context, not real plant classification or failure-probability validation. See `docs/status.md` for exact runs and the retrieval defect found and repaired during acceptance.
 
-The eight-line template uses 36 fictional assets and configured nominal capacities. Mapped sources retain their original measured record IDs, values and units. Reusing the same dataset on another asset does not provide an independent measured equipment population or evidence of transfer accuracy. Supporting signals remain synthetic.
+The eight-line template uses 36 example assets and configured nominal capacities. Historical sources retain their original measured record IDs, values and units. Reusing the same dataset on another asset does not provide an independent measured equipment population or evidence of transfer accuracy. Previously generated supporting signals are absent from the operational product.
 
-Affected production is traced through validated dependency reachability. Percentage restrictions and delivery commitments scale from reviewed reference assumptions; these are deterministic operational models rather than validated physics. Dependency fractions do not implement general fractional flow, and per-incident comparisons do not solve joint repair scheduling. Coordinated monitoring uses one persisted plant clock; independent replay remains available when monitoring is disabled. Hardware GPU performance for the expanded scene and live-model grounding on custom configurations remain unverified.
+Affected production is traced through validated dependency reachability. Percentage restrictions and delivery commitments scale from reviewed reference assumptions; these are deterministic operational models rather than validated physics. Dependency fractions do not implement general fractional flow, and per-incident comparisons do not solve joint repair scheduling. Legacy replay clocks are paused and their interfaces disabled by default. Hardware GPU performance for the expanded scene and live-model grounding on custom configurations remain unverified.

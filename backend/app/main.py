@@ -15,6 +15,7 @@ from .dependencies import Storage
 from .middleware import RequestBoundary
 from .models import InvestigationJob
 from .monitoring_api import router as monitoring_router
+from .source_api import router as source_router
 from .store import Store
 from .telemetry import sample
 from .workspace_api import router as workspace_router
@@ -27,7 +28,8 @@ def create_app(store: Store | None = None, *, shared_runtime=True) -> FastAPI:
     async def lifespan(application: FastAPI):
         application.state.store = store if store is not None else Store()
         # Validate and warm trusted replay/model artifacts before accepting judge traffic.
-        await asyncio.to_thread(sample, 0, None)
+        if config.INTERNAL_TEST_MODE:
+            await asyncio.to_thread(sample, 0, None)
         task = None
         if shared_runtime and config.SERVICE_ROLE == "api" and not application.state.store.cloud:
             from .local_runtime import run
@@ -46,6 +48,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True) -> FastAPI:
     application.include_router(router)
     application.include_router(workspace_router)
     application.include_router(monitoring_router)
+    application.include_router(source_router)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_input(request: Request, exc: RequestValidationError):

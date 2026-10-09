@@ -8,6 +8,7 @@ from pydantic import ConfigDict, Field, field_validator
 from .models import PlantSnapshot, RequestModel, ScenarioRequest
 from .monitoring_models import MonitoringView
 from .plant_configuration import Identifier
+from .source_models import SourceView
 
 Role = Literal["admin", "manager", "reliability", "technician", "viewer"]
 
@@ -107,6 +108,9 @@ class WorkspaceContext(PlantAccess):
 
 
 class SharedPlantSnapshot(PlantSnapshot):
+    sources: list[SourceView] = []
+    measured_output_per_hour: float | None = None
+    estimated_output_per_hour: int | None = None
     monitoring: MonitoringView | None = None
     workspace: WorkspaceContext
 

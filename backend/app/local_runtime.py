@@ -7,6 +7,7 @@ separate gate; existing incident leases and claim fencing protect duplicate runs
 import asyncio
 import logging
 
+from . import config
 from .agent import investigate
 from .monitoring import advance_plants
 from .workspace_store import advance_all
@@ -26,7 +27,7 @@ async def run(store):
     try:
         while True:
             try:
-                jobs = await asyncio.to_thread(advance_plants, store)
+                jobs = await asyncio.to_thread(advance_plants, store) if config.INTERNAL_TEST_MODE else []
                 jobs.extend(await asyncio.to_thread(advance_all, store))
                 for job in jobs:
                     task = asyncio.create_task(execute(job))

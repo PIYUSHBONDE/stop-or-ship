@@ -428,8 +428,9 @@ export function StaffWorkspace() {
               </p>
             </div>
             <p className={styles.sourceNote}>
-              Telemetry currently uses attributed replay or labelled synthetic fallback. Real plant
-              ingestion and live AI evaluation are subsequent milestones.
+              Connect observation sources or import attributed historical datasets in Monitor.
+              Equipment without current data remains unknown. Live AI evaluation follows this
+              milestone.
             </p>
           </section>
           <section className={styles.panel}>
@@ -584,18 +585,7 @@ export function StaffWorkspace() {
           )}
         </>
       )}
-      <footer className={styles.footer}>
-        Local development · staff sessions expire after eight hours.
-        <button
-          className="text-button"
-          onClick={() => {
-            localStorage.removeItem('plantsense-workspace');
-            router.push('/plant');
-          }}
-        >
-          Open isolated demo
-        </button>
-      </footer>
+      <footer className={styles.footer}>Staff sessions expire after eight hours.</footer>
     </main>
   );
 }

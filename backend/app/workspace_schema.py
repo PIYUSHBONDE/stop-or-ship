@@ -3,6 +3,34 @@
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS workspace_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS telemetry_sources (
+ id TEXT PRIMARY KEY, plant_id TEXT NOT NULL REFERENCES plants(id), asset_id TEXT NOT NULL,
+ kind TEXT NOT NULL, version INTEGER NOT NULL, data TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS one_operational_source ON telemetry_sources(plant_id,asset_id) WHERE kind='operational';
+CREATE TABLE IF NOT EXISTS source_revisions (
+ source_id TEXT NOT NULL REFERENCES telemetry_sources(id), version INTEGER NOT NULL,
+ data TEXT NOT NULL, PRIMARY KEY(source_id,version));
+CREATE TRIGGER IF NOT EXISTS source_revision_no_update BEFORE UPDATE ON source_revisions
+ BEGIN SELECT RAISE(ABORT,'Source history cannot be updated'); END;
+CREATE TRIGGER IF NOT EXISTS source_revision_no_delete BEFORE DELETE ON source_revisions
+ BEGIN SELECT RAISE(ABORT,'Source history cannot be deleted'); END;
+CREATE TABLE IF NOT EXISTS telemetry_records (
+ source_id TEXT NOT NULL REFERENCES telemetry_sources(id), record_id TEXT NOT NULL,
+ checksum TEXT NOT NULL, data TEXT NOT NULL, received_at TEXT NOT NULL,
+ PRIMARY KEY(source_id,record_id));
+CREATE TABLE IF NOT EXISTS source_checkpoints (
+-- Raw accepted observations remain immutable; new records represent later readings.
+ source_id TEXT PRIMARY KEY REFERENCES telemetry_sources(id), data TEXT NOT NULL);
+CREATE TRIGGER IF NOT EXISTS telemetry_record_no_update BEFORE UPDATE ON telemetry_records
+ BEGIN SELECT RAISE(ABORT,'Observation records cannot be updated'); END;
+CREATE TRIGGER IF NOT EXISTS telemetry_record_no_delete BEFORE DELETE ON telemetry_records
+ BEGIN SELECT RAISE(ABORT,'Observation records cannot be deleted'); END;
+CREATE TABLE IF NOT EXISTS ingestion_receipts (
+ plant_id TEXT NOT NULL REFERENCES plants(id), key TEXT NOT NULL,
+ checksum TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(plant_id,key));
+CREATE TABLE IF NOT EXISTS ingestion_budgets (
+ plant_id TEXT NOT NULL REFERENCES plants(id), day TEXT NOT NULL, calls INTEGER NOT NULL,
+ PRIMARY KEY(plant_id,day));
 CREATE TABLE IF NOT EXISTS plant_monitoring (
  plant_id TEXT PRIMARY KEY REFERENCES plants(id), data TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS monitoring_revisions (
@@ -83,3 +111,26 @@ def migrate(db, at):
     db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (2, ?)", (at,))
     db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (3, ?)", (at,))
     db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (4, ?)", (at,))
+    if not db.execute("SELECT 1 FROM workspace_migrations WHERE version=5").fetchone():
+        import json
+
+        for workflow_id, data in db.execute("SELECT id,data FROM plant_workflows").fetchall():
+            state = json.loads(data)
+            state.update(running=False, record_origin="legacy_replay")
+            if state.get("incident"):
+                state["incident"]["record_origin"] = "legacy_replay"
+            db.execute("UPDATE plant_workflows SET data=? WHERE id=?", (json.dumps(state), workflow_id))
+            if state.get("incident"):
+                db.execute(
+                    "UPDATE plant_incidents SET data=? WHERE workflow_id=?",
+                    (json.dumps(state["incident"]), workflow_id),
+                )
+        for plant_id, data in db.execute("SELECT plant_id,data FROM plant_monitoring").fetchall():
+            state = json.loads(data)
+            state.update(running=False, enabled=False)
+            db.execute("UPDATE plant_monitoring SET data=? WHERE plant_id=?", (json.dumps(state), plant_id))
+        for case_id, data in db.execute("SELECT id,data FROM plant_cases").fetchall():
+            case = json.loads(data)
+            case["record_origin"] = "legacy_replay"
+            db.execute("UPDATE plant_cases SET data=? WHERE id=?", (json.dumps(case), case_id))
+        db.execute("INSERT INTO workspace_migrations VALUES (5, ?)", (at,))

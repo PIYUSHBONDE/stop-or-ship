@@ -114,6 +114,13 @@ def activate_configuration(store, token, plant_id, request):
             raise HTTPException(409, "Plant configuration changed; reload before applying your draft")
         for (data,) in db.execute("SELECT data FROM plant_workflows WHERE plant_id=?", (plant_id,)):
             state = json.loads(data)
+            from . import config
+
+            if (
+                not config.INTERNAL_TEST_MODE
+                and state.get("record_origin", "legacy_replay") != "plant_observation"
+            ):
+                continue
             if not state["incident"] or state["incident"]["state"] != "resolved":
                 raise HTTPException(
                     409, "Resolve every open telemetry source and incident before changing the plant"
@@ -125,6 +132,12 @@ def activate_configuration(store, token, plant_id, request):
             )
         }
         assets = {asset.id: asset for asset in request.configuration.assets}
+        source_assets = {
+            row[0]
+            for row in db.execute("SELECT asset_id FROM telemetry_sources WHERE plant_id=?", (plant_id,))
+        }
+        if not source_assets.issubset(assets):
+            raise HTTPException(409, "Equipment mapped to telemetry sources must retain its ID")
         prior_assets = {asset["id"]: asset for asset in current["configuration"]["assets"]}
         if not used.issubset(assets) or any(assets[key].type != prior_assets[key]["type"] for key in used):
             raise HTTPException(

@@ -1,5 +1,13 @@
 # Engineering conventions
 
+## Product source boundaries
+
+- Production-facing local execution defaults to `PLANTSENSE_INTERNAL_TEST_MODE=false`. Legacy anonymous/scenario/clock endpoints are unavailable. Tests opt into internal adapters explicitly; no request body can change the setting.
+- `sources.py` owns source review, quality, immutable observation admission and transactional incident ingestion. `source_imports.py` parses the fixed CSV contract and previews without writing. `source_api.py` stays thin. `product_snapshot.py` projects observations without generated values or inferred health.
+- Historical analysis and legacy repair records are never operational authorizations. Keep original timestamps, record IDs, source revisions and provenance. Missing acquisition times stay missing. Receipts bind actor, plant, source version and normalized payload.
+- Operational recovery counts complete, distinct post-completion windows only. Never generate replacement measurements or mutate a source after technician completion. Reviewed envelopes and procedures belong to administrators, not agents or imported files.
+- Keep source/editor/import presentation modular, and use the shared serialized controller for every request. Show measured output separately from rated capacity and estimated impact. Legacy browser scenarios are explicitly archived; active acceptance exercises staff and source workflows.
+
 ## Module boundaries
 
 | Module | Responsibility |

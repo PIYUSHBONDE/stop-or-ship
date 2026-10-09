@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
+from . import config
 from .engine import advance, fresh, snapshot, start_scenario
 from .events import event, now
 from .plant_configuration import line_capacities
@@ -42,6 +43,16 @@ def load_runtime(db, row):
             "SELECT data FROM plant_cases WHERE plant_id=? ORDER BY verified_at,id", (row[1],)
         )
     ]
+    if not config.INTERNAL_TEST_MODE:
+        state["memory"] = [
+            case for case in state["memory"] if case.get("record_origin") == "plant_observation"
+        ]
+    if state.get("_source_id") and state["history"]:
+        stamp = state["history"][-1].get("observed_at")
+        if state.get("record_origin") == "plant_observation" and (
+            not stamp or (datetime.now(timezone.utc) - datetime.fromisoformat(stamp)).total_seconds() > 180
+        ):
+            state["_monitoring_quality"] = "stale"
     if state.get("_monitoring") and state["history"]:
         monitor = db.execute("SELECT data FROM plant_monitoring WHERE plant_id=?", (row[1],)).fetchone()
         if monitor and json.loads(monitor[0])["running"]:
@@ -133,6 +144,16 @@ def mutate_runtime(
             raise HTTPException(404, "Session not found")
         actor = authorize(db, token, row[1], permission)["user"] if token is not None else None
         state = load_runtime(db, row)
+        if not config.INTERNAL_TEST_MODE and state.get("record_origin", "legacy_replay") == "legacy_replay":
+            raise HTTPException(409, "Legacy replay workflows are read-only")
+        if not config.INTERNAL_TEST_MODE and token is not None:
+            origin = state.get("record_origin", "legacy_replay")
+            if origin == "legacy_replay" or (
+                origin == "historical_import" and permission != "incident.review"
+            ):
+                raise HTTPException(
+                    409, "Historical and legacy records are read-only for operational actions"
+                )
         state["_actor"] = actor
         result = operation(state)
         if getattr(result, "status_code", None) == 409:
@@ -237,6 +258,7 @@ def plant_snapshot(store, token, plant_id, incident_id=None):
         configuration = configuration_view(db, plant_id)
         catalog = configuration["configuration"]
         if not states:
+            selected["_plant_id"] = plant_id
             selected["_catalog"] = catalog
             selected["_configuration_version"] = configuration["version"]
         result = snapshot(selected)
@@ -247,7 +269,8 @@ def plant_snapshot(store, token, plant_id, incident_id=None):
         result["assets"] = [dict(asset, status="healthy") for asset in catalog["assets"]]
         # Generate supporting context for every configured asset; measured sources override only their mapped asset.
         result["signals"] = {
-            asset["id"]: asset_signals(asset, result["window"]) for asset in result["assets"]
+            asset["id"]: asset_signals(asset, result["window"]) if config.INTERNAL_TEST_MODE else []
+            for asset in result["assets"]
         }
         result["workspace"] = context
         result["active_source_count"] = sum(
@@ -291,6 +314,8 @@ def plant_snapshot(store, token, plant_id, incident_id=None):
                 if profile.asset_id in result["signals"]:
                     result["signals"][profile.asset_id] = view["signals"][profile.asset_id]
             current = state["incident"]
+            if not config.INTERNAL_TEST_MODE and state.get("record_origin") != "plant_observation":
+                continue
             if not current or current["state"] == "resolved":
                 continue
             affected.update(view["affected"])
@@ -305,6 +330,10 @@ def plant_snapshot(store, token, plant_id, incident_id=None):
         result["affected"] = sorted(affected)
         result["output_per_hour"] = sum(rates.values())
         result["line_output_per_hour"] = rates
+        if not config.INTERNAL_TEST_MODE:
+            from .product_snapshot import project
+
+            return project(db, plant_id, result, states, catalog)
         for asset in result["assets"]:
             if asset["id"] not in {session_profile(state).asset_id for state in states if state["history"]}:
                 result["signals"][asset["id"]] = asset_signals(asset, result["window"])
@@ -374,6 +403,8 @@ def advance_all(store):
     jobs = []
     for workflow_id, plant_id in rows:
         state = store.read(workflow_id, internal_owner(plant_id))
+        if not config.INTERNAL_TEST_MODE and state.get("record_origin", "legacy_replay") == "legacy_replay":
+            continue
         incident = state["incident"]
         if incident and incident["state"] == "resolved":
             if state["running"]:

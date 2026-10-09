@@ -1,3 +1,4 @@
+// Archived replay UI coverage; backend adapters retain regression coverage.
 import { test, expect, type Page } from '@playwright/test';
 
 async function connect(page: Page) {
@@ -148,3 +149,8 @@ test('plant questions expose sources and reject cross-origin writes', async ({ p
   const oversized = await page.request.post('/api/v1/local-identity', { data: 'x'.repeat(65537) });
   expect(oversized.status()).toBe(413);
 });
+
+test.skip(
+  true,
+  'Replay UI is intentionally absent from the operational product; use product-telemetry.spec.ts',
+);

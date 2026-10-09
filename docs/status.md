@@ -1,5 +1,26 @@
 # Implementation status
 
+## Operational product foundation — current iteration
+
+The main application now requires staff access and uses versioned observation sources and historical import preview/commit. Replay controls, anonymous demo entry, generated supporting readings and selectable post-repair recovery have been removed from product pages. Missing current data remains unknown; measured output, rated capacity and configured impact estimates are separate.
+
+Operational observations use reviewed envelopes, immutable original records, bounded batches and server-owned quality/detection. Historical and legacy records cannot authorize work or verify operational repairs. Maintenance eligibility is UTC-based, and technician completion waits for incoming post-repair observations. Additive migration 5 pauses legacy clocks and preserves accounts, original evidence and approvals. Current AI remains explicitly scripted.
+
+### Observed acceptance
+
+- **97 backend tests passed in 277.14 seconds** in the final backend run, including five consecutive operational incident-to-verified-memory workflows with controlled UTC time and isolated databases. Two upstream deprecation warnings remain. Coverage includes populated migration, source permissions/versioning, bounded preview/commit, immutable records, duplicates/conflicts, incomplete/stale/reordered windows, reviewed envelope breaches, procedure gates, historical isolation, stale authorization and verification gaps.
+- Ruff lint/format, TypeScript, ESLint and Prettier passed. Repeating OpenAPI and TypeScript generation left both contract hashes unchanged. Credential-pattern inspection of changed files found no matching private keys/provider tokens; this is not a complete security audit.
+- Dataset converter smoke checks preserved and parsed **19 UCI hydraulic records and 18 IMS records**, in bounded batches. Compatible historical analysis was available, original features/IDs were retained and no acquisition timestamps were invented. Exports stayed in ignored runtime directories.
+- Production Docker builds passed. The read-only container checker passed non-root execution, isolation/storage boundaries, health, security headers, blocked anonymous entry and unauthenticated staff access.
+- **10 active browser checks passed in one final 3.5-minute run** against the production images, including staff access, 36 unknown assets, historical preview/commit, evidence units/focus return, narrow layout, dirty decisions, refresh, authorized repair, incoming post-repair windows, confirmed technician correction and WebGL failure/keyboard access. Twenty-eight retired replay UI checks were explicitly skipped; they are not counted as passes. Equipment motion is disabled in operational scenes because condition readings do not attest that equipment is running.
+- Earlier browser attempts exposed an equipment-label accessibility issue and an incorrect evidence-button test selector; both were fixed. Read-only incident authorization messaging and recovery messages were corrected during final review. Screenshots of the unknown-data plant, separated production measures, 430px Monitor and confirmed correction memory were visually inspected.
+- Final acceptance used `plantsense-product-acceptance-v3-20261009` on port 3002 with its own database volume. The main staff database was not used for acceptance writes. A pre-migration SQLite backup passed integrity checking and was saved in ignored `.runtime/pre-product-foundation.db`.
+- Applied the tested release to the main local Docker stack on port 3000; both containers are healthy and the read-only container checks pass. The web health endpoint returns `ok`, account setup remains retained (`setup_required: false`) and migration versions 1–5 are present. Before/after counts match: one staff user, one plant, zero main-plant incidents and six audit records. Populated legacy incident preservation is covered separately in the migration test. Acceptance containers/networks were stopped without deleting their volumes.
+
+AI remains explicitly scripted. Live hardware acquisition, live Gemini evaluation, cloud staff identity/storage, distributed dispatch and physical plant model validation remain separate release gates. See [source boundaries](telemetry-sources.md).
+
+## Previous implementation records
+
 Local implementation includes the whole plant, measured replay, runtime detector, explicitly scripted investigation, evidence inspection, option calculations, versioned approval, work order, repair verification, technician correction and subsequent case retrieval.
 
 The latest local work adds coordinated whole-plant monitoring: versioned source mappings, one persisted replay clock, explicit data quality, automatic incident investigation and quality-gated recovery. Versioned hydraulic plant configuration, two-to-eight-line templates, an adaptive factory scene, configured production capacities, shared staff permissions and durable audit history remain in place. See [monitoring](monitoring.md) for the walkthrough and local limits.

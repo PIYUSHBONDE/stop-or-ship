@@ -2535,7 +2535,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RepairRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/OperationalRepair"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RepairRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2871,6 +2879,538 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MonitoringView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/sources": {
+      "get": {
+        "summary": "Read",
+        "operationId": "read_api_v1_plants__plant_id__sources_get",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SourceView"
+                  },
+                  "title": "Response Read Api V1 Plants  Plant Id  Sources Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create",
+        "operationId": "create_api_v1_plants__plant_id__sources_post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceConfiguration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/sources/{source_id}": {
+      "post": {
+        "summary": "Configure",
+        "operationId": "configure_api_v1_plants__plant_id__sources__source_id__post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceConfiguration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/sources/{source_id}/records": {
+      "get": {
+        "summary": "Records",
+        "operationId": "records_api_v1_plants__plant_id__sources__source_id__records_get",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 9223372036854775807,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/sources/{source_id}/observations": {
+      "post": {
+        "summary": "Observations",
+        "operationId": "observations_api_v1_plants__plant_id__sources__source_id__observations_post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObservationBatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/sources/{source_id}/imports/preview": {
+      "post": {
+        "summary": "Preview",
+        "operationId": "preview_api_v1_plants__plant_id__sources__source_id__imports_preview_post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plants/{plant_id}/sources/{source_id}/imports/commit": {
+      "post": {
+        "summary": "Commit",
+        "operationId": "commit_api_v1_plants__plant_id__sources__source_id__imports_commit_post",
+        "parameters": [
+          {
+            "name": "plant_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Plant Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 100,
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "plantsense_staff",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Plantsense Staff"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestionResult"
                 }
               }
             }
@@ -3685,6 +4225,11 @@
       },
       "Evidence": {
         "properties": {
+          "record_origin": {
+            "type": "string",
+            "title": "Record Origin",
+            "default": "reference"
+          },
           "id": {
             "type": "string",
             "title": "Id"
@@ -3774,6 +4319,82 @@
         ],
         "title": "Hypothesis"
       },
+      "ImportPreview": {
+        "properties": {
+          "checksum": {
+            "type": "string",
+            "title": "Checksum"
+          },
+          "source_version": {
+            "type": "integer",
+            "title": "Source Version"
+          },
+          "window_count": {
+            "type": "integer",
+            "title": "Window Count"
+          },
+          "signal_count": {
+            "type": "integer",
+            "title": "Signal Count"
+          },
+          "missing_timestamp_count": {
+            "type": "integer",
+            "title": "Missing Timestamp Count"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationWindow"
+            },
+            "type": "array",
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "checksum",
+          "source_version",
+          "window_count",
+          "signal_count",
+          "missing_timestamp_count",
+          "windows"
+        ],
+        "title": "ImportPreview"
+      },
+      "ImportRequest": {
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Version"
+          },
+          "csv": {
+            "type": "string",
+            "maxLength": 50000,
+            "minLength": 1,
+            "title": "Csv"
+          },
+          "preview_checksum": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Checksum"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_version",
+          "csv"
+        ],
+        "title": "ImportRequest"
+      },
       "IncidentPlantContext": {
         "properties": {
           "name": {
@@ -3810,6 +4431,33 @@
           "dependencies"
         ],
         "title": "IncidentPlantContext"
+      },
+      "IngestionResult": {
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "title": "Accepted"
+          },
+          "duplicates": {
+            "type": "integer",
+            "title": "Duplicates"
+          },
+          "incident_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Incident Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "accepted",
+          "duplicates",
+          "incident_ids"
+        ],
+        "title": "IngestionResult"
       },
       "InvestigationResult": {
         "properties": {
@@ -4162,6 +4810,167 @@
           "health"
         ],
         "title": "MonitoringView"
+      },
+      "ObservationBatch": {
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Version"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationWindow"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Windows"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_version",
+          "windows"
+        ],
+        "title": "ObservationBatch"
+      },
+      "ObservationValue": {
+        "properties": {
+          "signal_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$",
+            "title": "Signal Id"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Unit"
+          },
+          "std": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Std"
+          },
+          "p95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signal_id",
+          "value",
+          "unit"
+        ],
+        "title": "ObservationValue"
+      },
+      "ObservationWindow": {
+        "properties": {
+          "record_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Record Id"
+          },
+          "window_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Start"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationValue"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "minItems": 1,
+            "title": "Values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "record_id",
+          "values"
+        ],
+        "title": "ObservationWindow"
+      },
+      "OperationalRepair": {
+        "properties": {
+          "observed_cause": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Observed Cause"
+          },
+          "fix": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Fix"
+          },
+          "parts": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Parts"
+          },
+          "outcome": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Outcome"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "observed_cause",
+          "fix",
+          "parts",
+          "outcome"
+        ],
+        "title": "OperationalRepair"
       },
       "Plant": {
         "properties": {
@@ -4687,6 +5496,63 @@
               }
             ]
           },
+          "triggering_windows": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetryWindow"
+            },
+            "type": "array",
+            "title": "Triggering Windows",
+            "default": []
+          },
+          "record_origin": {
+            "type": "string",
+            "title": "Record Origin",
+            "default": "legacy_replay"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version"
+          },
+          "repair_completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Completed At"
+          },
+          "authorization_blocked_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorization Blocked Reason"
+          },
           "monitoring_version": {
             "anyOf": [
               {
@@ -5209,6 +6075,36 @@
             "type": "integer",
             "title": "Simulated Minutes"
           },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceView"
+            },
+            "type": "array",
+            "title": "Sources",
+            "default": []
+          },
+          "measured_output_per_hour": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured Output Per Hour"
+          },
+          "estimated_output_per_hour": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Output Per Hour"
+          },
           "monitoring": {
             "anyOf": [
               {
@@ -5260,7 +6156,14 @@
             "title": "Signal Id"
           },
           "timestamp": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Timestamp"
           },
           "value": {
@@ -5275,9 +6178,33 @@
             "type": "string",
             "enum": [
               "measured_replay",
-              "synthetic"
+              "synthetic",
+              "historical_import",
+              "operational_observation"
             ],
             "title": "Provenance"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version"
           },
           "source_cycle_id": {
             "anyOf": [
@@ -5324,6 +6251,55 @@
         ],
         "title": "Signal"
       },
+      "SignalRule": {
+        "properties": {
+          "requires_stop": {
+            "type": "boolean",
+            "title": "Requires Stop",
+            "default": false
+          },
+          "signal_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$",
+            "title": "Signal Id"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Unit"
+          },
+          "lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower"
+          },
+          "upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signal_id",
+          "unit"
+        ],
+        "title": "SignalRule"
+      },
       "SourceBinding": {
         "properties": {
           "asset_id": {
@@ -5359,6 +6335,81 @@
           "asset_id"
         ],
         "title": "SourceBinding"
+      },
+      "SourceConfiguration": {
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected Version"
+          },
+          "plant_configuration_version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Plant Configuration Version"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "asset_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$",
+            "title": "Asset Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "operational",
+              "historical"
+            ],
+            "title": "Kind"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/SignalRule"
+            },
+            "type": "array",
+            "maxItems": 32,
+            "title": "Rules"
+          },
+          "procedure": {
+            "type": "string",
+            "maxLength": 3000,
+            "title": "Procedure",
+            "default": ""
+          },
+          "dataset": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Dataset",
+            "default": ""
+          },
+          "attribution": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Attribution",
+            "default": ""
+          },
+          "transformation": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Transformation",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_version",
+          "plant_configuration_version",
+          "name",
+          "asset_id",
+          "kind"
+        ],
+        "title": "SourceConfiguration"
       },
       "SourceHealth": {
         "properties": {
@@ -5459,6 +6510,112 @@
         ],
         "title": "SourceHealth"
       },
+      "SourceView": {
+        "properties": {
+          "condition": {
+            "type": "string",
+            "enum": [
+              "within_envelope",
+              "outside_envelope",
+              "unknown"
+            ],
+            "title": "Condition",
+            "default": "unknown"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/SourceConfiguration"
+          },
+          "reviewed_by": {
+            "type": "string",
+            "title": "Reviewed By"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "title": "Reviewed At"
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "missing",
+              "not_connected",
+              "historical",
+              "incomplete"
+            ],
+            "title": "Quality"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "diagnostic_ready": {
+            "type": "boolean",
+            "title": "Diagnostic Ready"
+          },
+          "observed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed At"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/Signal"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "configuration",
+          "reviewed_by",
+          "reviewed_at",
+          "quality",
+          "reason",
+          "diagnostic_ready"
+        ],
+        "title": "SourceView"
+      },
       "StaffUser": {
         "properties": {
           "id": {
@@ -5499,6 +6656,55 @@
       },
       "TelemetryWindow": {
         "properties": {
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "window_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Start"
+          },
+          "analysis_available": {
+            "type": "boolean",
+            "title": "Analysis Available",
+            "default": true
+          },
           "plant_tick": {
             "anyOf": [
               {
@@ -5677,6 +6883,16 @@
       },
       "VerifiedCase": {
         "properties": {
+          "record_origin": {
+            "type": "string",
+            "title": "Record Origin",
+            "default": "legacy_replay"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance",
+            "default": ""
+          },
           "id": {
             "type": "string",
             "title": "Id"
@@ -5736,6 +6952,22 @@
       },
       "WorkOrder": {
         "properties": {
+          "record_origin": {
+            "type": "string",
+            "title": "Record Origin",
+            "default": "legacy_replay"
+          },
+          "eligible_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligible At"
+          },
           "approved_tick": {
             "anyOf": [
               {

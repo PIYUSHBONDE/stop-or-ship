@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { toEvidenceView } from '../lib/incident-view-model';
 
 const source = {
+  record_origin: 'legacy_replay',
   id: 'telemetry-current',
   source: 'Saved telemetry',
   section: 'Snapshot',

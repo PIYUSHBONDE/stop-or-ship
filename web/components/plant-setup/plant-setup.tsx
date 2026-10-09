@@ -213,8 +213,8 @@ export function PlantSetup() {
             </div>
             <p className="muted">
               Templates reuse the canonical equipment IDs. Existing cases keep their original
-              topology. Additional lines reuse test-rig replay records; they are not independent
-              measured datasets.
+              topology. Adding equipment does not create measurements; connect its sources in
+              Monitor.
             </p>
             <div className={styles.areaGrid}>
               {draft.areas.map((area, index) => (

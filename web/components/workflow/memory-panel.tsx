@@ -1,23 +1,23 @@
 'use client';
-import { ArrowRight, Cpu, ShieldCheck } from 'lucide-react';
+import { Cpu, ShieldCheck } from 'lucide-react';
 import type { State } from '@/lib/types';
 import type { CommandBodies } from '@/lib/api';
 import { Empty } from '../dashboard-primitives';
-import { type Tab, type SessionActions } from './shared';
+import type { Tab, SessionActions } from './shared';
+
 type Props = SessionActions & {
   state: State;
   setTab: (tab: Tab) => void;
   setOption: (value: CommandBodies['/approve']['option_id'] | '') => void;
 };
-export function MemoryPanel({ state, busy, act, setTab, setOption }: Props) {
-  const isResolved = state.incident?.state === 'resolved';
+export function MemoryPanel({ state }: Props) {
   return (
     <>
       <div className="section-label">VERIFIED RELIABILITY MEMORY</div>
-      <h3 className="tab-heading">Make the next repair smarter</h3>
+      <h3 className="tab-heading">Confirmed repairs, reusable evidence</h3>
       <p className="muted">
-        Confirmed outcomes are reusable evidence. This is retrieval memory, not online model
-        retraining.
+        Only recovery established from post-repair operational observations enters confirmed memory.
+        The original diagnosis and technician correction remain traceable.
       </p>
       {state.memory.length === 0 ? (
         <Empty
@@ -26,38 +26,27 @@ export function MemoryPanel({ state, busy, act, setTab, setOption }: Props) {
           text="A technician's note enters confirmed memory only after telemetry verifies recovery."
         />
       ) : (
-        state.memory.map((c) => (
-          <div className="memory-card" key={c.id}>
+        state.memory.map((repair) => (
+          <div className="memory-card" key={repair.id}>
             <span className="verified-label">
-              <ShieldCheck size={13} />
-              VERIFIED IN SIMULATION
+              <ShieldCheck size={13} /> VERIFIED FROM OPERATIONAL OBSERVATIONS
             </span>
-            <h3>{c.observed_cause}</h3>
-            <p>{c.fix}</p>
+            <h3>{repair.observed_cause}</h3>
+            <p>{repair.fix}</p>
             <dl>
+              <dt>Equipment</dt>
+              <dd>{repair.asset_id}</dd>
               <dt>Original AI hypothesis</dt>
-              <dd>{c.original_diagnosis?.hypotheses[0]?.cause || 'Not available'}</dd>
+              <dd>{repair.original_diagnosis?.hypotheses[0]?.cause || 'Not available'}</dd>
               <dt>Technician confirmed</dt>
-              <dd>{c.observed_cause}</dd>
+              <dd>{repair.observed_cause}</dd>
               <dt>Outcome</dt>
-              <dd>{c.outcome}</dd>
+              <dd>{repair.outcome}</dd>
+              <dt>Verified</dt>
+              <dd>{repair.verified_at}</dd>
             </dl>
           </div>
         ))
-      )}
-      {state.memory.length > 0 && (
-        <button
-          className="primary full"
-          disabled={busy || !isResolved}
-          onClick={() => {
-            setTab('Investigation');
-            setOption('');
-            act('/scenarios', { scenario: 'memory_recurrence' });
-          }}
-        >
-          Replay a similar incident
-          <ArrowRight size={14} />
-        </button>
       )}
     </>
   );

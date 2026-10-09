@@ -11,4 +11,7 @@ export type Case = components['schemas']['VerifiedCase'];
 export type State = components['schemas']['PlantSnapshot'] & {
   workspace?: components['schemas']['WorkspaceContext'];
   monitoring?: components['schemas']['MonitoringView'] | null;
+  sources?: components['schemas']['SourceView'][];
+  measured_output_per_hour?: number | null;
+  estimated_output_per_hour?: number | null;
 };

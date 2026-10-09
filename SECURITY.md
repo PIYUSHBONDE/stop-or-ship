@@ -14,6 +14,8 @@ Docker Compose is configured for localhost access, a private API, non-root proce
 
 ## Production requirements
 
+Normal execution disables legacy replay and anonymous endpoints. The internal adapter switch is for automated tests only. Current observations and historical imports retain explicit origins, source revisions and immutable original records; historical records cannot authorize operational work. Staff file submission does not attest physical acquisition or create a live hardware connection. Administrators must review operational envelopes and site procedures.
+
 The shared local identity adapter is for development. A launch needs managed named identity, MFA/recovery and first-plant role policies, a cloud persistence adapter, reviewed site procedures, TLS, managed secrets, tested backups/retention and operational monitoring. Shared staff routes fail closed in cloud mode until that adapter exists. Isolated demo identity and editable approver labels confer no access to shared records. Cloud identity, private worker authentication and live AI behavior require deployment testing. Source and dependency checks do not certify the application as secure.
 
 Never commit server API keys, service-account files or credentials. Keep secrets outside Docker build contexts and inject them through the deployment's secret manager. Only reviewed, locally prepared model artifacts may be loaded; do not load uploaded pickle files.

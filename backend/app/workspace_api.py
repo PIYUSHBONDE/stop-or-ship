@@ -33,6 +33,7 @@ from .plant_configuration import (
     TemplateRequest,
     hydraulic_template,
 )
+from .source_models import OperationalRepair
 from .staff_security import COOKIE, SESSION_SECONDS
 from .workflow import (
     finish_repair,
@@ -156,6 +157,8 @@ def audit(
 def source(
     plant_id: str, body: WorkspaceSourceRequest, store: Storage, token: StaffToken = None
 ) -> SharedPlantSnapshot:
+    if not config.INTERNAL_TEST_MODE:
+        raise HTTPException(404, "Scenario endpoints are disabled in the product")
     workspace_store.start_source(store, token, plant_id, body.scenario, body.asset_id)
     return workspace_store.plant_snapshot(store, token, plant_id)
 
@@ -197,6 +200,8 @@ def replay(
     token: StaffToken = None,
     incident: OptionalIncident = None,
 ) -> SharedPlantSnapshot:
+    if not config.INTERNAL_TEST_MODE:
+        raise HTTPException(404, "Replay endpoints are disabled in the product")
     workflow, _ = workspace_store.workflow_for(store, token, plant_id, incident, "plant.manage")
 
     def transition(state):
@@ -319,8 +324,14 @@ def begin_repair(
 
 @router.post("/api/v1/plants/{plant_id}/repair/complete")
 def complete_repair(
-    plant_id: str, body: RepairRequest, store: Storage, incident: IncidentHeader, token: StaffToken = None
+    plant_id: str,
+    body: OperationalRepair | RepairRequest,
+    store: Storage,
+    incident: IncidentHeader,
+    token: StaffToken = None,
 ) -> SharedPlantSnapshot:
+    if not config.INTERNAL_TEST_MODE and isinstance(body, RepairRequest):
+        raise HTTPException(422, "Recovery cannot be selected; verification requires incoming observations")
     return change_state(
         store,
         token,

@@ -16,7 +16,7 @@ export type CommandBodies = {
   '/reopen': Record<string, never>;
   '/repair/start': Record<string, never>;
   '/repair/reopen': Record<string, never>;
-  '/repair/complete': Schema['RepairRequest'];
+  '/repair/complete': Schema['OperationalRepair'] & { recovery?: 'healthy' | 'failed' };
 };
 export type Command = keyof CommandBodies;
 export type QuestionAnswer = Schema['QuestionResponse'];

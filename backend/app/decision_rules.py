@@ -57,6 +57,25 @@ def replace_calculation(session, calculation, reason):
 
 
 def temperature_triggers(session, row):
+    if session.get("_source_id"):
+        if row.get("source_version") != session.get("_source_version"):
+            return []
+        rules = {r["signal_id"]: r for r in session.get("_source_rules", []) if r.get("requires_stop")}
+        return [
+            Signal.model_validate(signal).model_dump()
+            for signal in row["signals"]
+            if signal["signal_id"] in rules
+            and (
+                (
+                    rules[signal["signal_id"]]["lower"] is not None
+                    and signal["value"] < rules[signal["signal_id"]]["lower"]
+                )
+                or (
+                    rules[signal["signal_id"]]["upper"] is not None
+                    and signal["value"] > rules[signal["signal_id"]]["upper"]
+                )
+            )
+        ]
     incident = session["incident"]
     return [
         Signal.model_validate(signal).model_dump()
@@ -80,10 +99,14 @@ def refresh_constraints(session):
     if not triggers:
         return False
     incident.update(safety_stop=True, safety_evidence=triggers, severity="critical")
-    reason = "Demo temperature constraint breached; stop is required until verified recovery"
+    reason = (
+        "Reviewed operating envelope breached; stop authorization required until verified recovery"
+        if session.get("_source_id")
+        else "Demo temperature constraint breached; stop is required until verified recovery"
+    )
     if incident["state"] in {"repairing", "verifying"}:
-        # Production is already isolated. Preserve the executed authorization and its cost snapshot.
-        event(session, reason + "; active isolated repair and verification remain recorded")
+        # Preserve the recorded authorization without claiming that physical isolation occurred.
+        event(session, reason + "; active repair authorization and verification remain recorded")
         return True
     calculation = calculate(
         incident["calculation"]["risk_multiplier"],

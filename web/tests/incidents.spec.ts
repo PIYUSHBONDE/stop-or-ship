@@ -1,3 +1,4 @@
+// Archived replay UI coverage; backend adapters retain regression coverage.
 import { test, expect, type Page } from '@playwright/test';
 import type { State } from '../lib/types';
 
@@ -229,3 +230,8 @@ test('incomplete investigation keeps evidence available and explains disabled ap
   await page.getByRole('button', { name: /Open P-107 telemetry replay/ }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
 });
+
+test.skip(
+  true,
+  'Replay UI is intentionally absent from the operational product; use product-telemetry.spec.ts',
+);

@@ -1,10 +1,41 @@
 # Architecture and implementation boundaries
 
+## Operational product and source foundation
+
+The normal workspace requires staff identity and receives observations through versioned plant-scoped sources. It does not run replay clocks or generate asset readings. Equipment without usable current observations remains unknown. Historical files and legacy records cannot authorize current work or enter operational repair memory. See [telemetry source contract](telemetry-sources.md).
+
+```mermaid
+flowchart LR
+  Staff[Named staff] --> Web[Next.js plant workspace]
+  Web --> Access[FastAPI role and plant checks]
+  Access --> Sources[Reviewed source revisions]
+  Observation[Submitted 60-second observations] --> Validation[Units, timestamps, completeness and retries]
+  Historical[Historical dataset imports] --> Preview[Read-only preview and checksum confirmation]
+  Sources --> Validation
+  Sources --> Preview
+  Validation --> Operational[Operational incident engine]
+  Preview --> Analysis[Historical analysis: no work authorization]
+  Operational --> Investigator[Bounded read-only investigator]
+  Analysis --> Investigator
+  Operational --> Approval[Versioned human authorization]
+  Approval --> Repair[Technician repair and UTC eligibility]
+  Repair --> Verification[Three qualifying post-repair observations]
+  Validation --> Verification
+  Verification --> Memory[Confirmed operational repair memory]
+  Access --> Store[(Local SQLite: immutable observations, source revisions and audit)]
+  Operational --> Store
+  Analysis --> Store
+```
+
+The API scheduler maintains investigation dispatch/leases; it never creates product measurements. UTC maintenance eligibility and observation freshness use server time. Source changes invalidate authorization and reset consecutive-window context. The existing dataset detectors are restricted to compatible historical features; operational diagnosis uses explicitly reviewed source envelopes. Current AI is scripted and clearly identified. These local changes do not complete managed cloud identity, distributed ingestion or live Gemini evaluation.
+
+The sections below retain the implementation history and the isolated adapter's deployment architecture; replay behavior is enabled only through the explicit internal test setting.
+
 The 9 October configuration milestone adds administrator-reviewed revisions, two-to-eight-line hydraulic templates, scalable scene bounds, configured production capacities, diagnostic replay bindings, and frozen historical incident topology. See [plant configuration](plant-configuration.md) for the contract, review steps, and supported limits.
 
 The coordinated monitoring iteration adds a persisted plant clock, one reviewed source binding per asset, shared observation timestamps, explicit quality states, transactional incident ingestion and versioned evidence for investigation. See [monitoring](monitoring.md) for the data path and local boundaries. Independent diagnostic replay remains available when coordinated monitoring is disabled.
 
-## Current local shared plant foundation
+## Previous shared plant foundation
 
 ```mermaid
 flowchart LR

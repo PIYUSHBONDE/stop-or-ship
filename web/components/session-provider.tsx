@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { usePlantSession } from '@/hooks/use-plant-session';
 
 type SessionController = ReturnType<typeof usePlantSession> & {
@@ -13,13 +13,16 @@ const SessionContext = createContext<SessionController | null>(null);
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const query = useSearchParams();
+  const router = useRouter();
   const [mode, setMode] = useState<{ plantId: string } | false | null>(null);
   useEffect(() => {
     const plantId = localStorage.getItem('plantsense-workspace');
     setMode(plantId ? { plantId } : false);
-  }, [pathname]);
+    if (!plantId && pathname !== '/workspace' && pathname !== '/evidence-preview')
+      router.replace('/workspace');
+  }, [pathname, router]);
   const controller = usePlantSession(
-    mode !== null && pathname !== '/evidence-preview' && pathname !== '/workspace',
+    !!mode && pathname !== '/evidence-preview' && pathname !== '/workspace',
     mode ? { plantId: mode.plantId, incidentId: query.get('incident') } : undefined,
   );
   const [selected, selectAsset] = useState('P-107');

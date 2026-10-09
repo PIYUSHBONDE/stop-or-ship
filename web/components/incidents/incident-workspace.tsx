@@ -86,6 +86,11 @@ function IncidentDetail({
             {incident.asset_id} · {asset?.name || 'Equipment deviation'}
           </h2>
           <p>{asset?.purpose}</p>
+          <p>
+            {incident.record_origin.replaceAll('_', ' ')} ·{' '}
+            {incident.authorization_blocked_reason ||
+              'Operational evidence; human approval required'}
+          </p>
           {incident.plant_configuration_version && (
             <p>
               Plant configuration v{incident.plant_configuration_version} · recorded incident
@@ -239,7 +244,7 @@ function IncidentDetail({
         )}
         <div className={styles.subheading}>
           <h3>Production impact</h3>
-          <span className={styles.meta}>Synthetic plant configuration</span>
+          <span className={styles.meta}>Reviewed plant configuration</span>
         </div>
         <DependencyImpact state={contextState} assetId={incident.asset_id} />
         <details className={styles.evidenceLibrary}>
@@ -338,7 +343,7 @@ export default function IncidentWorkspace() {
             <p className={styles.note}>Detected incidents appear here automatically.</p>
           )}
           <Link className={styles.plantLink} href="/plant">
-            Open simulated plant
+            Open plant
             <ArrowRight size={13} />
           </Link>
         </aside>
@@ -347,7 +352,11 @@ export default function IncidentWorkspace() {
             key={`${state.generation}-${incident.id}`}
             state={state}
             incident={incident}
-            readOnly={incident.id !== state.incident?.id || incident.state === 'resolved'}
+            readOnly={
+              incident.id !== state.incident?.id ||
+              incident.state === 'resolved' ||
+              incident.record_origin !== 'plant_observation'
+            }
           />
         ) : (
           <section className={styles.empty}>
@@ -358,7 +367,7 @@ export default function IncidentWorkspace() {
             <p>
               {requested
                 ? 'This incident is not available in your current session. Choose a case from the list.'
-                : 'Start a replay scenario in Plant. A persistent deviation creates an incident with evidence and intervention options.'}
+                : 'Connect a source in Monitor. Persistent deviations in accepted observations create incidents with evidence and intervention options.'}
             </p>
             <Link className="primary" href="/plant">
               Open Plant

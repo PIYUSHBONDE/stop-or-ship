@@ -1,7 +1,6 @@
 'use client';
 import { ArrowRight, Check, FileCheck2, LoaderCircle, ShieldCheck } from 'lucide-react';
 import type { State } from '@/lib/types';
-import type { CommandBodies } from '@/lib/api';
 import { money } from '@/lib/api';
 import { Empty } from '../dashboard-primitives';
 import { stateNames, type Tab, type SessionActions } from './shared';
@@ -15,8 +14,6 @@ type Props = SessionActions & {
   setParts: (value: string) => void;
   outcome: string;
   setOutcome: (value: string) => void;
-  recovery: CommandBodies['/repair/complete']['recovery'];
-  setRecovery: (value: CommandBodies['/repair/complete']['recovery']) => void;
   setTab: (tab: Tab) => void;
 };
 export function WorkOrderPanel({
@@ -31,8 +28,6 @@ export function WorkOrderPanel({
   setParts,
   outcome,
   setOutcome,
-  recovery,
-  setRecovery,
   setTab,
 }: Props) {
   const incident = state.incident;
@@ -42,7 +37,8 @@ export function WorkOrderPanel({
   const source = state.monitoring?.enabled
     ? state.monitoring.health.find((item) => item.asset_id === incident?.asset_id)
     : undefined;
-  const qualityBlocked = !!source && source.quality !== 'fresh';
+  const qualityBlocked =
+    !!incident?.authorization_blocked_reason || (!!source && source.quality !== 'fresh');
   const delay = incident?.work_order
     ? { stop: 0, derate: 180, defer: 180, continue: 480 }[
         incident.work_order.approval.option_id as 'stop' | 'derate' | 'defer' | 'continue'
@@ -52,7 +48,9 @@ export function WorkOrderPanel({
     state.monitoring?.enabled && incident?.work_order?.approved_tick != null
       ? incident.work_order.approved_tick + delay
       : null;
-  const waiting = dueTick !== null && (state.monitoring?.tick ?? -1) < dueTick;
+  const waiting = incident?.work_order?.eligible_at
+    ? Date.now() < new Date(incident.work_order.eligible_at).getTime()
+    : dueTick !== null && (state.monitoring?.tick ?? -1) < dueTick;
   return !incident?.work_order ? (
     <Empty
       icon={<FileCheck2 size={32} />}
@@ -90,18 +88,19 @@ export function WorkOrderPanel({
       )}
       {incident.state === 'approved' && qualityBlocked && (
         <p className="context-note">
-          {source?.reason}. Fresh monitoring evidence is required to start repair.
+          {incident.authorization_blocked_reason || source?.reason}. Current complete evidence is
+          required to start repair.
         </p>
       )}
       {incident.state === 'approved' && waiting && (
         <p className="context-note">
-          The approved maintenance window begins at plant tick {dueTick}. Advance the shared clock
-          in Monitoring.
+          The approved maintenance window begins at {incident.work_order.eligible_at} UTC.
+          Submission does not advance that time.
         </p>
       )}
       {incident.state === 'repairing' && (
         <>
-          <div className="section-label">TECHNICIAN OUTCOME · SIMULATED</div>
+          <div className="section-label">TECHNICIAN OUTCOME</div>
           <label className="field-label">
             Observed root cause
             <input
@@ -142,20 +141,6 @@ export function WorkOrderPanel({
               maxLength={500}
             />
           </label>
-          <label className="field-label">
-            Simulated post-repair telemetry
-            <select
-              aria-label="Post-repair telemetry"
-              disabled={busy}
-              value={recovery}
-              onChange={(e) =>
-                setRecovery(e.target.value as CommandBodies['/repair/complete']['recovery'])
-              }
-            >
-              <option value="healthy">Recovery to healthy operating envelope</option>
-              <option value="failed">Fault persists · test failed verification</option>
-            </select>
-          </label>
           <button
             className="primary full"
             disabled={
@@ -167,7 +152,6 @@ export function WorkOrderPanel({
                 fix,
                 parts,
                 outcome,
-                recovery,
               })
             }
           >
