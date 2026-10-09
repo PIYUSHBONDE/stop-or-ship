@@ -77,24 +77,24 @@ class Evidence(BaseModel):
     text: str
 
 
-class Hypothesis(BaseModel):
-    cause: str
+class Hypothesis(RequestModel):
+    cause: str = Field(min_length=1, max_length=400)
     confidence: Literal["low", "medium", "high"]
-    supporting_evidence: list[str] = Field(min_length=1)
-    conflicting_evidence: list[str] = []
+    supporting_evidence: list[str] = Field(min_length=1, max_length=12)
+    conflicting_evidence: list[str] = Field(default_factory=list, max_length=12)
 
 
-class RolePosition(BaseModel):
+class RolePosition(RequestModel):
     role: Literal["Reliability", "Production"]
-    preferred_option: str
-    explanation: str
+    preferred_option: Literal["stop", "defer", "derate", "continue"]
+    explanation: str = Field(min_length=1, max_length=1200)
 
 
-class InvestigationResult(BaseModel):
-    summary: str
+class InvestigationResult(RequestModel):
+    summary: str = Field(min_length=1, max_length=1800)
     hypotheses: list[Hypothesis] = Field(min_length=1, max_length=3)
-    missing_information: list[str]
-    citations: list[str]
+    missing_information: list[str] = Field(max_length=12)
+    citations: list[str] = Field(min_length=1, max_length=12)
     roles: list[RolePosition] = Field(max_length=2)
 
 
@@ -277,6 +277,20 @@ class RuntimeIncident(Incident):
     repair_attempts: list[dict] = []
     superseded_work_orders: list[WorkOrder] = []
     model_calls: int = 0
+    ai_usage: list["ModelUsage"] = Field(default_factory=list)
+
+
+class ModelUsage(BaseModel):
+    request_id: str
+    stage: str
+    model: str
+    status: Literal["reserved", "completed", "unknown"]
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    thought_tokens: int | None = None
+    reserved_micro_usd: int
+    charged_micro_usd: int
+    cost_basis: str = "Estimated USD model cost; not a provider invoice"
 
 
 class DecisionChange(BaseModel):

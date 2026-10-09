@@ -1,7 +1,6 @@
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import HTTPException
@@ -104,26 +103,12 @@ class Store:
             db.execute("UPDATE sessions SET data=? WHERE id=?", (json.dumps(s), id))
             return result
 
-    def reserve_ai(self):
-        day = datetime.now(timezone.utc).date().isoformat()
-        if self.cloud:
-            from google.cloud import firestore
+    def reserve_ai(self, reservation=None):
+        from app.persistence.ai_usage import reserve
 
-            ref = self.client.collection("ai_budgets").document(day)
+        return reserve(self, reservation)
 
-            @firestore.transactional
-            def reserve(tx):
-                count = (ref.get(transaction=tx, timeout=8, retry=None).to_dict() or {}).get("calls", 0)
-                if count >= config.DAILY_LIMIT:
-                    raise HTTPException(429, "Daily AI allowance reached")
-                tx.set(ref, {"calls": count + 1})
+    def settle_ai(self, request_id, owner, outcome):
+        from app.persistence.ai_usage import settle
 
-            reserve(self.client.transaction())
-        else:
-            with self.connection() as db:
-                db.execute("BEGIN IMMEDIATE")
-                row = db.execute("SELECT calls FROM budgets WHERE day=?", (day,)).fetchone()
-                count = row[0] if row else 0
-                if count >= config.DAILY_LIMIT:
-                    raise HTTPException(429, "Daily AI allowance reached")
-                db.execute("INSERT OR REPLACE INTO budgets VALUES (?, ?)", (day, count + 1))
+        return settle(self, request_id, owner, outcome)

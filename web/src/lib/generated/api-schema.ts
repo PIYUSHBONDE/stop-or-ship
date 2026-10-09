@@ -1166,11 +1166,8 @@ export interface components {
             confidence: "low" | "medium" | "high";
             /** Supporting Evidence */
             supporting_evidence: string[];
-            /**
-             * Conflicting Evidence
-             * @default []
-             */
-            conflicting_evidence: string[];
+            /** Conflicting Evidence */
+            conflicting_evidence?: string[];
         };
         /** ImportPreview */
         ImportPreview: {
@@ -1283,6 +1280,35 @@ export interface components {
         MemoryResponse: {
             /** Cases */
             cases: components["schemas"]["VerifiedCase"][];
+        };
+        /** ModelUsage */
+        ModelUsage: {
+            /** Request Id */
+            request_id: string;
+            /** Stage */
+            stage: string;
+            /** Model */
+            model: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "reserved" | "completed" | "unknown";
+            /** Input Tokens */
+            input_tokens?: number | null;
+            /** Output Tokens */
+            output_tokens?: number | null;
+            /** Thought Tokens */
+            thought_tokens?: number | null;
+            /** Reserved Micro Usd */
+            reserved_micro_usd: number;
+            /** Charged Micro Usd */
+            charged_micro_usd: number;
+            /**
+             * Cost Basis
+             * @default Estimated USD model cost; not a provider invoice
+             */
+            cost_basis: string;
         };
         /** MonitoringControl */
         MonitoringControl: {
@@ -1574,8 +1600,11 @@ export interface components {
              * @enum {string}
              */
             role: "Reliability" | "Production";
-            /** Preferred Option */
-            preferred_option: string;
+            /**
+             * Preferred Option
+             * @enum {string}
+             */
+            preferred_option: "stop" | "defer" | "derate" | "continue";
             /** Explanation */
             explanation: string;
         };
@@ -1692,6 +1721,8 @@ export interface components {
              * @default 0
              */
             model_calls: number;
+            /** Ai Usage */
+            ai_usage?: components["schemas"]["ModelUsage"][];
         };
         /** ScenarioDefinition */
         ScenarioDefinition: {

@@ -163,6 +163,29 @@ function IncidentDetail({
             </p>
           ))}
         </details>
+        {!!incident.ai_usage?.length && (
+          <details className={styles.progress}>
+            <summary>Model usage · {incident.ai_usage.length} requests</summary>
+            <p>
+              Estimated model cost: USD{' '}
+              {(
+                incident.ai_usage.reduce((total, request) => total + request.charged_micro_usd, 0) /
+                1_000_000
+              ).toFixed(4)}
+              . This is separate from intervention costs and is not a provider invoice.
+            </p>
+            {incident.ai_usage.map((request) => (
+              <p key={request.request_id}>
+                {request.stage}:{' '}
+                {request.status === 'completed'
+                  ? `${request.input_tokens} input, ${request.output_tokens} output, ${request.thought_tokens} reasoning tokens`
+                  : request.status === 'reserved'
+                    ? 'Request in progress; spending allowance reserved'
+                    : 'Usage unavailable; conservative spending reservation retained'}
+              </p>
+            ))}
+          </details>
+        )}
         {pending && (
           <div className={styles.emptyInline} role="status">
             <LoaderCircle className="spin" size={22} />
@@ -215,11 +238,11 @@ function IncidentDetail({
                     <div className={styles.citations}>
                       {hypothesis.supporting_evidence.map((id) => citation(id))}
                     </div>
-                    {hypothesis.conflicting_evidence.length > 0 && (
+                    {!!hypothesis.conflicting_evidence?.length && (
                       <div className={styles.conflicts}>
                         <span>Conflicting evidence</span>
                         <div className={styles.citations}>
-                          {hypothesis.conflicting_evidence.map((id) => citation(id, true))}
+                          {hypothesis.conflicting_evidence?.map((id) => citation(id, true))}
                         </div>
                       </div>
                     )}

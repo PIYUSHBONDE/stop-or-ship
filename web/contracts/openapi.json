@@ -4283,6 +4283,8 @@
         "properties": {
           "cause": {
             "type": "string",
+            "maxLength": 400,
+            "minLength": 1,
             "title": "Cause"
           },
           "confidence": {
@@ -4299,6 +4301,7 @@
               "type": "string"
             },
             "type": "array",
+            "maxItems": 12,
             "minItems": 1,
             "title": "Supporting Evidence"
           },
@@ -4307,10 +4310,11 @@
               "type": "string"
             },
             "type": "array",
-            "title": "Conflicting Evidence",
-            "default": []
+            "maxItems": 12,
+            "title": "Conflicting Evidence"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "cause",
@@ -4463,6 +4467,8 @@
         "properties": {
           "summary": {
             "type": "string",
+            "maxLength": 1800,
+            "minLength": 1,
             "title": "Summary"
           },
           "hypotheses": {
@@ -4479,6 +4485,7 @@
               "type": "string"
             },
             "type": "array",
+            "maxItems": 12,
             "title": "Missing Information"
           },
           "citations": {
@@ -4486,6 +4493,8 @@
               "type": "string"
             },
             "type": "array",
+            "maxItems": 12,
+            "minItems": 1,
             "title": "Citations"
           },
           "roles": {
@@ -4497,6 +4506,7 @@
             "title": "Roles"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "summary",
@@ -4652,6 +4662,87 @@
           "cases"
         ],
         "title": "MemoryResponse"
+      },
+      "ModelUsage": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "completed",
+              "unknown"
+            ],
+            "title": "Status"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens"
+          },
+          "thought_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thought Tokens"
+          },
+          "reserved_micro_usd": {
+            "type": "integer",
+            "title": "Reserved Micro Usd"
+          },
+          "charged_micro_usd": {
+            "type": "integer",
+            "title": "Charged Micro Usd"
+          },
+          "cost_basis": {
+            "type": "string",
+            "title": "Cost Basis",
+            "default": "Estimated USD model cost; not a provider invoice"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "stage",
+          "model",
+          "status",
+          "reserved_micro_usd",
+          "charged_micro_usd"
+        ],
+        "title": "ModelUsage"
       },
       "MonitoringControl": {
         "properties": {
@@ -5442,13 +5533,22 @@
           },
           "preferred_option": {
             "type": "string",
+            "enum": [
+              "stop",
+              "defer",
+              "derate",
+              "continue"
+            ],
             "title": "Preferred Option"
           },
           "explanation": {
             "type": "string",
+            "maxLength": 1200,
+            "minLength": 1,
             "title": "Explanation"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "role",
@@ -5766,6 +5866,13 @@
             "type": "integer",
             "title": "Model Calls",
             "default": 0
+          },
+          "ai_usage": {
+            "items": {
+              "$ref": "#/components/schemas/ModelUsage"
+            },
+            "type": "array",
+            "title": "Ai Usage"
           }
         },
         "type": "object",

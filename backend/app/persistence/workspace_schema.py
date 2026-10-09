@@ -1,6 +1,9 @@
 """Additive, versioned SQLite migration for the local shared-plant foundation."""
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS ai_usage (
+ id TEXT PRIMARY KEY, day TEXT NOT NULL, data TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS ai_usage_day ON ai_usage(day);
 CREATE TABLE IF NOT EXISTS workspace_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS telemetry_sources (
@@ -103,6 +106,7 @@ CREATE TRIGGER IF NOT EXISTS plant_audit_no_delete BEFORE DELETE ON plant_audit
 
 def migrate(db, at):
     db.executescript(SCHEMA)
+    db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (6, ?)", (at,))
     db.execute("INSERT OR IGNORE INTO workspace_migrations VALUES (1, ?)", (at,))
     from app.plant.catalog import seed_catalog
 

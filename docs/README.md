@@ -10,6 +10,7 @@
 - [Telemetry sources, CSV and API contracts](data/telemetry-sources.md)
 - [Dataset attribution](data/attribution.md)
 - [Docker operation](operations/docker.md) and [future cloud deployment](operations/deployment.md)
+- [Local Gemini evaluation and activation](operations/live-gemini.md)
 
 ## Retained records
 
