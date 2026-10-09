@@ -27,7 +27,7 @@ Open **http://127.0.0.1:3000/workspace**. Initial setup creates a named administ
 
 Administrators can invite staff and assign plant-scoped roles. Invitation links are copied manually; password recovery and invitation email delivery remain later release gates.
 
-A fresh plant has no readings or automatically asserted healthy condition. Open **Monitor → Add source**, review required units/envelopes/procedure, then accept observations or historical imports. See [source setup and CSV/API contracts](docs/telemetry-sources.md), [Docker controls](docs/docker.md) and [security boundaries](SECURITY.md).
+A fresh plant has no readings or automatically asserted healthy condition. Open **Monitor → Add source**, review required units/envelopes/procedure, then accept observations or historical imports. See [source setup and CSV/API contracts](docs/data/telemetry-sources.md), [Docker controls](docs/operations/docker.md) and [security boundaries](SECURITY.md).
 
 ## Native development
 
@@ -54,25 +54,39 @@ Run separate terminals:
 npm.cmd --prefix web run start
 ```
 
-Unix uses `.venv/bin/python`, `.venv/bin/uv` and `npm` in place of Windows executables. Development frontend: `npm.cmd --prefix web run dev`. Inspect occupied ports before launching additional servers. Containers expose only the web service on laptop loopback; the API remains private.
+Unix setup:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install uv==0.12.23
+export UV_PROJECT_ENVIRONMENT="$PWD/.venv"
+.venv/bin/uv sync --frozen --extra dev --project backend
+npm --prefix web ci
+npm --prefix web run build
+```
+
+Start the API with `.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000`, and the frontend in a separate terminal with `npm --prefix web run start`. Development frontend: `npm --prefix web run dev` (Windows: `npm.cmd`). Inspect occupied ports before launching additional servers. Containers expose only the web service on laptop loopback; the API remains private.
 
 ## Historical datasets
 
-Existing preparation scripts support attributed UCI hydraulic and IMS bearing artifacts. They are optional for historical analysis, and no synthetic fallback populates the product when artifacts are missing. The [source guide](docs/telemetry-sources.md) explains conversion into bounded imports, preserved source IDs/features, attribution, missing timestamps and detector limits. Raw datasets and converted batches must remain outside Git.
+Existing preparation scripts support attributed UCI hydraulic and IMS bearing artifacts. They are optional for historical analysis, and no synthetic fallback populates the product when artifacts are missing. The [source guide](docs/data/telemetry-sources.md) explains conversion into bounded imports, preserved source IDs/features, attribution, missing timestamps and detector limits. Raw datasets and converted batches must remain outside Git.
 
 ## Validation
 
 ```powershell
 .venv/Scripts/python.exe -m pytest backend/tests -q
-.venv/Scripts/python.exe -m ruff check backend scripts/check_containers.py
-.venv/Scripts/python.exe -m ruff format --check backend scripts/check_containers.py
+.venv/Scripts/python.exe -m ruff check backend scripts
+.venv/Scripts/python.exe -m ruff format --check backend scripts
 $env:PYTHONPATH='backend'
-.venv/Scripts/python.exe backend/scripts/export_openapi.py
+.venv/Scripts/python.exe backend/scripts/contracts/export_openapi.py
 npm.cmd --prefix web run generate:api
 npm.cmd --prefix web run format:check
 npm.cmd --prefix web run typecheck
 npm.cmd --prefix web run lint
 npm.cmd --prefix web run build
+npm.cmd --prefix web run test:unit
+# Run browser acceptance only against an isolated test deployment.
+$env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:3002'
 npm.cmd --prefix web run test:e2e
 ```
 
@@ -80,9 +94,11 @@ Use an isolated acceptance database/Compose project for browser tests; tests cre
 
 ## Project guide
 
-- `web/`: Next.js, generated contracts, accessible plant/evidence interfaces and browser acceptance.
-- `backend/`: FastAPI, staff permissions, immutable source/observation storage, diagnosis, deterministic economics, work orders and repair verification.
-- `infra/`: future Google Cloud deployment configuration.
-- `docs/`: [architecture](docs/architecture.md), [engineering](docs/engineering.md), [observed status](docs/status.md), [evaluation limits](docs/evaluation.md) and [source contracts](docs/telemetry-sources.md).
+- `web/src/`: Next.js routes, dedicated features, shared UI, providers and typed API clients. `web/contracts/` holds generated OpenAPI; `web/tests/` separates unit, product browser and archived legacy checks.
+- `backend/app/`: capability packages for HTTP, contracts, identity, plant, telemetry, incidents, AI, persistence and runtime. `backend/tests/` separates tests from shared fixtures; `backend/scripts/` groups data, contract, cloud and submission utilities.
+- `infra/gcp/` and `infra/firebase/`: future deployment definitions and storage access configuration.
+- `docs/`: [architecture](docs/architecture/overview.md), [engineering](docs/engineering/conventions.md), [observed status](docs/status.md), [evaluation limits](docs/engineering/evaluation.md) and [source contracts](docs/data/telemetry-sources.md).
 
 Development remains local. Draft proposals/recordings and earlier screenshots represent earlier iterations and must not be presented as proof of live Gemini or physical plant validation.
+
+See [repository structure](docs/engineering/repository-structure.md), [contributing](CONTRIBUTING.md), and the [documentation index](docs/README.md). Run `.venv/Scripts/python.exe scripts/validate.py` (Unix: `.venv/bin/python`) for portable local validation. Add `--skip-tests` for static checks only.

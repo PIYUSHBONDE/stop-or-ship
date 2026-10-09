@@ -23,17 +23,17 @@ jobs:
       - run: uv run --project backend pytest backend/tests -q
       - run: uv run --project backend ruff check backend/app backend/scripts backend/tests
       - run: uv run --project backend ruff format --check backend/app backend/scripts backend/tests
-      - run: uv run --project backend ruff check scripts/check_containers.py
-      - run: uv run --project backend ruff format --check scripts/check_containers.py
+      - run: uv run --project backend ruff check scripts
+      - run: uv run --project backend ruff format --check scripts
       - run: |
           uv export --project backend --frozen --no-dev --no-emit-project --output-file /tmp/runtime-requirements.txt
           uvx --from pip-audit==2.9.0 python -m pip_audit --disable-pip --require-hashes -r /tmp/runtime-requirements.txt
-      - run: uv run --project backend python backend/scripts/export_openapi.py
+      - run: uv run --project backend python backend/scripts/contracts/export_openapi.py --check
       - run: npm ci
         working-directory: web
       - run: npm audit --omit=dev --audit-level=high
         working-directory: web
-      - run: npm run generate:api && git diff --exit-code -- openapi.json lib/api-schema.ts
+      - run: npm run check:api
         working-directory: web
       - run: npm run format:check && npm run typecheck && npm run lint && npm run build
         working-directory: web
@@ -44,7 +44,7 @@ jobs:
           cd web
           npm run start > web.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && curl -fsS http://127.0.0.1:3000 && break; sleep 1; done
-          npm run test:e2e
+          npm run test:unit && npm run test:e2e
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -85,7 +85,7 @@ jobs:
         working-directory: web
       - run: npx playwright install --with-deps chromium
         working-directory: web
-      - run: npm run test:e2e
+      - run: npm run test:unit && npm run test:e2e
         working-directory: web
       - name: Container diagnostics
         if: failure()

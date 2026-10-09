@@ -5,7 +5,7 @@ export default ts.config(
   {
     ignores: [
       '.next/**',
-      'lib/api-schema.ts',
+      'src/lib/generated/api-schema.ts',
       'next-env.d.ts',
       'node_modules/**',
       'test-results/**',

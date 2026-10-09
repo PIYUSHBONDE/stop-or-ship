@@ -2,9 +2,18 @@
 
 import pytest
 
-from app import config
+from app.core import config
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "operational: exercise production defaults with legacy adapters disabled"
+    )
 
 
 @pytest.fixture(autouse=True)
 def internal_test_adapter(monkeypatch, request):
-    monkeypatch.setattr(config, "INTERNAL_TEST_MODE", not request.node.path.name.startswith("test_sources"))
+    monkeypatch.setattr(config, "INTERNAL_TEST_MODE", request.node.get_closest_marker("operational") is None)
+
+
+pytest_plugins = ["tests.support.workspace", "tests.support.telemetry"]

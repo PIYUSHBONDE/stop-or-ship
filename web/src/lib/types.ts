@@ -1,0 +1,17 @@
+import type { components } from '@/lib/generated/api-schema';
+export type Evidence = components['schemas']['Evidence'];
+export type Signal = components['schemas']['Signal'];
+export type Asset = components['schemas']['Asset'];
+export type Option = components['schemas']['DecisionOption'];
+export type Diagnosis = components['schemas']['InvestigationResult'];
+export type Calculation = components['schemas']['Calculation'];
+export type WorkOrder = components['schemas']['WorkOrder'];
+export type Incident = components['schemas']['RuntimeIncident'];
+export type Case = components['schemas']['VerifiedCase'];
+export type State = components['schemas']['PlantSnapshot'] & {
+  workspace?: components['schemas']['WorkspaceContext'];
+  monitoring?: components['schemas']['MonitoringView'] | null;
+  sources?: components['schemas']['SourceView'][];
+  measured_output_per_hour?: number | null;
+  estimated_output_per_hour?: number | null;
+};

@@ -1,8 +1,8 @@
 node_modules/
 .next/
 next-env.d.ts
-lib/api-schema.ts
-openapi.json
+src/lib/generated/api-schema.ts
+contracts/openapi.json
 package-lock.json
 test-results/
 playwright-report/

@@ -8,17 +8,17 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import config
-from .agent import investigate
-from .api import router
-from .dependencies import Storage
-from .middleware import RequestBoundary
-from .models import InvestigationJob
-from .monitoring_api import router as monitoring_router
-from .source_api import router as source_router
-from .store import Store
-from .telemetry import sample
-from .workspace_api import router as workspace_router
+from app.ai.agent import investigate
+from app.api.dependencies import Storage
+from app.api.middleware import RequestBoundary
+from app.api.monitoring import router as monitoring_router
+from app.api.sessions import router
+from app.api.sources import router as source_router
+from app.api.workspace import router as workspace_router
+from app.contracts.models import InvestigationJob
+from app.core import config
+from app.persistence.store import Store
+from app.telemetry.datasets import sample
 
 log = logging.getLogger("plantsense.api")
 
@@ -32,7 +32,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True) -> FastAPI:
             await asyncio.to_thread(sample, 0, None)
         task = None
         if shared_runtime and config.SERVICE_ROLE == "api" and not application.state.store.cloud:
-            from .local_runtime import run
+            from app.runtime.local_runtime import run
 
             task = asyncio.create_task(run(application.state.store))
         try:
