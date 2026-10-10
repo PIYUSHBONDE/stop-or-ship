@@ -10,6 +10,7 @@ Plant reliability with configurable equipment, named staff access, observation-b
 - **Incidents:** retained evidence, uncertainty, specialist positions, intervention assumptions and versioned approval.
 - **Maintenance:** authorized work, UTC eligibility, technician outcomes and recovery from three qualifying post-repair observation windows.
 - **Memory:** confirmed operational repairs with original diagnosis and technician corrections.
+- **Ask PlantSense:** contextual read-only answers, inspectable citations, saved costs, editable English voice transcripts and playback on request. See [local activation and limits](docs/operations/assistant.md).
 - **Setup:** administrator-reviewed plant configuration and immutable revision history.
 
 **The standard local stack defaults to the explicitly scripted investigator.** Live Gemini uses bounded evidence collection, independent specialist explanations, token/spend accounting and a matching real-response evaluation gate. See [local evaluation and activation](docs/operations/live-gemini.md) and [observed results](docs/status.md). No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.

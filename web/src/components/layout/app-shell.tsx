@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
+import { AssistantPanel } from '@/features/assistant/assistant-panel';
 
 const destinations = [
   { href: '/plant', name: 'Plant', icon: Factory },
@@ -92,6 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <small>{state.plant.name.toUpperCase()}</small>
           </div>
           <div className="topbar-right">
+            <AssistantPanel />
             <span className="demo-pill">
               {state.sources?.some(
                 (source) =>

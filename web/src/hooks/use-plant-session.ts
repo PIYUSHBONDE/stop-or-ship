@@ -34,6 +34,7 @@ export function usePlantSession(
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const actionPending = useRef(false);
   const pollPending = useRef(false);
+  const assistantPending = useRef(false);
   const approvalKeys = useRef(new Map<string, string>());
   const plantId = workspace?.plantId;
   const incidentId = workspace?.incidentId;
@@ -115,7 +116,13 @@ export function usePlantSession(
     const id = state.id;
     let active = true;
     const timer = setInterval(() => {
-      if (actionPending.current || pollPending.current || document.hidden) return;
+      if (
+        actionPending.current ||
+        assistantPending.current ||
+        pollPending.current ||
+        document.hidden
+      )
+        return;
       pollPending.current = true;
       serialize(async () => {
         if (!mounted.current) return;
@@ -144,6 +151,10 @@ export function usePlantSession(
   const perform = useCallback(
     async <T>(operation: (session: State) => Promise<T>): Promise<T | undefined> => {
       if (actionPending.current || !current.current) return undefined;
+      if (assistantPending.current) {
+        setError('Assistant request in progress. Wait for completion before saving an action.');
+        return undefined;
+      }
       actionPending.current = true;
       setBusy(true);
       setError('');
@@ -240,6 +251,32 @@ export function usePlantSession(
       return undefined;
     }
     return perform((session) => askQuestion(session.id, question));
+  }
+
+  async function assistantRequest<T>(
+    operation: 'questions' | 'transcriptions' | 'speech',
+    body: unknown,
+    key: string,
+  ): Promise<T> {
+    if (actionPending.current || assistantPending.current || !current.current?.workspace)
+      throw new ApiError('Another request is in progress. Try again after it completes.', 409);
+    assistantPending.current = true;
+    try {
+      return await serialize(async () => {
+        if (context.current !== contextKey || !current.current?.workspace)
+          throw new ApiError('Plant context changed. Ask again in the current workspace.', 409);
+        const result = await staffRequest<T>(
+          `/plants/${current.current.workspace.id}/assistant/${operation}`,
+          body,
+          key,
+        );
+        if (!mounted.current || context.current !== contextKey)
+          throw new ApiError('Plant context changed. Previous response discarded.', 409);
+        return result;
+      });
+    } finally {
+      assistantPending.current = false;
+    }
   }
 
   async function configuration() {
@@ -351,6 +388,7 @@ export function usePlantSession(
     actForIncident,
     approve,
     ask,
+    assistantRequest,
     configuration,
     configurationTemplate,
     saveConfiguration,

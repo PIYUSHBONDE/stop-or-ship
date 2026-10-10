@@ -76,6 +76,13 @@ def check_runtime(service: str, uid: str) -> dict:
             "/run/secrets/google_adc.json",
             "/run/secrets/gemini_evaluation.json",
         }
+        if environment.get("PLANTSENSE_ASSISTANT_EVALUATION_FILE"):
+            require(
+                environment["PLANTSENSE_ASSISTANT_EVALUATION_FILE"]
+                == "/run/secrets/assistant_evaluation.json",
+                "Unexpected assistant evaluation path",
+            )
+            allowed_bind_paths.add("/run/secrets/assistant_evaluation.json")
         require(
             environment.get("GOOGLE_APPLICATION_CREDENTIALS")
             == "/run/secrets/google_adc.json"

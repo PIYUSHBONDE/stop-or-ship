@@ -51,6 +51,7 @@ def reserve(store, reservation=None):
         **(reservation or {}),
     }
     record["charged_micro_usd"] = record["reserved_micro_usd"]
+    staff_token = record.pop("staff_token", None)
     if record["reserved_micro_usd"] < 0:
         raise ValueError("AI reservation must be non-negative")
     if store.cloud:
@@ -89,6 +90,21 @@ def reserve(store, reservation=None):
     else:
         with store.connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            if record.get("assistant_plant_id"):
+                from app.identity.staff_access import authorize
+
+                actor = authorize(db, staff_token, record["assistant_plant_id"])
+                if actor["user"]["id"] != record["owner"]:
+                    raise HTTPException(404, "Assistant owner not found")
+                if db.execute("SELECT 1 FROM ai_usage WHERE id=?", (record["request_id"],)).fetchone():
+                    raise HTTPException(409, "Assistant request already dispatched")
+                if record["stage"] == "assistant_question":
+                    questions = db.execute(
+                        "SELECT count(*) FROM ai_usage WHERE day=? AND json_extract(data,'$.owner')=? AND json_extract(data,'$.stage')='assistant_question'",
+                        (record["day"], record["owner"]),
+                    ).fetchone()[0]
+                    if questions >= 10:
+                        raise HTTPException(429, "Ten assistant questions per user per UTC day")
             if record.get("claim_token"):
                 row = db.execute(
                     "SELECT data FROM plant_workflows WHERE id=?", (record["session_id"],)

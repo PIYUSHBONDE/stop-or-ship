@@ -840,6 +840,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plants/{plant_id}/assistant/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Question */
+        post: operations["question_api_v1_plants__plant_id__assistant_questions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/assistant/transcriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transcription */
+        post: operations["transcription_api_v1_plants__plant_id__assistant_transcriptions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/assistant/speech": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Playback */
+        post: operations["playback_api_v1_plants__plant_id__assistant_speech_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -947,6 +998,79 @@ export interface components {
             status: components["schemas"]["Status"];
             /** Diagnostic Profile */
             diagnostic_profile?: ("pump" | "bearing" | "valve" | "cooler") | null;
+        };
+        /** AssistantAnswer */
+        AssistantAnswer: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Answer */
+            answer: string;
+            /** Citations */
+            citations: components["schemas"]["AssistantSource"][];
+            /** Navigation */
+            navigation: string[];
+            /** Calculation Version */
+            calculation_version: string | null;
+            /** Configuration Version */
+            configuration_version: number;
+            /** Costs */
+            costs: components["schemas"]["AssistantCost"][];
+            /** Provider */
+            provider: string;
+            /** Answer Reference */
+            answer_reference: string;
+            usage?: components["schemas"]["AssistantUsage"] | null;
+        };
+        /** AssistantCost */
+        AssistantCost: {
+            /** Option Id */
+            option_id: string;
+            /** Name */
+            name: string;
+            /** Total Paise */
+            total_paise: number;
+            /** Feasible */
+            feasible: boolean;
+        };
+        /** AssistantQuestion */
+        AssistantQuestion: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Question */
+            question: string;
+            /**
+             * Screen
+             * @enum {string}
+             */
+            screen: "plant" | "monitoring" | "operations" | "incidents" | "maintenance" | "memory" | "plant-setup";
+            /** History */
+            history?: components["schemas"]["Exchange"][];
+        };
+        /** AssistantSource */
+        AssistantSource: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+        };
+        /** AssistantUsage */
+        AssistantUsage: {
+            /** Request Id */
+            request_id: string;
+            /** Status */
+            status: string;
+            /** Charged Micro Usd */
+            charged_micro_usd: number;
+            /** Audio Seconds */
+            audio_seconds?: number | null;
+            /** Synthesis Characters */
+            synthesis_characters?: number | null;
         };
         /** AuditEvent */
         AuditEvent: {
@@ -1149,6 +1273,13 @@ export interface components {
             provenance: string;
             /** Text */
             text: string;
+        };
+        /** Exchange */
+        Exchange: {
+            /** Question */
+            question: string;
+            /** Answer */
+            answer: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2015,6 +2146,27 @@ export interface components {
             /** Incident Id */
             incident_id?: string | null;
         };
+        /** SpeechRequest */
+        SpeechRequest: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Answer Reference */
+            answer_reference: string;
+        };
+        /** SpeechResponse */
+        SpeechResponse: {
+            /** Audio Base64 */
+            audio_base64: string;
+            /**
+             * Mime Type
+             * @default audio/mpeg
+             * @constant
+             */
+            mime_type: "audio/mpeg";
+            usage: components["schemas"]["AssistantUsage"];
+        };
         /** StaffUser */
         StaffUser: {
             /** Id */
@@ -2091,6 +2243,21 @@ export interface components {
             lines: number;
             /** Name */
             name: string;
+        };
+        /** TranscriptionRequest */
+        TranscriptionRequest: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Audio Base64 */
+            audio_base64: string;
+        };
+        /** TranscriptionResponse */
+        TranscriptionResponse: {
+            /** Transcript */
+            transcript: string;
+            usage: components["schemas"]["AssistantUsage"];
         };
         /** ValidationError */
         ValidationError: {
@@ -4040,6 +4207,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngestionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    question_api_v1_plants__plant_id__assistant_questions_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistantQuestion"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantAnswer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transcription_api_v1_plants__plant_id__assistant_transcriptions_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TranscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    playback_api_v1_plants__plant_id__assistant_speech_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpeechRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpeechResponse"];
                 };
             };
             /** @description Validation Error */

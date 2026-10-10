@@ -234,6 +234,41 @@ async def evaluate(output, only_case=None):
     return report["passed"]
 
 
+async def retry_failed(output):
+    """Rerun failed cases only; retain prior attempts and never reuse a stale fingerprint."""
+    report = json.loads(output.read_text(encoding="utf-8"))
+    expected = {
+        "sensor_disagreement",
+        "historical_boundary",
+        "verified_memory_injection",
+        "hard_constraint",
+        "operational_sparse",
+    }
+    if not (
+        report["fingerprint"] == fingerprint()
+        and report["model"] == config.MODEL
+        and report["provider"] == config.AI_PROVIDER
+        and report["code_stable"] is True
+        and len(report["cases"]) == 5
+        and {c["name"] for c in report["cases"]} == expected
+    ):
+        raise RuntimeError("Failed-case retry requires a complete matching evaluation report")
+    for index, previous in enumerate(list(report["cases"])):
+        if previous["passed"]:
+            continue
+        attempt_file = output.parent / ("evaluation-retry-" + secrets.token_hex(8) + ".json")
+        await evaluate(attempt_file, previous["name"])
+        attempt = json.loads(attempt_file.read_text(encoding="utf-8"))
+        if attempt["fingerprint"] != report["fingerprint"] or not attempt["code_stable"]:
+            raise RuntimeError("Implementation changed during failed-case retry")
+        report.setdefault("prior_attempts", []).append(previous)
+        report["cases"][index] = attempt["cases"][0]
+    report["passed"] = all(c["passed"] and all(c["checks"].values()) for c in report["cases"])
+    report["evaluated_at"] = datetime.now(timezone.utc).isoformat()
+    output.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return report["passed"]
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="Ignored local report path")
@@ -248,8 +283,20 @@ if __name__ == "__main__":
         ],
         help="Diagnose one fixture; a partial run cannot pass the release gate",
     )
+    parser.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="Rerun only failed cases from a complete matching report; retain prior attempts",
+    )
     arguments = parser.parse_args()
+    if arguments.retry_failed and arguments.case:
+        parser.error("Choose --case or --retry-failed")
     logging.getLogger("google.adk").setLevel(logging.CRITICAL)
     logging.getLogger("google_adk").setLevel(logging.CRITICAL)
     logging.getLogger("google.genai").setLevel(logging.CRITICAL)
-    raise SystemExit(0 if asyncio.run(evaluate(arguments.output.resolve(), arguments.case)) else 1)
+    run = (
+        retry_failed(arguments.output.resolve())
+        if arguments.retry_failed
+        else evaluate(arguments.output.resolve(), arguments.case)
+    )
+    raise SystemExit(0 if asyncio.run(run) else 1)

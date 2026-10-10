@@ -1,0 +1,174 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #c7d8d5;
+  border-radius: 8px;
+  background: #eaf5f0;
+  color: #125e47;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #102e3033;
+  z-index: 100;
+}
+.panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(480px, 100vw);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  gap: 12px;
+  background: #fafcfb;
+  box-shadow: -8px 0 40px #122e3022;
+  color: #203c39;
+  overflow: hidden;
+}
+.heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.heading h2 {
+  font-size: 22px;
+  margin: 0;
+}
+.context {
+  font-size: 13px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.note {
+  font-size: 12px;
+  color: #536e67;
+  margin: 0;
+}
+.conversation {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.suggestions {
+  display: grid;
+  gap: 10px;
+}
+.suggestions button {
+  text-align: left;
+  background: white;
+  border: 1px solid #d6e4df;
+  border-radius: 10px;
+  padding: 14px;
+  color: #244c40;
+}
+.turn {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: white;
+  border: 1px solid #d6e4df;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.turn p {
+  margin: 0;
+  line-height: 1.6;
+}
+.question {
+  font-weight: 650;
+  background: #edf5f0;
+  padding: 10px;
+  border-radius: 8px;
+}
+.turn small {
+  color: #536e67;
+}
+.turn summary {
+  cursor: pointer;
+  font-size: 12px;
+}
+.turn pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 220px;
+  overflow: auto;
+  font-size: 12px;
+}
+.costs {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  background: #f2f7f4;
+  padding: 12px;
+  border-radius: 8px;
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  text-transform: capitalize;
+}
+.composer {
+  display: grid;
+  gap: 8px;
+}
+.composer label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.composer textarea {
+  resize: vertical;
+  width: 100%;
+  border: 1px solid #c7d8d5;
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+  min-height: 70px;
+  max-height: 180px;
+}
+.composer textarea::placeholder {
+  color: #6a8078;
+}
+.composer small {
+  font-size: 11px;
+  color: #536e67;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+.actions button,
+.turn button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.error {
+  color: #912d2d;
+  font-size: 13px;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .panel {
+    width: 100%;
+    padding: 16px;
+    height: 100dvh;
+  }
+  .trigger {
+    font-size: 12px;
+    padding: 7px;
+  }
+}

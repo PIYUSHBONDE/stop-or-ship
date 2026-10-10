@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 const MAX_BODY_BYTES = 64 * 1024;
 class BodyTimeout extends Error {}
 
-async function readBody(request: NextRequest): Promise<string | null> {
+async function readBody(request: NextRequest, limit = MAX_BODY_BYTES): Promise<string | null> {
   if (!request.body) return '';
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -21,7 +21,7 @@ async function readBody(request: NextRequest): Promise<string | null> {
       if (timedOut) throw new BodyTimeout();
       if (done) break;
       size += value.byteLength;
-      if (size > MAX_BODY_BYTES) {
+      if (size > limit) {
         await reader.cancel();
         return null;
       }
@@ -70,9 +70,17 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     const base = new URL(process.env.API_BASE_URL || 'http://127.0.0.1:8000');
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password)
       throw new Error('Invalid API configuration');
-    const body = request.method === 'GET' ? undefined : await readBody(request);
+    const transcription =
+      path.length === 5 &&
+      path[1] === 'plants' &&
+      path[3] === 'assistant' &&
+      path[4] === 'transcriptions';
+    const body =
+      request.method === 'GET'
+        ? undefined
+        : await readBody(request, transcription ? 1024 * 1024 : MAX_BODY_BYTES);
     if (body === null)
-      return Response.json({ detail: 'Request body exceeds 64 KiB' }, { status: 413 });
+      return Response.json({ detail: 'Request body exceeds allowed size' }, { status: 413 });
     if (
       body &&
       !request.headers.get('content-type')?.toLowerCase().startsWith('application/json')

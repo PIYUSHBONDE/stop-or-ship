@@ -12,6 +12,13 @@ def fingerprint():
     digest = hashlib.sha256()
     paths = sorted((root / "ai").glob("*.py")) + [
         root / "contracts/models.py",
+        root / "contracts/assistant.py",
+        root / "api/assistant.py",
+        root / "api/middleware.py",
+        root / "main.py",
+        root / "persistence/workspace_store.py",
+        root / "identity/staff_access.py",
+        root / "plant/snapshot.py",
         root / "incidents/economics.py",
         root / "incidents/engine.py",
         root / "incidents/workflow.py",

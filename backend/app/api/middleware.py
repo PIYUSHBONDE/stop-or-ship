@@ -1,6 +1,7 @@
 """Bounded ASGI request bodies and safe response metadata."""
 
 import asyncio
+import re
 import uuid
 
 from starlette.responses import JSONResponse
@@ -29,6 +30,11 @@ class RequestBoundary:
             await send(message)
 
         messages, size = [], 0
+        limit = (
+            1024 * 1024
+            if re.fullmatch(r"/api/v1/plants/[A-Za-z0-9_-]+/assistant/transcriptions", scope.get("path", ""))
+            else MAX_REQUEST_BYTES
+        )
         while True:
             try:
                 message = await asyncio.wait_for(receive(), timeout=10)
@@ -38,8 +44,8 @@ class RequestBoundary:
             if message["type"] == "http.disconnect":
                 return
             size += len(message.get("body", b""))
-            if size > MAX_REQUEST_BYTES:
-                response = JSONResponse({"detail": "Request body exceeds 64 KiB"}, status_code=413)
+            if size > limit:
+                response = JSONResponse({"detail": "Request body exceeds allowed size"}, status_code=413)
                 return await response(scope, receive, safe_send)
             messages.append(message)
             if not message.get("more_body", False):
