@@ -11,7 +11,7 @@ Plant reliability with configurable equipment, named staff access, observation-b
 - **Memory:** plant guide cards (address, what can break, what can be fixed) and confirmed repair memory.
 - **Setup:** administrator-reviewed plant configuration and immutable revision history.
 
-Operations and Maintenance are no longer in the rail; those URLs redirect to Plant and Incidents.
+Operations and Maintenance are no longer in the rail. `/operations` goes to Plant. `/maintenance` still serves authorized repair when opened from an approved incident.
 
 ## Local admin sign-in
 
@@ -124,5 +124,5 @@ See [repository structure](docs/engineering/repository-structure.md), [contribut
 - Monitor is card-first. Click a machine for `/monitoring/{id}` records, trend graphs and case history.
 - Each OOC case stores occurred, attended and fixed times, the operator note and metadata. Incidents shows a paginated table; the row arrow opens that record underneath.
 - Memory is a plant-guide card list (floor address, what can break, what can be fixed, station guide). Click a card for `/memory/{id}`.
-- Operations and Maintenance were removed from navigation. `/operations` goes to Plant; `/maintenance` goes to Incidents.
+- Operations and Maintenance were removed from navigation. `/operations` goes to Plant. `/maintenance` remains for authorized repair opened from an approved incident.
 - Preview records stay in a plant-scoped browser ledger. They do not write operational sources or authorize work.
