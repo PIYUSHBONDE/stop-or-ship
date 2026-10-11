@@ -16,7 +16,9 @@ async function owner(page: Page) {
       exact: true,
     })
     .click();
-  await expect(page.getByRole('heading', { name: 'Welcome, Product Owner' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome, Product Owner' })).toBeVisible({
+    timeout: 30000,
+  });
   const signed = await (await page.request.get('/api/v1/access/state')).json();
   const plant = signed.plants[0].id as string;
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
@@ -171,6 +173,8 @@ test('operational incident, dirty decisions, authorized repair and incoming reco
   await page.getByRole('radio', { name: /Stop.*repair now/ }).check();
   await approve.click();
   await page.getByRole('link', { name: 'Open authorized work order' }).click();
+  await expect(page).toHaveURL(/\/maintenance/);
+  await expect(page.getByRole('heading', { name: 'Maintenance workspace' })).toBeVisible();
   await page.getByRole('button', { name: 'Start approved repair' }).click();
   await page.getByLabel('Observed root cause').fill('Valve bypass confirmed by inspection');
   await page.getByLabel('Repair performed').fill('Repaired and inspected the valve assembly');

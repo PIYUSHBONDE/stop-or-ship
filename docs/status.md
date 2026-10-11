@@ -8,6 +8,8 @@ The plant explorer now generates a session-scoped synthetic preview for every as
 
 - Frontend unit checks cover deterministic preview generation for all equipment types, OOC envelope breaches, operator assignment by experience and severity, and per-machine preview record storage.
 - Operational inspector copy still states that unconnected equipment has no current data.
+- `/maintenance` again renders the authorized-repair workspace so “Open authorized work order” can reach **Start approved repair**. It stays off the rail.
+- Local `scripts/validate.py --build` passed: Ruff, OpenAPI, Prettier, TypeScript, ESLint, **97** backend tests, **16** frontend unit checks, and the Next.js production build. Isolated browser acceptance was not a clean pass on this Windows host.
 
 ## Home SSO landing — completed iteration
 
