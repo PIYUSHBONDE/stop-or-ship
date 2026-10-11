@@ -7,11 +7,27 @@ import * as THREE from 'three';
 import type { Asset, State } from '@/lib/types';
 import { FactoryEnvironment } from '@/features/plant/components/factory-environment';
 import { ConfiguredEnvironment } from '@/features/plant/components/configured-environment';
-import { plantBounds, planPosition } from '@/lib/plant-layout';
-import styles from '@/features/plant/components/plant-plan.module.css';
+import { plantBounds, planPoint, planPosition } from '@/lib/plant-layout';
+import { PreviewCard } from '@/features/plant/components/preview-card';
+import { PreviewMarker } from '@/features/plant/components/preview-marker';
+import { OocHalo } from '@/features/plant/components/ooc-halo';
+import { OperatorFigure } from '@/features/plant/components/operator-figure';
+import type { PreviewReading } from '@/features/plant/lib/preview-telemetry';
+import type { FloorActor } from '@/features/operators/lib/preview-dispatch';
+import planStyles from '@/features/plant/components/plant-plan.module.css';
+import previewStyles from '@/features/plant/components/plant-preview.module.css';
 
 const [BoxInstances, BoxInstance] = createInstances();
 const [CylinderInstances, CylinderInstance] = createInstances();
+
+export type PlantPreview = {
+  focusId: string | null;
+  scannedId: string | null;
+  oocIds: string[];
+  readings: Record<string, PreviewReading[]>;
+  actors?: FloorActor[];
+  onHover: (id: string | null) => void;
+};
 
 const statusColors: Record<string, string> = {
   unknown: '#91a0b5',
@@ -102,12 +118,18 @@ function Cylinder({
 function Equipment({
   asset,
   selected,
+  scanned,
+  ooc,
   onSelect,
+  onHover,
   reduced,
 }: {
   asset: Asset;
   selected: boolean;
+  scanned: boolean;
+  ooc: boolean;
   onSelect: (id: string) => void;
+  onHover: (id: string | null) => void;
   reduced: boolean;
 }) {
   const color = statusColors[asset.status] || statusColors.unknown;
@@ -128,16 +150,33 @@ function Equipment({
         e.stopPropagation();
         onSelect(asset.id);
       }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        onHover(asset.id);
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation();
+        onHover(null);
+      }}
     >
+      <mesh position={[0, 1.1, 0]}>
+        <boxGeometry args={[2.8, 2.6, 2.5]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
       <Box
         position={[0, 0.08, 0]}
         size={[2.6, 0.16, 2.4]}
         color={selected ? '#405566' : '#2b4050'}
       />
-      {selected && (
+      {ooc && <OocHalo reduced={reduced} />}
+      {(selected || scanned) && !ooc && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.18, 0]}>
           <ringGeometry args={[1.55, 1.59, 48]} />
-          <meshBasicMaterial color="#93bcf0" transparent opacity={0.8} />
+          <meshBasicMaterial
+            color={selected ? '#93bcf0' : '#b7f08a'}
+            transparent
+            opacity={selected ? 0.8 : 0.55}
+          />
         </mesh>
       )}
       {asset.type === 'press' && (
@@ -246,12 +285,16 @@ function Equipment({
       )}
       <mesh position={[0.95, 0.3, -0.95]}>
         <sphereGeometry args={[0.12, 12, 12]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} />
+        <meshStandardMaterial
+          color={ooc ? '#ff6b78' : color}
+          emissive={ooc ? '#ff6b78' : color}
+          emissiveIntensity={ooc ? 2.4 : 1.5}
+        />
       </mesh>
       <AssetLabel
         id={asset.id}
-        color={color}
-        selected={selected}
+        color={ooc ? '#ff6b78' : color}
+        selected={selected || ooc}
         y={asset.type === 'press' ? 3.3 : 2.25}
       />
     </group>
@@ -358,6 +401,7 @@ function SceneContent({
   preset,
   overlay,
   onSlowDevice,
+  preview,
 }: {
   state: State;
   selected: string;
@@ -367,6 +411,7 @@ function SceneContent({
   preset: string;
   overlay: 'health' | 'impact';
   onSlowDevice?: () => void;
+  preview?: PlantPreview;
 }) {
   const { gl } = useThree();
   const bounds = plantBounds(state.assets);
@@ -439,12 +484,28 @@ function SceneContent({
               key={a.id}
               asset={a}
               selected={selected === a.id}
+              scanned={preview?.scannedId === a.id}
+              ooc={preview?.oocIds.includes(a.id) || false}
               onSelect={onSelect}
+              onHover={preview?.onHover || (() => undefined)}
               reduced={reduced || !!state.workspace || a.status === 'unknown'}
             />
           ))}
         </CylinderInstances>
       </BoxInstances>
+      {preview?.actors?.map((actor) => (
+        <OperatorFigure key={actor.id} actor={actor} reduced={reduced} />
+      ))}
+      {preview?.focusId &&
+        state.assets
+          .filter((asset) => asset.id === preview.focusId)
+          .map((asset) => (
+            <PreviewMarker
+              key={asset.id}
+              asset={asset}
+              readings={preview.readings[asset.id] || []}
+            />
+          ))}
       <OrbitControls
         makeDefault
         enablePan
@@ -488,6 +549,7 @@ export default function PlantScene({
   overlay = 'impact',
   quality = 'detail',
   onSlowDevice,
+  preview,
 }: {
   state: State;
   selected: string;
@@ -498,6 +560,7 @@ export default function PlantScene({
   overlay?: 'health' | 'impact';
   quality?: 'detail' | 'balanced';
   onSlowDevice?: () => void;
+  preview?: PlantPreview;
 }) {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [reduced, setReduced] = useState(false);
@@ -517,8 +580,8 @@ export default function PlantScene({
   }, []);
   const fallback = (
     <div className="plan-view" role="region" aria-label="Accessible plant plan">
-      <div className={styles.viewport}>
-        <div className={styles.board}>
+      <div className={planStyles.viewport}>
+        <div className={planStyles.board}>
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             {state.dependencies.map((d) => {
               const a = state.assets.find((a) => a.id === d.source)!;
@@ -545,14 +608,33 @@ export default function PlantScene({
                 left: `${planPosition(a, bounds).x}%`,
                 top: `${planPosition(a, bounds).y}%`,
               }}
-              className={`plan-asset ${selected === a.id ? 'selected' : ''}`}
+              className={`plan-asset ${selected === a.id ? 'selected' : ''} ${preview?.oocIds.includes(a.id) ? previewStyles.planOoc : ''}`}
               onClick={() => onSelect(a.id)}
+              onMouseEnter={() => preview?.onHover(a.id)}
+              onMouseLeave={() => preview?.onHover(null)}
             >
+              {preview?.focusId === a.id && (
+                <div className={previewStyles.planTip}>
+                  <PreviewCard id={a.id} name={a.name} readings={preview.readings[a.id] || []} />
+                </div>
+              )}
               <span className={`dot ${a.status}`} />
               <strong>{a.id}</strong>
               <small>{a.name}</small>
             </button>
           ))}
+          {preview?.actors?.map((actor) => {
+            const point = planPoint(actor.position, bounds);
+            return (
+              <span
+                key={actor.id}
+                className={previewStyles.actor}
+                style={{ left: `${point.x}%`, top: `${point.y}%` }}
+              >
+                {actor.label}
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -591,6 +673,7 @@ export default function PlantScene({
           preset={preset}
           overlay={overlay}
           onSlowDevice={onSlowDevice}
+          preview={preview}
         />
       </Canvas>
     </SceneBoundary>

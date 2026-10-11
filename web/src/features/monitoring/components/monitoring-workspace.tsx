@@ -3,6 +3,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Radio, Plus, ArrowRight, ShieldCheck, Search } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
+import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
+import { sampleCount } from '@/features/monitoring/lib/preview-records';
+import { MachineRecords } from '@/features/monitoring/components/machine-records';
 import type { components } from '@/lib/generated/api-schema';
 import styles from '@/components/layout/workspace.module.css';
 import { SourceEditor } from '@/features/monitoring/components/source-editor';
@@ -12,27 +15,36 @@ type Source = components['schemas']['SourceView'];
 
 export function MonitoringWorkspace() {
   const { state, can, busy } = usePlant();
+  const preview = usePreviewDispatch();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<Source | 'new' | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [importId, setImportId] = useState<string | null>(null);
   if (!state) return null;
   const sources = state.sources || [];
   const operational = sources.filter((source) => source.configuration.kind === 'operational');
   const current = operational.filter((source) => source.quality === 'fresh');
-  const importSource = sources.find((source) => source.id === selected);
+  const importSource = sources.find((source) => source.id === importId);
+  const machines = state.assets.filter((asset) =>
+    `${asset.name} ${asset.id}`.toLowerCase().includes(query.toLowerCase()),
+  );
   const filtered = sources.filter((source) =>
     `${source.configuration.name} ${source.configuration.asset_id}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
+  const stored = sampleCount(preview.ledger);
+  const openCases = preview.ledger.cases.filter((item) => !item.clearedAt).length;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
         <div>
-          <span className="eyebrow">PLANT DATA</span>
-          <h1>Telemetry sources</h1>
+          <span className="eyebrow">
+            PLANT DATA <span className="live-tag">SYNTHETIC PREVIEW</span>
+          </span>
+          <h1>Machine records</h1>
           <p>
-            Know where readings came from, whether they are current, and what they can establish.
+            Real-time preview samples, trend graphs, and who cleared each OOC stay on this plant.
+            Reviewed sources remain the only path to operational observations.
           </p>
         </div>
         {can('plant.configure') && (
@@ -43,26 +55,36 @@ export function MonitoringWorkspace() {
       </header>
       <div className={styles.metrics}>
         <div>
+          <small>Stored preview records</small>
+          <strong>{stored}</strong>
+        </div>
+        <div>
+          <small>Open preview cases</small>
+          <strong>{openCases}</strong>
+        </div>
+        <div>
           <small>Operational sources</small>
           <strong>{operational.length}</strong>
-        </div>
-        <div>
-          <small>Current observations</small>
-          <strong>{current.length}</strong>
-        </div>
-        <div>
-          <small>Equipment without current data</small>
-          <strong>{state.assets.length - current.length}</strong>
         </div>
       </div>
       <section className={styles.notice}>
         <Radio size={19} />
         <p>
-          Sources accept submitted observations and historical files. No PLC or historian connector
-          is active. Missing data means unknown condition; plant configuration does not supply
-          measurements.
+          Preview records are labeled synthetic and do not establish plant health. Current
+          observations: {current.length}. Equipment without a reviewed source stays unknown. No PLC
+          or historian connector is active.
         </p>
       </section>
+      <label className={styles.search}>
+        <Search size={17} />
+        <input
+          aria-label="Search machines or sources"
+          placeholder="Find a machine or source…"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
+      <MachineRecords assets={machines} />
       {editor && (
         <SourceEditor
           key={editor === 'new' ? 'new' : `${editor.id}-${editor.version}`}
@@ -70,15 +92,7 @@ export function MonitoringWorkspace() {
           onClose={() => setEditor(null)}
         />
       )}
-      <label className={styles.search}>
-        <Search size={17} />
-        <input
-          aria-label="Search telemetry sources"
-          placeholder="Find a source or equipment…"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </label>
+      <h2>Reviewed sources</h2>
       <div className={styles.sourceList}>
         {filtered.map((source) => (
           <article
@@ -145,7 +159,7 @@ export function MonitoringWorkspace() {
                 </button>
               )}
               {can('plant.manage') && (
-                <button className="secondary" onClick={() => setSelected(source.id)}>
+                <button className="secondary" onClick={() => setImportId(source.id)}>
                   Import observations
                 </button>
               )}

@@ -1,5 +1,26 @@
 # Implementation status
 
+## Plant synthetic preview overlay — current iteration
+
+The plant explorer now generates a session-scoped synthetic preview for every asset at runtime. Hover and a 2.5-second scan show labeled preview readings above equipment. Preview metrics also compare against synthetic control limits; out-of-control cells flash on the floor. A labeled operator roster then assigns by experience and severity, walks to the cell, and clears the excursion. `/operators` monitors those assignment IDs live. `/monitoring` shows machine cards; each card opens `/monitoring/{asset}` for graphs and case history. Preview OOC cases store occurred, attended and fixed times plus the operator note and appear on `/incidents`. `/memory` is the plant guide. Operations and Maintenance are removed from the rail. Preview repairs stay on the cell for at least two minutes before they clear. Those values do not write sources, change condition, or authorize work. Unconnected equipment remains unknown.
+
+### Observed acceptance
+
+- Frontend unit checks cover deterministic preview generation for all equipment types, OOC envelope breaches, operator assignment by experience and severity, and per-machine preview record storage.
+- Operational inspector copy still states that unconnected equipment has no current data.
+
+## Home SSO landing — completed iteration
+
+The public home route is now a staff sign-in landing instead of an immediate workspace redirect. Google and Microsoft continue into a two-field work-email form. Initial administrator name, organization and plant are derived from the email, so those enrollment fields are no longer shown. Cloud identity providers are not connected; the local staff cookie session remains authoritative.
+
+### Observed acceptance
+
+- TypeScript, ESLint, Prettier and **4 frontend unit checks** passed, including email-to-identity derivation for `product-owner@example.test`.
+- Playwright against the native local app at `http://127.0.0.1:3000/` showed Continue with Google/Microsoft, then Email/Password/Sign in on desktop and a 390px viewport. No anonymous demo control is present.
+- Product browser acceptance was not re-run against an isolated Compose stack in this iteration.
+
+AI remains explicitly scripted. Managed SSO is still a later identity gate.
+
 ## Operational product foundation — completed iteration
 
 The main application now requires staff access and uses versioned observation sources and historical import preview/commit. Replay controls, anonymous demo entry, generated supporting readings and selectable post-repair recovery have been removed from product pages. Missing current data remains unknown; measured output, rated capacity and configured impact estimates are separate.

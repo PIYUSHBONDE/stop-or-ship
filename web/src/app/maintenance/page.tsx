@@ -1,9 +1,5 @@
-import { Suspense } from 'react';
-import MaintenanceWorkspace from '@/features/maintenance/components/maintenance-workspace';
+import { redirect } from 'next/navigation';
+
 export default function Page() {
-  return (
-    <Suspense fallback={<p className="muted">Loading maintenance…</p>}>
-      <MaintenanceWorkspace />
-    </Suspense>
-  );
+  redirect('/incidents');
 }

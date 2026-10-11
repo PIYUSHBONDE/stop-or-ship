@@ -18,11 +18,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const plantId = localStorage.getItem('plantsense-workspace');
     setMode(plantId ? { plantId } : false);
-    if (!plantId && pathname !== '/workspace' && pathname !== '/evidence-preview')
-      router.replace('/workspace');
+    if (
+      !plantId &&
+      pathname !== '/' &&
+      pathname !== '/workspace' &&
+      pathname !== '/evidence-preview'
+    )
+      router.replace('/');
   }, [pathname, router]);
   const controller = usePlantSession(
-    !!mode && pathname !== '/evidence-preview' && pathname !== '/workspace',
+    !!mode && pathname !== '/' && pathname !== '/evidence-preview' && pathname !== '/workspace',
     mode ? { plantId: mode.plantId, incidentId: query.get('incident') } : undefined,
   );
   const [selected, selectAsset] = useState('P-107');

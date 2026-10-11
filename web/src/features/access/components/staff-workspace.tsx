@@ -3,18 +3,10 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  ArrowRight,
-  Check,
-  Factory,
-  LoaderCircle,
-  LogOut,
-  ShieldCheck,
-  Users,
-  Workflow,
-} from 'lucide-react';
+import { ArrowRight, Factory, LogOut, ShieldCheck, Users, Workflow } from 'lucide-react';
 import { staffApi } from '@/lib/api/staff-client';
 import type { AccessState, AuditPage, Member, PlantAccess } from '@/lib/api/staff-client';
+import { SignInLanding } from '@/features/access/components/sign-in-landing';
 import styles from '@/features/access/components/access.module.css';
 
 const roles = ['admin', 'manager', 'reliability', 'technician', 'viewer'] as const;
@@ -278,64 +270,25 @@ export function StaffWorkspace() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'sign-in' | 'invitation'>('sign-in');
-  const [token, setToken] = useState('');
   const [plantId, setPlantId] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [organization, setOrganization] = useState('');
-  const [plantName, setPlantName] = useState('');
 
   useEffect(() => {
     let active = true;
     const invite = new URLSearchParams(window.location.hash.slice(1)).get('invite');
-    if (invite) {
-      setToken(invite);
-      setMode('invitation');
-      history.replaceState(null, '', window.location.pathname);
-    }
+    if (invite) setMode('invitation');
     setPlantId(localStorage.getItem('plantsense-workspace') || '');
     staffApi
       .access()
       .then((next) => {
         if (active) setAccess(next);
       })
-      .catch((error) => {
-        if (active) setError(error.message);
+      .catch((caught) => {
+        if (active) setError(caught.message);
       });
     return () => {
       active = false;
     };
   }, []);
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    if (busy || !access) return;
-    setBusy(true);
-    setError('');
-    try {
-      const next =
-        mode === 'invitation'
-          ? await staffApi.accept({ email, password, display_name: name, token })
-          : access.setup_required
-            ? await staffApi.setup({
-                email,
-                password,
-                display_name: name,
-                organization_name: organization,
-                plant_name: plantName,
-              })
-            : await staffApi.signIn({ email, password });
-      setAccess(next);
-      setPassword('');
-      setToken('');
-      setMode('sign-in');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Staff access failed');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   function openPlant(plant: PlantAccess) {
     localStorage.setItem('plantsense-workspace', plant.id);
@@ -351,15 +304,24 @@ export function StaffWorkspace() {
       localStorage.removeItem('plantsense-workspace');
       setAccess(await staffApi.access());
       setPlantId('');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Sign-out failed');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Sign-out failed');
     } finally {
       setBusy(false);
     }
   }
 
   const selectedPlant = access?.plants.find((plant) => plant.id === plantId) || access?.plants[0];
-  const enrolling = mode === 'invitation' || access?.setup_required;
+  if (!access?.user || mode === 'invitation')
+    return (
+      <SignInLanding
+        inviteOnly={mode === 'invitation' && Boolean(access?.user)}
+        onSignedIn={(next) => {
+          setAccess(next);
+          setMode('sign-in');
+        }}
+      />
+    );
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -368,222 +330,56 @@ export function StaffWorkspace() {
           <strong>PlantSense</strong>
           <span>Plant access</span>
         </div>
-        {access?.user && (
-          <button className="secondary" disabled={busy} onClick={signOut}>
-            <LogOut size={15} />
-            Sign out
-          </button>
-        )}
+        <button className="secondary" disabled={busy} onClick={signOut}>
+          <LogOut size={15} />
+          Sign out
+        </button>
       </header>
       {error && (
         <p className={styles.error} role="alert">
           {error}
         </p>
       )}
-      {!access ? (
-        <section className={styles.panel} role="status">
-          <LoaderCircle className="spin" />
-          Loading staff access…
-          {error && (
-            <button className="secondary" onClick={() => location.reload()}>
-              Retry connection
+      <div className={styles.welcome}>
+        <span className={styles.eyebrow}>YOUR PLANTS</span>
+        <h1>Welcome, {access.user.display_name}</h1>
+        <p>Choose a plant. Your role controls the actions available there.</p>
+      </div>
+      <div className={styles.plants}>
+        {access.plants.map((plant) => (
+          <section className={styles.panel} key={plant.id}>
+            <Factory size={25} />
+            <small>{plant.organization_name}</small>
+            <h2>{plant.name}</h2>
+            <span className={styles.role}>{plant.role}</span>
+            <button className="primary" onClick={() => openPlant(plant)}>
+              Open plant
+              <ArrowRight size={16} />
             </button>
-          )}
-        </section>
-      ) : !access.available ? (
-        <section className={styles.panel}>
-          <h1>Staff workspace unavailable</h1>
-          <p>
-            The shared staff foundation currently runs locally. Managed cloud identity and
-            persistence require their deployment gate.
-          </p>
-        </section>
-      ) : !access.user || mode === 'invitation' ? (
-        <div className={styles.entry}>
-          <section className={styles.introduction}>
-            <span className={styles.eyebrow}>SHARED PLANT WORKSPACE</span>
-            <h1>
-              {mode === 'invitation'
-                ? 'Join your plant team.'
-                : access.setup_required
-                  ? 'Set up your plant workspace.'
-                  : 'Sign in to your plant.'}
-            </h1>
-            <p>
-              Inspect equipment, review evidence and keep maintenance decisions accountable to your
-              team.
-            </p>
-            <div className={styles.benefits}>
-              <p>
-                <Check size={18} />
-                Shared incidents and repair history
-              </p>
-              <p>
-                <Check size={18} />
-                Role-based approval and maintenance
-              </p>
-              <p>
-                <Check size={18} />
-                Retained audit records
-              </p>
-            </div>
-            <p className={styles.sourceNote}>
-              Connect observation sources or import attributed historical datasets in Monitor.
-              Equipment without current data remains unknown. Live AI evaluation follows this
-              milestone.
-            </p>
-          </section>
-          <section className={styles.panel}>
-            <h2>
-              {mode === 'invitation'
-                ? 'Accept invitation'
-                : access.setup_required
-                  ? 'Initial administrator'
-                  : 'Staff sign-in'}
-            </h2>
-            <form className={styles.form} onSubmit={submit}>
-              {mode === 'invitation' && (
-                <label>
-                  Invitation code
-                  <input
-                    required
-                    value={token}
-                    minLength={32}
-                    maxLength={100}
-                    autoComplete="off"
-                    onChange={(event) => setToken(event.target.value)}
-                  />
-                </label>
-              )}
-              {enrolling && (
-                <label>
-                  Your name
-                  <input
-                    required
-                    value={name}
-                    minLength={2}
-                    maxLength={80}
-                    autoComplete="name"
-                    onChange={(event) => setName(event.target.value)}
-                  />
-                </label>
-              )}
-              {access.setup_required && mode !== 'invitation' && (
-                <>
-                  <label>
-                    Organization name
-                    <input
-                      required
-                      value={organization}
-                      minLength={2}
-                      maxLength={80}
-                      onChange={(event) => setOrganization(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    Plant name
-                    <input
-                      required
-                      value={plantName}
-                      minLength={2}
-                      maxLength={80}
-                      onChange={(event) => setPlantName(event.target.value)}
-                    />
-                  </label>
-                </>
-              )}
-              <label>
-                Email
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  maxLength={254}
-                  autoComplete="username"
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              </label>
-              <label>
-                Password
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  minLength={enrolling ? 15 : 1}
-                  maxLength={128}
-                  autoComplete={enrolling ? 'new-password' : 'current-password'}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-              </label>
-              {enrolling && <small>Use a unique passphrase of at least 15 characters.</small>}
-              <button className="primary" disabled={busy}>
-                {busy
-                  ? 'Saving…'
-                  : mode === 'invitation'
-                    ? 'Accept invitation'
-                    : access.setup_required
-                      ? 'Create plant workspace'
-                      : 'Sign in'}
-                <ArrowRight size={16} />
-              </button>
-            </form>
-            {!access.setup_required && (
-              <button
-                className="text-button"
-                onClick={() => {
-                  setMode(mode === 'invitation' ? 'sign-in' : 'invitation');
-                  setError('');
-                }}
-              >
-                {mode === 'invitation' ? 'Back to sign-in' : 'I have an invitation'}
+            {access.plants.length > 1 && (
+              <button className="text-button" onClick={() => setPlantId(plant.id)}>
+                Manage this plant
               </button>
             )}
           </section>
-        </div>
-      ) : (
-        <>
-          <div className={styles.welcome}>
-            <span className={styles.eyebrow}>YOUR PLANTS</span>
-            <h1>Welcome, {access.user.display_name}</h1>
-            <p>Choose a plant. Your role controls the actions available there.</p>
-          </div>
-          <div className={styles.plants}>
-            {access.plants.map((plant) => (
-              <section className={styles.panel} key={plant.id}>
-                <Factory size={25} />
-                <small>{plant.organization_name}</small>
-                <h2>{plant.name}</h2>
-                <span className={styles.role}>{plant.role}</span>
-                <button className="primary" onClick={() => openPlant(plant)}>
-                  Open plant
-                  <ArrowRight size={16} />
-                </button>
-                {access.plants.length > 1 && (
-                  <button className="text-button" onClick={() => setPlantId(plant.id)}>
-                    Manage this plant
-                  </button>
-                )}
-              </section>
-            ))}
-          </div>
-          {!access.plants.length && (
-            <section className={styles.panel}>
-              <h2>No active plant access</h2>
-              <p>Ask your plant administrator to grant access or send an invitation.</p>
-              <button className="secondary" onClick={() => setMode('invitation')}>
-                Accept an invitation
-              </button>
-            </section>
-          )}
-          {selectedPlant && (
-            <PlantAdministration
-              key={selectedPlant.id}
-              plant={selectedPlant}
-              onError={setError}
-              onAccessChanged={setAccess}
-            />
-          )}
-        </>
+        ))}
+      </div>
+      {!access.plants.length && (
+        <section className={styles.panel}>
+          <h2>No active plant access</h2>
+          <p>Ask your plant administrator to grant access or send an invitation.</p>
+          <button className="secondary" onClick={() => setMode('invitation')}>
+            Accept an invitation
+          </button>
+        </section>
+      )}
+      {selectedPlant && (
+        <PlantAdministration
+          key={selectedPlant.id}
+          plant={selectedPlant}
+          onError={setError}
+          onAccessChanged={setAccess}
+        />
       )}
       <footer className={styles.footer}>Staff sessions expire after eight hours.</footer>
     </main>

@@ -4,13 +4,26 @@ Plant reliability with configurable equipment, named staff access, observation-b
 
 ## Current product
 
-- **Plant:** dedicated 3D explorer and accessible 2D plan, adapting to reviewed two-to-eight-line configurations (up to 36 assets in supplied templates).
-- **Monitor:** reviewed operational/historical sources, freshness, units, record provenance, CSV validation, read-only preview and explicit import confirmation.
-- **Operations:** measured output, rated capacity and estimated dependency impact shown separately. Unconnected equipment remains unknown.
-- **Incidents:** retained evidence, uncertainty, specialist positions, intervention assumptions and versioned approval.
-- **Maintenance:** authorized work, UTC eligibility, technician outcomes and recovery from three qualifying post-repair observation windows.
-- **Memory:** confirmed operational repairs with original diagnosis and technician corrections.
+- **Plant:** dedicated 3D explorer and accessible 2D plan, adapting to reviewed two-to-eight-line configurations (up to 36 assets in supplied templates). Synthetic preview metrics, OOC flash and operators on the floor.
+- **Operators:** live assignment IDs, experience-based dispatch and walk-to-cell preview.
+- **Monitor:** machine cards, per-machine records/graphs, plus reviewed operational/historical sources.
+- **Incidents:** paginated case table for preview OOC records and operational incidents.
+- **Memory:** plant guide cards (address, what can break, what can be fixed) and confirmed repair memory.
 - **Setup:** administrator-reviewed plant configuration and immutable revision history.
+
+Operations and Maintenance are no longer in the rail; those URLs redirect to Plant and Incidents.
+
+## Local admin sign-in
+
+Open **http://127.0.0.1:3000/**, continue with Google or Microsoft, then use the work-email form.
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Administrator (this machine) | `akarshpriyadarshancp@gmail.com` | the passphrase set at first setup |
+| Local operator | `operator@plantsense.local` | `testing-only strong passphrase!` |
+| Product browser tests | `product-owner@example.test` | `testing-only strong passphrase!` |
+
+There is no default password for a new plant. Staff sessions use expiring HttpOnly cookies; only password hashes are stored. These local accounts do not grant cloud access.
 
 **AI remains explicitly scripted locally.** Live Gemini is wired separately but has not passed live evaluation. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
 
@@ -102,3 +115,14 @@ Use an isolated acceptance database/Compose project for browser tests; tests cre
 Development remains local. Draft proposals/recordings and earlier screenshots represent earlier iterations and must not be presented as proof of live Gemini or physical plant validation.
 
 See [repository structure](docs/engineering/repository-structure.md), [contributing](CONTRIBUTING.md), and the [documentation index](docs/README.md). Run `.venv/Scripts/python.exe scripts/validate.py` (Unix: `.venv/bin/python`) for portable local validation. Add `--skip-tests` for static checks only.
+
+## Recent local changes
+
+- Home is an SSO-style sign-in. Name, organization and plant are derived from the work email.
+- Plant overlay generates labeled synthetic preview readings, control limits and OOC flash. Unconnected equipment stays unknown.
+- Operators assign by experience and severity, walk to the cell and take at least two minutes to clear a preview OOC.
+- Monitor is card-first. Click a machine for `/monitoring/{id}` records, trend graphs and case history.
+- Each OOC case stores occurred, attended and fixed times, the operator note and metadata. Incidents shows a paginated table; the row arrow opens that record underneath.
+- Memory is a plant-guide card list (floor address, what can break, what can be fixed, station guide). Click a card for `/memory/{id}`.
+- Operations and Maintenance were removed from navigation. `/operations` goes to Plant; `/maintenance` goes to Incidents.
+- Preview records stay in a plant-scoped browser ledger. They do not write operational sources or authorize work.
