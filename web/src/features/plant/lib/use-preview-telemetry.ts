@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { oocAssetIds, previewCatalog } from '@/features/plant/lib/preview-telemetry';
 
 const TICK_MS = 2500;
-const EMPTY: { id: string; type: string }[] = [];
 
 export function usePreviewTelemetry(assets: { id: string; type: string }[]) {
   const seed = useMemo(() => Date.now() % 9973, []);

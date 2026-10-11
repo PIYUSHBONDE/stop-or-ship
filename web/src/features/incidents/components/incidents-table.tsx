@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, type ComponentType } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { usePlant } from '@/providers/plant-session-provider';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 import { PreviewCaseDetail } from '@/features/incidents/components/preview-case-detail';
 import { stateNames } from '@/lib/workflow';
