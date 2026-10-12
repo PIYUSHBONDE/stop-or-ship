@@ -1,19 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from '../support/staff-session';
 
 test.describe.configure({ mode: 'serial' });
 
 async function openAssistant(page: Page) {
   await page.goto('/workspace');
-  const access = await (await page.request.get('/api/v1/access/state')).json();
-  await page.getByRole('button', { name: 'Continue with email', exact: true }).click();
-  await page.getByLabel('Email', { exact: true }).fill('product-owner@example.test');
-  await page.getByLabel('Password', { exact: true }).fill('testing-only strong passphrase!');
-  await page
-    .getByRole('button', {
-      name: access.setup_required ? 'Get started' : 'Sign in',
-      exact: true,
-    })
-    .click();
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
   await page.getByRole('button', { name: 'Ask PlantSense', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Ask PlantSense' })).toBeVisible();

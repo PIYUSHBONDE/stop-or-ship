@@ -1,21 +1,10 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from '../support/staff-session';
 
 test.describe.configure({ mode: 'serial' });
-const password = 'testing-only strong passphrase!';
-const email = 'product-owner@example.test';
 
 async function owner(page: Page) {
-  await page.goto('/');
-  const access = await (await page.request.get('/api/v1/access/state')).json();
-  await page.getByRole('button', { name: 'Continue with email' }).click();
-  await page.getByLabel('Email', { exact: true }).fill(email);
-  await page.getByLabel('Password', { exact: true }).fill(password);
-  await page
-    .getByRole('button', {
-      name: access.setup_required ? 'Get started' : 'Sign in',
-      exact: true,
-    })
-    .click();
+  await page.goto('/workspace');
   await expect(page.getByRole('heading', { name: 'Welcome, Product Owner' })).toBeVisible({
     timeout: 30000,
   });
@@ -31,16 +20,20 @@ async function csvPreview(page: Page, csv: string) {
   await expect(page.getByRole('button', { name: 'Confirm import' })).toBeVisible();
 }
 
-test('staff access is required; no anonymous fallback', async ({ page }) => {
-  const anonymous: string[] = [];
-  page.on('request', (request) => {
-    if (/local-identity|\/sessions/.test(request.url())) anonymous.push(request.url());
+test.describe('anonymous access', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('staff access is required; no anonymous fallback', async ({ page }) => {
+    const anonymous: string[] = [];
+    page.on('request', (request) => {
+      if (/local-identity|\/sessions/.test(request.url())) anonymous.push(request.url());
+    });
+    await page.goto('/plant');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('button', { name: 'Continue with email' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open isolated demo' })).toHaveCount(0);
+    expect(anonymous).toEqual([]);
   });
-  await page.goto('/plant');
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('button', { name: 'Continue with email' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Open isolated demo' })).toHaveCount(0);
-  expect(anonymous).toEqual([]);
 });
 
 test('expanded plant has unknown equipment and separate production measures', async ({ page }) => {

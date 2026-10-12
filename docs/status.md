@@ -1,5 +1,21 @@
 # Implementation status
 
+## Main browser authentication regression — 12 October 2026
+
+Checked remote main at `867b7e1`, matching the local checkout. The assistant and product browser suites previously enrolled or signed in the same owner account nine times. The production limiter allows eight attempts per email in five minutes, including successful authentication and enrollment. When the suite reaches its final preview check within that window, the ninth request returns HTTP 429 and the welcome heading never appears. Running that preview check alone does not expose this suite-level interaction.
+
+The two authenticated suites now share a worker-scoped, in-memory storage-state fixture. It authenticates through the actual UI once, checks the authentication HTTP response, closes its setup context, and supplies independent contexts to subsequent tests. The anonymous access check explicitly uses empty storage state. Production authentication limits, workflow behavior and contracts are unchanged; authenticated state is not written to a file.
+
+### Observed acceptance
+
+- **All 12 browser checks passed in 4.2 minutes**, including preview opt-in/isolation, anonymous access, historical provenance, authorized repair and three actual 60-second recovery windows. API logs show one successful enrollment request and no subsequent sign-in requests for the complete run.
+- **All 16 frontend unit checks passed in 3.4 seconds**. The existing backend authentication/invitation regression passed in 25.08 seconds, including rejection of the ninth attempt. An upstream Starlette deprecation warning and a Windows pytest cache permission warning remain.
+- TypeScript, ESLint, Prettier, the native production build and read-only TypeScript contract drift check passed. Windows sandbox restrictions initially blocked Next.js path resolution, local sockets and pytest temporary directories; expanded-access execution passed those steps.
+- An initial browser attempt timed out waiting for the historical source card while the API returned HTTP 200 and frontend static checks ran concurrently. After closing the fixture's setup context before test execution, the complete suite passed alone against a fresh database. The precise cause of that earlier source-save delay is unconfirmed.
+- Acceptance used a dedicated native production stack on ports 3002/8002 and ignored SQLite databases under `.runtime/ci-login-fix`. Main staff data received no acceptance writes. Both test servers were stopped and regenerated tracked screenshots were restored. Docker was unavailable on this host, and GitHub workflow artifacts could not be read through the connected repository account; remote CI has not been rerun.
+
+Development remains local. The investigator is scripted and browser speech responses use existing doubles; this run does not establish live Gemini or speech performance.
+
 ## PR #4 integration — 12 October 2026
 
 Integrated PR head `d05c512` with main `0a81537`. Resolved README, status and application-shell conflicts while retaining Gemini investigation, the contextual assistant, voice and server workflow authority. Incoming incident tables, landing-page design, equipment geometry, guides and preview components are retained. Operations and Maintenance stay in navigation; verified repair memory remains prominent. Local authentication is labelled email/password rather than provider SSO.
