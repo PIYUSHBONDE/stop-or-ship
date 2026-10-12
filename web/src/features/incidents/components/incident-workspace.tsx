@@ -1,19 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  ArrowRight,
-  Check,
-  CircleHelp,
-  Clock3,
-  FileText,
-  LoaderCircle,
-  ShieldCheck,
-  TriangleAlert,
-} from 'lucide-react';
+import { ArrowRight, Check, CircleHelp, Clock3, LoaderCircle, TriangleAlert } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
+import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
+import { IncidentsTable } from '@/features/incidents/components/incidents-table';
 import { stateNames } from '@/lib/workflow';
 import { toEvidenceView } from '@/features/incidents/lib/evidence-view-model';
 import type { Incident, State } from '@/lib/types';
@@ -23,7 +15,7 @@ import { DependencyImpact } from '@/features/incidents/components/dependency-imp
 import { IncidentDecision } from '@/features/incidents/components/incident-decision';
 import styles from '@/features/incidents/components/incidents.module.css';
 
-function IncidentDetail({
+export function IncidentDetail({
   state,
   incident,
   readOnly,
@@ -299,25 +291,21 @@ function IncidentDetail({
 
 export default function IncidentWorkspace() {
   const { state } = usePlant();
-  const query = useSearchParams();
-  const router = useRouter();
-  const requested = query.get('incident');
-  const fallback = state?.incident || state?.incidents.at(-1);
-  const selectedId = requested || fallback?.id;
-  const incident = state?.incidents.find((candidate) => candidate.id === selectedId);
-  useEffect(() => {
-    if (!requested && fallback)
-      router.replace(`/incidents?incident=${fallback.id}`, { scroll: false });
-  }, [requested, fallback, router]);
+  const preview = usePreviewDispatch();
   if (!state) return null;
-  const open = state.incidents.filter((candidate) => candidate.state !== 'resolved').length;
+  const open =
+    state.incidents.filter((candidate) => candidate.state !== 'resolved').length +
+    preview.ledger.cases.filter((item) => !item.fixedAt).length;
   return (
     <div className={styles.workspace}>
       <header className={styles.pageHeader}>
         <div>
           <span className={styles.eyebrow}>{state.plant.name.toUpperCase()} / RELIABILITY</span>
           <h1>Incidents</h1>
-          <p>Understand the evidence. Choose an intervention. Keep human control.</p>
+          <p>
+            Page the case table, then open a row to see occurred, attended, fixed times and the
+            operator note.
+          </p>
         </div>
         <div className={styles.counts}>
           <strong>{open}</strong>
@@ -330,75 +318,7 @@ export default function IncidentWorkspace() {
           </span>
         </div>
       </header>
-      <div className={styles.layout}>
-        <aside className={styles.caseList} aria-label="Incident list">
-          <div className={styles.listHeading}>
-            <FileText size={15} />
-            <h2>Cases</h2>
-            <span>{state.incidents.length}</span>
-          </div>
-          {state.incidents
-            .slice()
-            .reverse()
-            .map((candidate) => (
-              <Link
-                key={candidate.id}
-                href={`/incidents?incident=${candidate.id}`}
-                className={styles.caseLink}
-                aria-current={candidate.id === selectedId ? 'page' : undefined}
-              >
-                <span className={styles.caseLinkTop}>
-                  <strong>{candidate.asset_id}</strong>
-                  <span className={styles.caseDot} data-state={candidate.state} />
-                </span>
-                <span>{state.assets.find((asset) => asset.id === candidate.asset_id)?.name}</span>
-                <small>{stateNames[candidate.state]}</small>
-                <small>
-                  {candidate.id.slice(0, 8).toUpperCase()} ·{' '}
-                  {new Date(candidate.created_at).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                  })}
-                </small>
-              </Link>
-            ))}
-          {!state.incidents.length && (
-            <p className={styles.note}>Detected incidents appear here automatically.</p>
-          )}
-          <Link className={styles.plantLink} href="/plant">
-            Open plant
-            <ArrowRight size={13} />
-          </Link>
-        </aside>
-        {incident ? (
-          <IncidentDetail
-            key={`${state.generation}-${incident.id}`}
-            state={state}
-            incident={incident}
-            readOnly={
-              incident.id !== state.incident?.id ||
-              incident.state === 'resolved' ||
-              incident.record_origin !== 'plant_observation'
-            }
-          />
-        ) : (
-          <section className={styles.empty}>
-            <ShieldCheck size={36} />
-            <h2>
-              {requested ? 'Incident unavailable' : 'Your next investigation starts in the plant'}
-            </h2>
-            <p>
-              {requested
-                ? 'This incident is not available in your current session. Choose a case from the list.'
-                : 'Connect a source in Monitor. Persistent deviations in accepted observations create incidents with evidence and intervention options.'}
-            </p>
-            <Link className="primary" href="/plant">
-              Open Plant
-              <ArrowRight size={14} />
-            </Link>
-          </section>
-        )}
-      </div>
+      <IncidentsTable state={state} IncidentDetail={IncidentDetail} />
     </div>
   );
 }

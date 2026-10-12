@@ -2,6 +2,10 @@
 
 Plant reliability with configurable equipment, named staff access, observation-based incidents, evidence inspection, deterministic INR comparisons, human authorization and verified repair memory.
 
+## UI preview integration
+
+The updated landing page uses local staff email/password authentication, not Google or Microsoft SSO. Synthetic equipment and operator previews are opt-in through `?preview=1`; they do not establish equipment health or authorize work. Operational observations, incidents, maintenance and verified repair memory remain separate.
+
 ## Current product
 
 - **Plant:** dedicated 3D explorer and accessible 2D plan, adapting to reviewed two-to-eight-line configurations (up to 36 assets in supplied templates).

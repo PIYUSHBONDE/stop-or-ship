@@ -5,8 +5,6 @@ import { usePathname } from 'next/navigation';
 import {
   Activity,
   Factory,
-  Gauge,
-  Wrench,
   BookOpen,
   Workflow,
   Radio,
@@ -16,13 +14,14 @@ import {
 } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { AssistantPanel } from '@/features/assistant/assistant-panel';
+import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 
 const destinations = [
   { href: '/plant', name: 'Plant', icon: Factory },
+  { href: '/operations', name: 'Operations', icon: Workflow },
+  { href: '/maintenance', name: 'Maintenance', icon: Settings2 },
   { href: '/monitoring', name: 'Monitor', icon: Radio },
-  { href: '/operations', name: 'Operations', icon: Gauge },
   { href: '/incidents', name: 'Incidents', icon: Activity },
-  { href: '/maintenance', name: 'Maintenance', icon: Wrench },
   { href: '/memory', name: 'Memory', icon: BookOpen },
   { href: '/plant-setup', name: 'Setup', icon: Settings2 },
 ];
@@ -30,7 +29,9 @@ const destinations = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { state, connected, error, busy, dismissError } = usePlant();
-  if (pathname === '/evidence-preview' || pathname === '/workspace') return children;
+  const preview = usePreviewDispatch();
+  if (pathname === '/' || pathname === '/evidence-preview' || pathname === '/workspace')
+    return children;
   if (!state)
     return (
       <main className="boot">
@@ -40,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {error ? (
           <>
             <p role="alert">{error}</p>
-            <Link className="secondary" href="/workspace">
+            <Link className="secondary" href="/">
               Sign in to your plant
             </Link>
             <button className="primary" onClick={() => location.reload()}>
@@ -72,9 +73,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Icon size={21} />
             <span>{name}</span>
-            {name === 'Incidents' && state.incident && state.incident.state !== 'resolved' && (
-              <i className="rail-dot" />
-            )}
+            {name === 'Incidents' &&
+              ((state.incident && state.incident.state !== 'resolved') ||
+                preview.ledger.cases.some((item) => !item.fixedAt)) && <i className="rail-dot" />}
+            {name === 'Operators' && preview.assignments.length > 0 && <i className="rail-dot" />}
           </Link>
         ))}
         <div className="rail-bottom">

@@ -3,6 +3,9 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
+import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
+import { PHASE_COPY } from '@/features/operators/lib/preview-dispatch';
+import previewStyles from '@/features/plant/components/plant-preview.module.css';
 import {
   ArrowRight,
   ChevronRight,
@@ -34,6 +37,7 @@ export function FactoryWorkspace() {
   const [inspector, setInspector] = useState(true);
   const [query, setQuery] = useState('');
   const [overlay, setOverlay] = useState<'health' | 'impact'>('health');
+  const preview = usePreviewDispatch();
   if (!state) return null;
   const asset = state.assets.find((a) => a.id === selected) || state.assets[0];
   const incident = state.incident;
@@ -49,6 +53,7 @@ export function FactoryWorkspace() {
     (item) => item.configuration.kind === 'operational' && item.configuration.asset_id === asset.id,
   );
   const signals = state.signals[asset.id] || [];
+  const job = preview.assignments.find((item) => item.assetId === asset.id);
   const recommended = active
     ? incident.calculation.options.find((o) => o.id === incident.calculation.recommended)
     : undefined;
@@ -71,12 +76,25 @@ export function FactoryWorkspace() {
           overlay={overlay}
           quality={quality === 'auto' ? automaticQuality : quality}
           onSlowDevice={quality === 'auto' ? usePerformanceMode : undefined}
+          preview={
+            preview.enabled
+              ? {
+                  focusId: preview.focusId,
+                  scannedId: preview.scannedId,
+                  oocIds: preview.oocIds,
+                  readings: preview.readings,
+                  actors: preview.actors,
+                  onHover: preview.setHoverId,
+                }
+              : undefined
+          }
         />
       </div>
       <header className="factory-heading">
         <div>
           <span className="eyebrow">
-            FACTORY EXPLORER <span className="live-tag">PLANT</span>
+            FACTORY EXPLORER{' '}
+            {preview.enabled && <span className="live-tag">SYNTHETIC PREVIEW</span>}
           </span>
           <h1>Your plant, in context.</h1>
           <p>
@@ -134,23 +152,31 @@ export function FactoryWorkspace() {
                   a.area_id === area.id &&
                   (a.name + a.id).toLowerCase().includes(query.toLowerCase()),
               )
-              .map((a) => (
-                <button
-                  key={a.id}
-                  className={`factory-asset ${selected === a.id ? 'selected' : ''}`}
-                  aria-pressed={selected === a.id}
-                  onClick={() => inspect(a.id)}
-                >
-                  <span className={`dot ${a.status}`} />
-                  <span>
-                    <strong>{a.id}</strong>
-                    <small>
-                      {a.name} · {a.status}
-                    </small>
-                  </span>
-                  <ChevronRight size={13} />
-                </button>
-              ))}
+              .map((a) => {
+                const job = preview.assignments.find((item) => item.assetId === a.id);
+                return (
+                  <button
+                    key={a.id}
+                    className={`factory-asset ${selected === a.id ? 'selected' : ''} ${preview.oocIds.includes(a.id) ? previewStyles.listOoc : ''}`}
+                    aria-pressed={selected === a.id}
+                    onClick={() => inspect(a.id)}
+                  >
+                    <span className={`dot ${a.status}`} />
+                    <span>
+                      <strong>{a.id}</strong>
+                      <small>
+                        {a.name} ·{' '}
+                        {job
+                          ? `${job.operatorId} ${PHASE_COPY[job.phase]}`
+                          : preview.oocIds.includes(a.id)
+                            ? 'preview OOC'
+                            : a.status}
+                      </small>
+                    </span>
+                    <ChevronRight size={13} />
+                  </button>
+                );
+              })}
           </div>
         ))}
       </aside>
@@ -231,28 +257,39 @@ export function FactoryWorkspace() {
             {source?.reason || 'No data connected · Condition unknown'} ·{' '}
             <Link href="/monitoring">Source details</Link>
           </p>
+          {job && (
+            <p className="muted">
+              {job.operatorId} · {PHASE_COPY[job.phase]} · {job.id} ·{' '}
+              <Link href={`/operators?assignment=${job.id}`}>Live assignment</Link>
+            </p>
+          )}
           <div className="inspector-signals">
-            {signals.map((signal) => (
+            {(signals.length ? signals : preview.readings[asset.id] || []).map((signal) => (
               <div key={signal.signal_id}>
                 <span>{signal.signal_id.replaceAll('_', ' ')}</span>
                 <strong>
                   {signal.value.toFixed(2)} <small>{signal.unit}</small>
                 </strong>
                 <small className="source-label">
-                  {signal.provenance.replaceAll('_', ' ')} ·{' '}
-                  {signal.source_record_id || 'Record unavailable'}{' '}
+                  {'provenance' in signal
+                    ? `${signal.provenance.replaceAll('_', ' ')} · ${signal.source_record_id || 'Record unavailable'}`
+                    : 'ooc' in signal && signal.ooc
+                      ? 'synthetic OOC · outside preview limits'
+                      : 'synthetic preview · not plant health'}
                 </small>
-                <Sparkline
-                  label={`${signal.signal_id} observation history`}
-                  values={state.history
-                    .map(
-                      (w) =>
-                        w.signals.find(
-                          (s) => s.asset_id === asset.id && s.signal_id === signal.signal_id,
-                        )?.value,
-                    )
-                    .filter((v): v is number => v !== undefined)}
-                />
+                {'provenance' in signal && (
+                  <Sparkline
+                    label={`${signal.signal_id} observation history`}
+                    values={state.history
+                      .map(
+                        (w) =>
+                          w.signals.find(
+                            (s) => s.asset_id === asset.id && s.signal_id === signal.signal_id,
+                          )?.value,
+                      )
+                      .filter((v): v is number => v !== undefined)}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -290,6 +327,38 @@ export function FactoryWorkspace() {
           </p>
         </aside>
       )}
+      {!active && preview.assignments[0] && (
+        <Link
+          href={`/operators?assignment=${preview.assignments[0].id}`}
+          className={previewStyles.banner}
+        >
+          <span className="dot stopped" />
+          <div>
+            <strong>
+              {preview.assignments[0].operatorId} {PHASE_COPY[preview.assignments[0].phase]}{' '}
+              {preview.assignments[0].assetId}
+            </strong>
+            <small>
+              {preview.assignments[0].id} · {preview.assignments[0].severity} · synthetic dispatch
+            </small>
+          </div>
+        </Link>
+      )}
+      {!active && !preview.assignments[0] && preview.oocIds.length > 0 && (
+        <div className={previewStyles.banner} role="status">
+          <span className="dot stopped" />
+          <div>
+            <strong>
+              Preview OOC on {preview.oocIds.length} cell
+              {preview.oocIds.length === 1 ? '' : 's'}
+            </strong>
+            <small>
+              {preview.oocIds.slice(0, 4).join(', ')}
+              {preview.oocIds.length > 4 ? '…' : ''} · synthetic limits only
+            </small>
+          </div>
+        </div>
+      )}
       {active && (
         <Link href={`/incidents?incident=${incident.id}`} className="factory-incident-toast">
           <span className="dot degrading" />
@@ -312,7 +381,8 @@ export function FactoryWorkspace() {
             sources with current data
           </p>
           <small>
-            Unconnected equipment stays unknown. Historical evidence is available in Monitor.
+            Unconnected equipment stays unknown. Synthetic overlays run only in explicit preview
+            mode.
           </small>
         </div>
         <Link className="primary" href="/monitoring">

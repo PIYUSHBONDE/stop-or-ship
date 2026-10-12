@@ -1,5 +1,43 @@
 # Implementation status
 
+## PR #4 integration — 12 October 2026
+
+Integrated PR head `d05c512` with main `0a81537`. Resolved README, status and application-shell conflicts while retaining Gemini investigation, the contextual assistant, voice and server workflow authority. Incoming incident tables, landing-page design, equipment geometry, guides and preview components are retained. Operations and Maintenance stay in navigation; verified repair memory remains prominent. Local authentication is labelled email/password rather than provider SSO.
+
+Synthetic telemetry and operator dispatch require explicit `?preview=1`. Preview state remounts across plant/mode changes; normal Monitor uses reviewed sources, normal Plant does not substitute generated readings, and normal incident counts exclude preview cases. Preview records cannot authorize work or verify repairs. Source contracts, backend implementation, dependency lockfiles and database migrations are unchanged.
+
+### Observed acceptance
+
+- **130 backend tests passed in 382.82 seconds**. Two upstream deprecation warnings and a Windows pytest cache permission warning remain. Initial sandbox runs could not open temporary SQLite databases; running outside that restriction passed without application changes.
+- **16 frontend unit tests passed**. **11 browser checks passed in 5.3 minutes**, including dirty decisions, refresh, authorized maintenance, three actual 60-second recovery windows, verified technician correction, assistant/citations/voice controls, narrow screens and WebGL fallback. An additional preview opt-in/isolation browser regression passed in 12.3 seconds.
+- Ruff lint/format, ESLint, Prettier, TypeScript, read-only OpenAPI/TypeScript contract checks and production Docker build passed. Native route generation initially hit Windows sandbox path denial; expanded-access type checking passed.
+- Isolated project `plantsense-pr4-acceptance` used port 3002 and its own volume. Container isolation, health, HTTP headers and unauthenticated access checks passed. Main staff data received no acceptance writes. Browser checks used scripted AI/provider doubles; no new live Gemini or speech evaluation is claimed.
+
+The incoming iteration notes below preserve branch-specific history and results; this integration section describes the merged behaviour. Development remains local. Preview ledger data stays browser-local, not authoritative plant workflow data.
+
+## Plant synthetic preview overlay — incoming branch history
+
+The plant explorer now generates a session-scoped synthetic preview for every asset at runtime. Hover and a 2.5-second scan show labeled preview readings above equipment. Preview metrics also compare against synthetic control limits; out-of-control cells flash on the floor. A labeled operator roster then assigns by experience and severity, walks to the cell, and clears the excursion. `/operators` monitors those assignment IDs live. `/monitoring` shows machine cards; each card opens `/monitoring/{asset}` for graphs and case history. Preview OOC cases store occurred, attended and fixed times plus the operator note and appear on `/incidents`. `/memory` is the plant guide. Operations and Maintenance are removed from the rail. Preview repairs stay on the cell for at least two minutes before they clear. Those values do not write sources, change condition, or authorize work. Unconnected equipment remains unknown.
+
+### Observed acceptance
+
+- Frontend unit checks cover deterministic preview generation for all equipment types, OOC envelope breaches, operator assignment by experience and severity, and per-machine preview record storage.
+- Operational inspector copy still states that unconnected equipment has no current data.
+- `/maintenance` again renders the authorized-repair workspace so “Open authorized work order” can reach **Start approved repair**. It stays off the rail.
+- Local `scripts/validate.py --build` passed: Ruff, OpenAPI, Prettier, TypeScript, ESLint, **97** backend tests, **16** frontend unit checks, and the Next.js production build. Isolated browser acceptance was not a clean pass on this Windows host.
+
+## Home sign-in landing — incoming branch history
+
+The public home route is now a staff sign-in landing instead of an immediate workspace redirect. Google and Microsoft continue into a two-field work-email form. Initial administrator name, organization and plant are derived from the email, so those enrollment fields are no longer shown. Cloud identity providers are not connected; the local staff cookie session remains authoritative.
+
+### Observed acceptance
+
+- TypeScript, ESLint, Prettier and **4 frontend unit checks** passed, including email-to-identity derivation for `product-owner@example.test`.
+- Playwright against the native local app at `http://127.0.0.1:3000/` showed Continue with Google/Microsoft, then Email/Password/Sign in on desktop and a 390px viewport. No anonymous demo control is present.
+- Product browser acceptance was not re-run against an isolated Compose stack in this iteration.
+
+AI remains explicitly scripted. Managed SSO is still a later identity gate.
+
 ## Contextual assistant and Google voice — current iteration
 
 Ask PlantSense adds an authenticated contextual drawer with six in-tab exchanges, source inspection, saved deterministic INR cards and approved navigation. One bounded Gemini call answers a question; investigation agents and workflow authority are unchanged. Asset/incident consistency is checked server-side, and equipment-only context excludes unrelated latest incidents. All requests run through the shared serialized controller; long assistant requests cannot silently queue approvals. Context changes discard old answers and stop voice.

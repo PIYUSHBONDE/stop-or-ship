@@ -5,16 +5,12 @@ test.describe.configure({ mode: 'serial' });
 async function openAssistant(page: Page) {
   await page.goto('/workspace');
   const access = await (await page.request.get('/api/v1/access/state')).json();
-  if (access.setup_required) {
-    await page.getByLabel('Your name', { exact: true }).fill('Product owner');
-    await page.getByLabel('Organization name').fill('Product acceptance');
-    await page.getByLabel('Plant name', { exact: true }).fill('Production foundation plant');
-  }
+  await page.getByRole('button', { name: 'Continue with email', exact: true }).click();
   await page.getByLabel('Email', { exact: true }).fill('product-owner@example.test');
   await page.getByLabel('Password', { exact: true }).fill('testing-only strong passphrase!');
   await page
     .getByRole('button', {
-      name: access.setup_required ? 'Create plant workspace' : 'Sign in',
+      name: access.setup_required ? 'Get started' : 'Sign in',
       exact: true,
     })
     .click();

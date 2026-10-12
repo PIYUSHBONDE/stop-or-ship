@@ -5,12 +5,19 @@ import { Radio, Plus, ArrowRight, ShieldCheck, Search } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import type { components } from '@/lib/generated/api-schema';
 import styles from '@/components/layout/workspace.module.css';
+import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
+import { PreviewMonitoringWorkspace } from './preview-monitoring-workspace';
 import { SourceEditor } from '@/features/monitoring/components/source-editor';
 import { ImportPanel } from '@/features/monitoring/components/import-panel';
 
 type Source = components['schemas']['SourceView'];
 
 export function MonitoringWorkspace() {
+  const preview = usePreviewDispatch();
+  return preview.enabled ? <PreviewMonitoringWorkspace /> : <OperationalMonitoringWorkspace />;
+}
+
+function OperationalMonitoringWorkspace() {
   const { state, can, busy } = usePlant();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<Source | 'new' | null>(null);

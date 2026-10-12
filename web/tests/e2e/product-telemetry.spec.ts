@@ -5,22 +5,20 @@ const password = 'testing-only strong passphrase!';
 const email = 'product-owner@example.test';
 
 async function owner(page: Page) {
-  await page.goto('/workspace');
+  await page.goto('/');
   const access = await (await page.request.get('/api/v1/access/state')).json();
-  if (access.setup_required) {
-    await page.getByLabel('Your name', { exact: true }).fill('Product owner');
-    await page.getByLabel('Organization name').fill('Product acceptance');
-    await page.getByLabel('Plant name', { exact: true }).fill('Production foundation plant');
-  }
+  await page.getByRole('button', { name: 'Continue with email' }).click();
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page
     .getByRole('button', {
-      name: access.setup_required ? 'Create plant workspace' : 'Sign in',
+      name: access.setup_required ? 'Get started' : 'Sign in',
       exact: true,
     })
     .click();
-  await expect(page.getByRole('heading', { name: 'Welcome, Product owner' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome, Product Owner' })).toBeVisible({
+    timeout: 30000,
+  });
   const signed = await (await page.request.get('/api/v1/access/state')).json();
   const plant = signed.plants[0].id as string;
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
@@ -39,7 +37,8 @@ test('staff access is required; no anonymous fallback', async ({ page }) => {
     if (/local-identity|\/sessions/.test(request.url())) anonymous.push(request.url());
   });
   await page.goto('/plant');
-  await expect(page).toHaveURL(/\/workspace/);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('button', { name: 'Continue with email' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open isolated demo' })).toHaveCount(0);
   expect(anonymous).toEqual([]);
 });
@@ -68,11 +67,13 @@ test('expanded plant has unknown equipment and separate production measures', as
   expect(state.measured_output_per_hour).toBeNull();
   await page.getByRole('button', { name: '2D plan', exact: true }).click();
   await page.screenshot({ path: '../docs/artifacts/product-plant.png' });
+  await expect(page.getByText(/measured parts\/h/)).toBeVisible();
+  await expect(page.getByText(/parts\/h rated capacity/)).toBeVisible();
+  await expect(page.getByText('synthetic preview � not plant health')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Maintenance', exact: true })).toBeVisible();
   await page.goto('/operations');
   await expect(page.getByText('Measured plant output')).toBeVisible();
   await expect(page.getByText('Unavailable', { exact: true })).toBeVisible();
-  await expect(page.getByText('Rated plant capacity')).toBeVisible();
-  await expect(page.getByText('Estimated available output')).toBeVisible();
   await page.screenshot({ path: '../docs/artifacts/product-operations.png' });
 });
 
@@ -177,6 +178,8 @@ test('operational incident, dirty decisions, authorized repair and incoming reco
   await page.getByRole('radio', { name: /Stop.*repair now/ }).check();
   await approve.click();
   await page.getByRole('link', { name: 'Open authorized work order' }).click();
+  await expect(page).toHaveURL(/\/maintenance/);
+  await expect(page.getByRole('heading', { name: 'Maintenance workspace' })).toBeVisible();
   await page.getByRole('button', { name: 'Start approved repair' }).click();
   await page.getByLabel('Observed root cause').fill('Valve bypass confirmed by inspection');
   await page.getByLabel('Repair performed').fill('Repaired and inspected the valve assembly');
@@ -242,4 +245,26 @@ test('WebGL failure retains the plant plan and keyboard equipment access', async
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Cooling unit', exact: true })).toBeVisible();
   await expect(page.getByText('No data connected · Condition unknown')).toBeVisible();
+});
+
+test('synthetic preview is opt-in and does not persist into operational pages', async ({
+  page,
+}) => {
+  const plant = await owner(page);
+  await page.goto('/monitoring?preview=1');
+  await expect(page.getByRole('heading', { name: 'Machine records', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await page.goto('/monitoring');
+  await expect(page.getByRole('heading', { name: 'Telemetry sources', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Machine preview records' })).toHaveCount(0);
+  await page.goto('/incidents');
+  await expect(page.locator('tbody').getByText('preview', { exact: true })).toHaveCount(0);
+  const snapshot = await (await page.request.get(`/api/v1/plants/${plant}/snapshot`)).json();
+  expect(
+    snapshot.incidents.every(
+      (incident: { record_origin: string }) =>
+        incident.record_origin === 'plant_observation' ||
+        incident.record_origin === 'historical_import',
+    ),
+  ).toBeTruthy();
 });
