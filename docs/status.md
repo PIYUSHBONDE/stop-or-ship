@@ -1,5 +1,24 @@
 # Implementation status
 
+## UI restoration to bd31976 — 14 October 2026
+
+At the user's request, restored the interface from `bd31976`: app shell/navigation, incident table/detail, maintenance, guide-first Memory, provider selection behavior and the assistant's visible UI. Removed the added case dossier/journey panels and separate scenario-history panel. No new layout, styling or navigation design is introduced. A source comparison verifies every page/layout/style file matches that baseline; the assistant's rendered JSX and wrapper also match, with only nonvisual request-context compatibility fixes retained.
+
+The retained backend still rejects mixed operational-incident/browser-simulation requests. The restored assistant therefore omits operational incident context for synthetic screens and omits browser simulation for operational screens. It retains stable retries and correct recovering/recovered status. Generated contracts and backend safeguards are unchanged. Existing accounts, samples and case records are retained; optional detection-context metadata continues to persist internally without exposing the removed UI.
+
+The repository's local `AGENTS.md` now records the user's requirement: ask before changing the established layout, styling, visible workflow or navigation. Future feature/backend authorization does not authorize redesign.
+
+### Observed restoration acceptance
+
+- **All 21 browser checks passed in one 5.6-minute run**, including sign-in, assistant/citations/voice doubles and stable retries, automatic simulation, pause/speed/reset, refresh recovery, machine/assignment links, historical selection, case records, cross-tab ownership, invalid/unavailable storage, source import/provenance, human approval, technician completion, three incoming recovery windows, verified memory, evidence dialogs and WebGL/keyboard fallback.
+- Added restoration checks passed the original guide search/detail, machine-record link, setup configuration loading, navigation, 430px layout, absence of removed panels and assistant context compatibility on both Plant views. A separate focused check passed original case pagination, expansion, collapse and machine links with six isolated browser fixture records in **10.7 seconds (17.2 seconds including setup)**.
+- **23 frontend unit checks passed in 3.2 seconds**; **18 assistant/backend integration checks passed in 53.29 seconds** using isolated databases. The full 134-test backend result from `abc4906` remains applicable to the unchanged backend; the targeted suite was rerun for restored-client compatibility. One upstream Starlette/httpx deprecation warning remains in the targeted run.
+- Production build, explicit TypeScript, ESLint, Prettier, Ruff lint/format, read-only OpenAPI/TypeScript drift and whitespace checks passed. Source comparison confirms the restored page/layout/style files and assistant rendered UI match `bd31976`. Desktop Plant and mobile Memory screenshots were visually inspected.
+
+Acceptance used ports 3003/8003 and the separate `.runtime/statistics-integration/ui-restoration-acceptance.db`; its servers are stopped and fixture data retained. The restored review UI is running on `http://127.0.0.1:3002/` against the existing separate review database on port 8002. Its health endpoint returns `ok`. No account, saved sample/case, primary staff database, original branch, or cloud deployment was replaced. Live AI remains scripted under the existing failed-evaluation gate; no live-provider requests or cloud deployment are part of this restoration. These checks establish the listed local coverage, not a guarantee that every possible input, device or industrial integration works.
+
+The entries below describe earlier iterations, including UI changes subsequently removed by this restoration.
+
 ## Connected case workflow and hackathon alignment — 14 October 2026
 
 The integration branch now provides a case dossier for simulated faults: saved detection value/envelope, bounded detection-time dependency and line-capacity context, response milestones, explicit uncertainty, assistant handoff and earlier scenario outcomes. Context is captured once for new cases and survives sample eviction and later configuration changes. Legacy cases retain their records and show unavailable historical topology; corrupt optional dossier metadata is discarded without removing the original case. Scripted response text no longer impersonates a technician finding. Scenario history appears separately from verified operational repair memory, after the existing plant guides.

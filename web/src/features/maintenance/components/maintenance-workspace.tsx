@@ -7,7 +7,6 @@ import { MaintenanceForm } from './maintenance-form';
 import { WorkspaceFrame } from '@/components/layout/workspace-frame';
 import { stateNames } from '@/lib/workflow';
 import styles from '@/components/layout/workspace.module.css';
-import { OperationalJourney } from '@/features/incidents/components/operational-journey';
 
 export default function MaintenanceWorkspace() {
   const { state } = usePlant();
@@ -50,7 +49,6 @@ export default function MaintenanceWorkspace() {
             </Link>
           ))}
       </div>
-      {incident && <OperationalJourney incident={incident} />}
       <MaintenanceForm key={incident?.id || 'empty'} />
     </WorkspaceFrame>
   );

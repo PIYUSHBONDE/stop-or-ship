@@ -44,8 +44,8 @@ Defer new physics scenarios, inventory, ERP/CMMS/PLC adapters, broad scheduling 
 
 New browser cases save their synthetic detection value/envelope and a bounded copy of affected equipment and line capacity. That snapshot survives sample eviction and later layout changes. Legacy cases without it show unavailable historical topology; no current topology is assigned retroactively.
 
-Case dossiers distinguish detection, scripted attendance, timed repair and timed recovery. Earlier recovered scenarios are rehearsal history. Neither timer completion nor that history confirms a mechanical cause or enters operational repair memory.
+The added dossier and scenario-history UI were removed at the user's request. The interface is restored to `bd31976`; further visual or navigation changes require approval. Scenario timers do not confirm a mechanical cause or enter operational repair memory.
 
-Operational case links select the observations view and incident equipment. Maintenance links retain the incident; confirmed-repair links filter Memory to that incident and return to the original investigation. Assistant requests with operational incident context cannot also carry browser simulation. Saved synthetic detection has a typed, ownership-checked citation, separate from current browser readings and authoritative plant state.
+Connected journey panels and matching-memory navigation are proposed work requiring design approval, not current restored UI behavior. Assistant requests with operational incident context cannot also carry browser simulation. Optional saved synthetic detection remains a typed, ownership-checked backend source, separate from current browser readings and authoritative plant state.
 
 Observed results and active limitations belong in [status](../status.md).

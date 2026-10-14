@@ -5,7 +5,7 @@ Earlier local recordings show previous interfaces and a scripted investigator. T
 | Time | Show | Narration |
 |---|---|---|
 | 0:00–0:20 | Automatic simulated plant, pump fault and unaffected parallel line | “PlantSense helps a manufacturing team connect abnormal readings to a maintenance decision. This reference factory illustrates how a pump affects one line. These readings and output are simulated.” |
-| 0:20–0:35 | Saved synthetic case dossier | “Detection facts stay attached to the case even after readings change. Automatic repair and recovery here are a scenario, not an inspection or authorization.” |
+| 0:20–0:35 | Existing machine records and expandable case table | “The case stores detection, attendance, repair and recovery times. Automatic repair and recovery here are a scenario, not an inspection or authorization.” |
 | 0:35–1:05 | Explicit switch to isolated authored operational-workflow fixture; investigation evidence | “Now we demonstrate the decision workflow with labeled authored inputs. The read-only investigator gathers observations, procedures and confirmed history, ranks possible causes and identifies missing checks.” |
 | 1:05–1:35 | Reliability/Production positions and intervention comparison | “Both perspectives receive the same evidence. Python calculates repair and production trade-offs. Failure exposure is a configured planning assumption, not a measured probability or realized saving.” |
 | 1:35–1:55 | Exact-version human approval and authorized work | “The manager approves this version of the plan. AI cannot authorize work. Physical isolation and site procedures remain the responsibility of authorized people.” |

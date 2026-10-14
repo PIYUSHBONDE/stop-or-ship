@@ -98,7 +98,7 @@ export function fixedAtFor(item: PreviewAssignment) {
 
 export function caseMessage(item: PreviewAssignment) {
   const signal = item.signalId.replaceAll('_', ' ');
-  return `${signal} reached ${item.value} ${item.unit}, outside preview limits ${item.low}–${item.high}. ${item.severity} OOC on ${item.assetId}. Scripted scenario response; no technician finding has been recorded.`;
+  return `${signal} reached ${item.value} ${item.unit}, outside preview limits ${item.low}–${item.high}. ${item.severity} OOC on ${item.assetId}. Operator note: inspect the ${signal} path, confirm the envelope, and restore the cell before release.`;
 }
 
 export function seriesFor(samples: MachineSample[], signalId: string) {
