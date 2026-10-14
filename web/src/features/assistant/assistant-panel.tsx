@@ -10,6 +10,7 @@ import { usePlant } from '@/providers/plant-session-provider';
 import type { components } from '@/lib/generated/api-schema';
 import { startRecording } from './recording';
 import styles from './assistant.module.css';
+import { simulationCaseStatus } from '@/features/incidents/lib/simulation-case';
 
 type Schema = components['schemas'];
 type Turn = { question: string; response: Schema['AssistantAnswer'] };
@@ -20,9 +21,13 @@ function invalidateVoice(epoch: { current: number }) {
 
 export function AssistantPanel() {
   const { state } = usePlant();
+  const pathname = usePathname();
+  const query = useSearchParams();
   if (!state?.workspace) return null;
   return (
-    <Panel key={`${state.workspace.user.id}:${state.workspace.id}:${state.incident?.id || ''}`} />
+    <Panel
+      key={`${state.workspace.user.id}:${state.workspace.id}:${pathname}:${query.get('view')}:${query.get('case')}:${query.get('assignment')}:${query.get('incident')}`}
+    />
   );
 }
 
@@ -48,19 +53,46 @@ function Panel() {
   const voiceEpoch = useRef(0);
   const screen = useRef(pathname);
   screen.current = pathname;
-  const incidentScreen = pathname === '/incidents' || pathname === '/maintenance';
+  const incidentScreen =
+    pathname === '/incidents' ||
+    pathname === '/maintenance' ||
+    (pathname === '/memory' && !!query.get('incident'));
+  const synthetic =
+    !query.get('incident') &&
+    query.get('view') !== 'observations' &&
+    (pathname === '/plant' ||
+      pathname.startsWith('/monitoring') ||
+      pathname === '/operators' ||
+      (pathname === '/incidents' && !!query.get('case')));
   const selectedCase = simulation.ledger.cases.find(
     (c) => c.id === (query.get('case') || query.get('assignment')),
   );
+  const machineRoute = pathname.startsWith('/monitoring/') ? pathname.split('/')[2] : null;
   const assetId =
     selectedCase?.assetId ||
+    state?.assets.find((a) => a.id === machineRoute)?.id ||
     (incidentScreen && state?.incident ? state.incident.asset_id : selected);
   const context = {
-    incident_id: !selectedCase && state?.incident?.asset_id === assetId ? state.incident.id : null,
+    incident_id:
+      !synthetic &&
+      query.get('incident') === state?.incident?.id &&
+      state?.incident?.asset_id === assetId
+        ? state.incident.id
+        : null,
     asset_id: state?.assets.some((a) => a.id === assetId) ? assetId : null,
   };
   const currentContext = useRef(JSON.stringify({ ...context, case: selectedCase?.id }));
   currentContext.current = JSON.stringify({ ...context, case: selectedCase?.id });
+  const selectedCaseId = selectedCase?.id;
+
+  useEffect(() => {
+    if (query.get('ask') === 'case' && selectedCaseId) {
+      setOpen(true);
+      setInput(
+        'Explain this simulated case from its saved detection evidence. What remains unconfirmed, and how does scenario recovery differ from operational verification?',
+      );
+    }
+  }, [query, selectedCaseId]);
 
   function stopPlayback() {
     player.current?.pause();
@@ -103,6 +135,20 @@ function Panel() {
 
   async function send() {
     if (!input.trim() || pending || recording || busy) return;
+    if (
+      selectedCase &&
+      [
+        selectedCase.occurredAt,
+        selectedCase.attendedAt,
+        selectedCase.fixedAt,
+        selectedCase.clearedAt,
+      ].some((at) => at !== null && !Number.isFinite(new Date(at).getTime()))
+    ) {
+      setError(
+        'Saved case timestamps are invalid. This case cannot be submitted to the assistant.',
+      );
+      return;
+    }
     const question = input.trim();
     const base = {
       ...context,
@@ -110,37 +156,80 @@ function Panel() {
       screen: pathname.split('/')[1] as Schema['AssistantQuestion']['screen'],
       history: turns.slice(-6).map((t) => ({ question: t.question, answer: t.response.answer })),
     };
-    const simulationContext: Schema['SimulationContext'] = {
-      captured_at: new Date().toISOString(),
+    const simulationContext: Schema['SimulationContext'] | undefined = synthetic
+      ? {
+          captured_at: new Date().toISOString(),
+          selected_case_id: selectedCase?.id ?? null,
+          equipment: (state?.assets ?? []).slice(0, 36).map((a) => ({
+            asset_id: a.id,
+            readings: (simulation.readings[a.id] ?? []).slice(0, 8),
+          })),
+          assignments: simulation.assignments.slice(0, 5).map((a) => ({
+            id: a.id,
+            asset_id: a.assetId,
+            operator_id: a.operatorId,
+            status: a.phase,
+            note: 'Simulated operator assignment',
+          })),
+          cases: [
+            ...(selectedCase ? [selectedCase] : []),
+            ...simulation.ledger.cases.filter((c) => c.id !== selectedCase?.id),
+          ]
+            .slice(0, 10)
+            .map((c) => ({
+              id: c.id,
+              asset_id: c.assetId,
+              operator_id: c.operatorId,
+              status: simulationCaseStatus(c),
+              note: c.message.slice(0, 600),
+            })),
+          case_evidence: selectedCase
+            ? {
+                case_id: selectedCase.id,
+                asset_id: selectedCase.assetId,
+                occurred_at: new Date(selectedCase.occurredAt).toISOString(),
+                attended_at: selectedCase.attendedAt
+                  ? new Date(selectedCase.attendedAt).toISOString()
+                  : null,
+                fixed_at: selectedCase.fixedAt
+                  ? new Date(selectedCase.fixedAt).toISOString()
+                  : null,
+                recovered_at: selectedCase.clearedAt
+                  ? new Date(selectedCase.clearedAt).toISOString()
+                  : null,
+                interrupted: !!selectedCase.interrupted,
+                detection: {
+                  signal_id: selectedCase.signalId,
+                  value: selectedCase.value,
+                  unit: selectedCase.unit,
+                  low: selectedCase.metadata.low,
+                  high: selectedCase.metadata.high,
+                  ooc:
+                    selectedCase.value < selectedCase.metadata.low ||
+                    selectedCase.value > selectedCase.metadata.high,
+                },
+                topology_captured: !!selectedCase.context,
+                affected_asset_ids: selectedCase.context?.affected.map((a) => a.id) ?? [],
+                lines:
+                  selectedCase.context?.lines.map((a) => ({
+                    id: a.id,
+                    name: a.name,
+                    capacity_per_hour: a.capacity,
+                  })) ?? [],
+                recovery_basis: 'scenario_timer',
+              }
+            : null,
+        }
+      : undefined;
+    const intent = JSON.stringify({
+      ...base,
+      synthetic,
       selected_case_id: selectedCase?.id ?? null,
-      equipment: (state?.assets ?? [])
-        .slice(0, 36)
-        .map((a) => ({ asset_id: a.id, readings: (simulation.readings[a.id] ?? []).slice(0, 8) })),
-      assignments: simulation.assignments.slice(0, 5).map((a) => ({
-        id: a.id,
-        asset_id: a.assetId,
-        operator_id: a.operatorId,
-        status: a.phase,
-        note: 'Simulated operator assignment',
-      })),
-      cases: [
-        ...(selectedCase ? [selectedCase] : []),
-        ...simulation.ledger.cases.filter((c) => c.id !== selectedCase?.id),
-      ]
-        .slice(0, 10)
-        .map((c) => ({
-          id: c.id,
-          asset_id: c.assetId,
-          operator_id: c.operatorId,
-          status: c.interrupted ? 'interrupted' : c.fixedAt ? 'cleared' : 'active',
-          note: c.message.slice(0, 600),
-        })),
-    };
-    const intent = JSON.stringify({ ...base, selected_case_id: selectedCase?.id ?? null });
+    });
     const body: Schema['AssistantQuestion'] =
       retry.current?.intent === intent
         ? retry.current.body
-        : { ...base, simulation_context: simulationContext };
+        : { ...base, ...(simulationContext ? { simulation_context: simulationContext } : {}) };
     const key = retry.current?.intent === intent ? retry.current.key : crypto.randomUUID();
     retry.current = { intent, key, body };
     setPending('Answering from plant evidence…');
@@ -278,8 +367,13 @@ function Panel() {
     }
   }
 
-  const suggestions =
-    pathname === '/memory'
+  const suggestions = selectedCase
+    ? [
+        'Explain this simulated case from its saved detection evidence.',
+        'What remains unconfirmed about the mechanical cause?',
+        'How does scenario recovery differ from operational verification?',
+      ]
+    : pathname === '/memory'
       ? ['What verified repairs exist for this equipment?', 'What was corrected after repair?']
       : pathname === '/incidents' || pathname === '/maintenance'
         ? [
@@ -308,11 +402,17 @@ function Panel() {
           </div>
           <Dialog.Description className={styles.context}>
             {state?.plant.name} · {context.asset_id || 'All equipment'} ·{' '}
-            {context.incident_id ? `Incident ${context.incident_id.slice(0, 8)}` : 'No incident'}
+            {selectedCase
+              ? `Simulated case ${selectedCase.id}`
+              : context.incident_id
+                ? `Incident ${context.incident_id.slice(0, 8)}`
+                : 'No selected case'}
           </Dialog.Description>
           <p className={styles.note}>
-            Screen readings and operator cases are synthetic simulation. Read-only help. Costs come
-            from saved calculations. Approvals remain in existing controls.
+            {synthetic
+              ? 'Synthetic screen context. Saved case detection is historical; current readings may differ. Scenario recovery is not operational verification.'
+              : 'Operational context only. Missing observations remain unknown. Saved evidence and calculations retain their own provenance.'}{' '}
+            Read-only help; approvals remain in existing controls.
           </p>
           <div className={styles.conversation} aria-live="polite">
             {!turns.length && (

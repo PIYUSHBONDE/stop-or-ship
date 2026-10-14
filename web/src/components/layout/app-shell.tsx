@@ -28,7 +28,11 @@ const destinations = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const operational = useSearchParams().get('view') === 'observations';
+  const query = useSearchParams();
+  const operational =
+    query.get('view') === 'observations' ||
+    pathname === '/maintenance' ||
+    (pathname === '/incidents' && !!query.get('incident'));
   const { state, connected, error, busy, dismissError } = usePlant();
   const preview = usePreviewDispatch();
   if (pathname === '/' || pathname === '/evidence-preview' || pathname === '/workspace')
@@ -66,9 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {destinations.map(({ href, name, icon: Icon }) => (
           <Link
             key={href}
-            href={
-              state.workspace && state.incident ? `${href}?incident=${state.incident.id}` : href
-            }
+            href={href}
             className={`rail-button ${pathname.startsWith(href) ? 'active' : ''}`}
             aria-current={pathname.startsWith(href) ? 'page' : undefined}
           >
@@ -100,7 +102,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="topbar-right">
             <AssistantPanel />
             <span className="demo-pill">
-              {operational ? 'Reviewed observations' : 'Simulated plant'}
+              {operational
+                ? 'Operational case / observations'
+                : pathname === '/memory'
+                  ? 'Guides and repair memory'
+                  : pathname === '/incidents' && !query.get('case')
+                    ? 'Case records'
+                    : pathname === '/plant-setup'
+                      ? 'Plant configuration'
+                      : 'Simulated plant'}
             </span>
             <span className="demo-pill operational-status">
               {state.sources?.some(

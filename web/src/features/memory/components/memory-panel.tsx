@@ -2,9 +2,15 @@
 import { Cpu, ShieldCheck } from 'lucide-react';
 import type { State } from '@/lib/types';
 import { Empty } from '@/components/ui/dashboard-primitives';
+import Link from 'next/link';
 
-type Props = { state: State };
-export function MemoryPanel({ state }: Props) {
+type Props = { state: State; incidentId?: string | null };
+export function MemoryPanel({ state, incidentId }: Props) {
+  const repairs = state.memory.filter(
+    (repair) =>
+      repair.record_origin === 'plant_observation' &&
+      (!incidentId || repair.incident_id === incidentId),
+  );
   return (
     <>
       <div className="section-label">VERIFIED RELIABILITY MEMORY</div>
@@ -13,14 +19,22 @@ export function MemoryPanel({ state }: Props) {
         Only recovery established from post-repair operational observations enters confirmed memory.
         The original diagnosis and technician correction remain traceable.
       </p>
-      {state.memory.length === 0 ? (
+      {incidentId && (
+        <p className="muted">
+          Showing this incident’s verified repair.{' '}
+          <Link href="/memory">Show all confirmed repairs</Link>
+        </p>
+      )}
+      {repairs.length === 0 ? (
         <Empty
           icon={<Cpu size={32} />}
-          title="Knowledge starts with proof"
+          title={
+            incidentId ? 'No verified repair for this incident' : 'Knowledge starts with proof'
+          }
           text="A technician's note enters confirmed memory only after telemetry verifies recovery."
         />
       ) : (
-        state.memory.map((repair) => (
+        repairs.map((repair) => (
           <div className="memory-card" key={repair.id}>
             <span className="verified-label">
               <ShieldCheck size={13} /> VERIFIED FROM OPERATIONAL OBSERVATIONS
@@ -39,6 +53,9 @@ export function MemoryPanel({ state }: Props) {
               <dt>Verified</dt>
               <dd>{repair.verified_at}</dd>
             </dl>
+            <Link href={`/incidents?incident=${repair.incident_id}`}>
+              Original investigation and decision
+            </Link>
           </div>
         ))
       )}

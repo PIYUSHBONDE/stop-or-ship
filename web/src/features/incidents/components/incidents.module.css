@@ -29,6 +29,10 @@
   line-height: 1.6;
   color: var(--muted);
 }
+.pageHeader > div {
+  min-width: 0;
+  max-width: 100%;
+}
 .counts {
   display: flex;
   align-items: center;
@@ -1054,4 +1058,46 @@
 .detailRow td {
   background: #10191f;
   padding: 0 12px 16px;
+}
+
+@media (max-width: 700px) {
+  .table {
+    table-layout: fixed;
+  }
+  .table th:first-child {
+    width: 12%;
+  }
+  .table th:nth-child(2),
+  .table th:nth-child(3),
+  .table th:nth-child(5) {
+    width: 29.33%;
+  }
+  .table th,
+  .table td {
+    padding: 10px 5px;
+    overflow-wrap: anywhere;
+  }
+  .table th:nth-child(4),
+  .table th:nth-child(6),
+  .table tr:not(.detailRow) td:nth-child(4),
+  .table tr:not(.detailRow) td:nth-child(6) {
+    display: none;
+  }
+  .detailRow td {
+    padding: 0 4px 12px;
+  }
+  .pageHeader {
+    display: block;
+  }
+  .pageHeader > div:first-child {
+    width: 100%;
+  }
+  .pageHeader p {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .pageHeader .counts {
+    width: fit-content;
+    margin-top: 18px;
+  }
 }

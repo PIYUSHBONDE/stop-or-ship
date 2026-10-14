@@ -24,6 +24,8 @@ test('completed assignment links win over active jobs and retain timeline comple
       { timeout: 20000 },
     )
     .toBeGreaterThan(0);
+  // Freeze the live writer before replacing its state with the elapsed-time fixture.
+  await page.getByRole('button', { name: 'Pause simulation', exact: true }).click();
   const expected = await page.evaluate((k) => {
     const saved = JSON.parse(localStorage.getItem(k)!);
     const completed = {
@@ -35,6 +37,7 @@ test('completed assignment links win over active jobs and retain timeline comple
     saved.snapshot.history = [];
     saved.ledger.cases = [];
     saved.process.elapsed = completed.openedAt - saved.process.epoch + 300000;
+    saved.process.paused = false;
     saved.advancedAt = Date.now();
     localStorage.setItem(k, JSON.stringify(saved));
     return (
@@ -191,6 +194,8 @@ test('invalid saved case metadata is preserved without breaking rendering', asyn
       { timeout: 20000 },
     )
     .toBeGreaterThan(0);
+  // Hold the writer so a valid tick cannot overwrite the deliberately corrupt fixture before reload.
+  await page.getByRole('button', { name: 'Pause simulation', exact: true }).click();
   await page.evaluate((k) => {
     const saved = JSON.parse(localStorage.getItem(k)!);
     saved.ledger.cases[0].operatorName = {};

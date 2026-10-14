@@ -24,8 +24,9 @@ def require_assistant_evaluation(*, voice=False):
                 "historical_boundary",
                 "saved_costs",
                 "approval_blockers",
+                "synthetic_case_boundary",
             }
-            and len(report["cases"]) == 5
+            and len(report["cases"]) == 6
             and all(c["passed"] is True for c in report["cases"])
             and (not voice or report.get("voice_passed") is True)
         )

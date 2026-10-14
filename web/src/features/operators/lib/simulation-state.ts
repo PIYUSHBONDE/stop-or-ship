@@ -5,6 +5,7 @@ import {
 } from '@/features/monitoring/lib/preview-records';
 import type { DispatchSnapshot } from './preview-dispatch';
 import type { ProcessState } from '@/features/plant/lib/process-simulation';
+import { validCaseContext } from '@/features/incidents/lib/simulation-case';
 
 export type SimulationState = {
   version: 2;
@@ -108,6 +109,8 @@ function validateLedger(ledger: PreviewLedger, plantId: string) {
   if (ledger.plantId !== plantId || !ledger.samples || !Array.isArray(ledger.cases))
     throw new Error('Invalid ledger');
   for (const item of ledger.cases) {
+    // An optional, corrupt dossier must not discard otherwise valid legacy records.
+    if (item.context && !validCaseContext(item.context)) delete item.context;
     if (
       ![
         item.id,

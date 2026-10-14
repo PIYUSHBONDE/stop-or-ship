@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { usePlantSession } from '@/hooks/use-plant-session';
 
@@ -31,6 +31,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     mode ? { plantId: mode.plantId, incidentId: query.get('incident') } : undefined,
   );
   const [selected, selectAsset] = useState('P-107');
+  const requestedAsset = query.get('asset');
+  const appliedSelection = useRef('');
+  const selectionKey = requestedAsset ? `${controller.state?.plant.id}:${requestedAsset}` : '';
+  useEffect(() => {
+    if (!requestedAsset) appliedSelection.current = '';
+    if (
+      requestedAsset &&
+      appliedSelection.current !== selectionKey &&
+      controller.state?.assets.some((a) => a.id === requestedAsset)
+    ) {
+      appliedSelection.current = selectionKey;
+      selectAsset(requestedAsset);
+    }
+  }, [requestedAsset, selectionKey, controller.state?.assets]);
   return (
     <SessionContext.Provider value={{ ...controller, selected, selectAsset }}>
       {children}

@@ -209,10 +209,20 @@ test('operational incident, dirty decisions, authorized repair and incoming reco
     expect(result.ok()).toBeTruthy();
   }
   await expect(page.getByRole('heading', { name: 'Recovery verified' })).toBeVisible();
-  await page.goto('/memory');
+  await page.getByRole('button', { name: 'View confirmed repair', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/memory\\?incident=${snapshot.incident.id}`));
   await expect(page.getByText('VERIFIED FROM OPERATIONAL OBSERVATIONS')).toBeVisible();
   await expect(page.getByText('Valve bypass confirmed by inspection').first()).toBeVisible();
   await page.screenshot({ path: '../.runtime/statistics-integration/product-memory.png' });
+  await page
+    .getByRole('link', { name: 'Original investigation and decision', exact: true })
+    .click();
+  await expect(page.getByLabel('Operational case journey')).toBeVisible();
+  await page.getByRole('link', { name: 'View equipment in Plant', exact: true }).click();
+  await expect(page).toHaveURL(/view=observations/);
+  await expect(page.getByRole('region', { name: 'Whole plant workspace' })).toBeVisible();
+  await page.getByRole('link', { name: 'Operators', exact: true }).click();
+  await expect(page).toHaveURL(/\/operators$/);
   expect(errors).toEqual([]);
 });
 

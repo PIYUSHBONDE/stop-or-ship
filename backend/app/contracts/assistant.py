@@ -33,12 +33,34 @@ class SimulationCase(RequestModel):
     note: str = Field(max_length=600)
 
 
+class SimulationImpactLine(RequestModel):
+    id: Text
+    name: Text
+    capacity_per_hour: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+
+
+class SimulationCaseEvidence(RequestModel):
+    case_id: Text
+    asset_id: Text
+    occurred_at: datetime
+    attended_at: datetime | None = None
+    fixed_at: datetime | None = None
+    recovered_at: datetime | None = None
+    interrupted: bool = False
+    detection: SimulationReading
+    topology_captured: bool
+    affected_asset_ids: list[Text] = Field(max_length=36)
+    lines: list[SimulationImpactLine] = Field(max_length=8)
+    recovery_basis: Literal["scenario_timer"] = "scenario_timer"
+
+
 class SimulationContext(RequestModel):
     captured_at: datetime
     selected_case_id: Text | None = None
     equipment: list[SimulationEquipment] = Field(max_length=36)
     assignments: list[SimulationCase] = Field(max_length=5)
     cases: list[SimulationCase] = Field(max_length=10)
+    case_evidence: SimulationCaseEvidence | None = None
 
 
 class Exchange(RequestModel):

@@ -2041,6 +2041,42 @@ export interface components {
             /** Note */
             note: string;
         };
+        /** SimulationCaseEvidence */
+        SimulationCaseEvidence: {
+            /** Case Id */
+            case_id: string;
+            /** Asset Id */
+            asset_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Attended At */
+            attended_at?: string | null;
+            /** Fixed At */
+            fixed_at?: string | null;
+            /** Recovered At */
+            recovered_at?: string | null;
+            /**
+             * Interrupted
+             * @default false
+             */
+            interrupted: boolean;
+            detection: components["schemas"]["SimulationReading"];
+            /** Topology Captured */
+            topology_captured: boolean;
+            /** Affected Asset Ids */
+            affected_asset_ids: string[];
+            /** Lines */
+            lines: components["schemas"]["SimulationImpactLine"][];
+            /**
+             * Recovery Basis
+             * @default scenario_timer
+             * @constant
+             */
+            recovery_basis: "scenario_timer";
+        };
         /** SimulationContext */
         SimulationContext: {
             /**
@@ -2056,6 +2092,7 @@ export interface components {
             assignments: components["schemas"]["SimulationCase"][];
             /** Cases */
             cases: components["schemas"]["SimulationCase"][];
+            case_evidence?: components["schemas"]["SimulationCaseEvidence"] | null;
         };
         /** SimulationEquipment */
         SimulationEquipment: {
@@ -2063,6 +2100,15 @@ export interface components {
             asset_id: string;
             /** Readings */
             readings: components["schemas"]["SimulationReading"][];
+        };
+        /** SimulationImpactLine */
+        SimulationImpactLine: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Capacity Per Hour */
+            capacity_per_hour: number;
         };
         /** SimulationReading */
         SimulationReading: {

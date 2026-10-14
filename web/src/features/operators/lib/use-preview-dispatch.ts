@@ -119,6 +119,7 @@ export function usePreviewDispatchState(catalog: ProcessCatalog, plantId = '') {
         now: view.now,
         open: advanced.snapshot.open,
         history: advanced.snapshot.history,
+        context: catalogRef.current,
       });
       const next: SimulationState = {
         ...base,

@@ -38,7 +38,7 @@ $env:GOOGLE_CLOUD_PROJECT='project-970d28ee-835b-4ca2-866'
 
 The WAV argument is a labelled local speech fixture, not a recorded industrial validation dataset. Acceptance used the spoken phrase “Pump P one zero seven pressure one hundred twenty five bar temperature sixty degrees Celsius.” Obtain an equivalent mono 16 kHz WAV before repeating this command. Reports, fixture audio, MP3 output and evaluation databases stay ignored in `.runtime`.
 
-The existing five-case investigation report and separate five-case assistant report must both match the backend fingerprint, provider and model. Voice additionally requires its own passing speech checks. Evaluation tooling can recheck speech alone with `--voice-only`; it preserves a matching passed text report and retains prior voice attempts. Never mark a failed report passing manually.
+The existing five-case investigation report and separate six-case assistant report must both match the backend fingerprint, provider and model. Voice additionally requires its own passing speech checks. Evaluation tooling can recheck speech alone with `--voice-only`; it preserves a matching passed text report and retains prior voice attempts. Never mark a failed report passing manually.
 
 For a complete investigation report with transient failed cases, `evaluate_gemini.py --output <report> --retry-failed` reruns only failed cases under the same fingerprint/provider/model, retains prior attempts and checks all five final case results. It refuses stale or partial reports. This evaluation command does not add production model retries or relax validation.
 
@@ -63,3 +63,7 @@ Clear continuous Indian-English synthetic speech preserved P-107, 125 bar and 60
 Questions include a captured browser simulation snapshot: at most 36 assets, eight readings per asset, five active assignments and ten recent cases. Selected synthetic cases are included. The server checks plant membership and asset IDs but does not attest browser values. Inspect the separate simulated-plant citation. Operational cost cards remain server-owned; synthetic cases never grant repair authorization.
 
 The Operators screen is supported. Failed-question retries reuse the exact captured body and key. Changed fingerprints require fresh live evaluation reports. Scripted context tests do not establish live grounding or injection resistance.
+
+## Case dossier context
+
+Operational incident requests exclude browser simulation. Saved synthetic case evidence has a separate citation from current screen readings; the server validates selected case/equipment, affected asset IDs and line ownership. Detection facts remain historical even after readings recover. Scenario timers do not confirm a physical cause or operational repair. The six-case text gate includes a synthetic-case/injected-note fixture. Run investigator and assistant evaluations sequentially to avoid competing for provider quota.

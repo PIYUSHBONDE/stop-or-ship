@@ -1,16 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { WorkspaceFrame } from '@/components/layout/workspace-frame';
 import styles from '@/components/layout/workspace.module.css';
 import { PlantGuideBoard } from '@/features/memory/components/plant-guide-board';
 import { MemoryPanel } from './memory-panel';
+import { SimulationHistory } from './simulation-history';
 
 export default function MemoryWorkspace() {
   const { state } = usePlant();
   const [query, setQuery] = useState('');
+  const incidentId = useSearchParams().get('incident');
   if (!state) return null;
   return (
     <WorkspaceFrame
@@ -29,8 +32,9 @@ export default function MemoryWorkspace() {
       </label>
       <PlantGuideBoard query={query} />
       <section className={styles.editor}>
-        <MemoryPanel state={state} />
+        <MemoryPanel state={state} incidentId={incidentId} />
       </section>
+      <SimulationHistory />
     </WorkspaceFrame>
   );
 }

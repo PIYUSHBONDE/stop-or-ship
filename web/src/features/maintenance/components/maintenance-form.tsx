@@ -50,7 +50,7 @@ export function MaintenanceForm() {
         setParts={setParts}
         outcome={outcome}
         setOutcome={setOutcome}
-        onOpenMemory={() => location.assign('/memory')}
+        onOpenMemory={() => location.assign(`/memory?incident=${incident.id}`)}
       />
     </section>
   );

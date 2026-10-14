@@ -6977,6 +6977,111 @@
         ],
         "title": "SimulationCase"
       },
+      "SimulationCaseEvidence": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Case Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Asset Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "attended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attended At"
+          },
+          "fixed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed At"
+          },
+          "recovered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovered At"
+          },
+          "interrupted": {
+            "type": "boolean",
+            "title": "Interrupted",
+            "default": false
+          },
+          "detection": {
+            "$ref": "#/components/schemas/SimulationReading"
+          },
+          "topology_captured": {
+            "type": "boolean",
+            "title": "Topology Captured"
+          },
+          "affected_asset_ids": {
+            "items": {
+              "type": "string",
+              "maxLength": 160,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 36,
+            "title": "Affected Asset Ids"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationImpactLine"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Lines"
+          },
+          "recovery_basis": {
+            "type": "string",
+            "const": "scenario_timer",
+            "title": "Recovery Basis",
+            "default": "scenario_timer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case_id",
+          "asset_id",
+          "occurred_at",
+          "detection",
+          "topology_captured",
+          "affected_asset_ids",
+          "lines"
+        ],
+        "title": "SimulationCaseEvidence"
+      },
       "SimulationContext": {
         "properties": {
           "captured_at": {
@@ -7020,6 +7125,16 @@
             "type": "array",
             "maxItems": 10,
             "title": "Cases"
+          },
+          "case_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimulationCaseEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -7056,6 +7171,35 @@
           "readings"
         ],
         "title": "SimulationEquipment"
+      },
+      "SimulationImpactLine": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "capacity_per_hour": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Capacity Per Hour"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "capacity_per_hour"
+        ],
+        "title": "SimulationImpactLine"
       },
       "SimulationReading": {
         "properties": {

@@ -137,6 +137,8 @@ Simulation state is plant-scoped and browser-local. Seed, tick, samples, cases a
 
 ## Connected Plant simulator
 
+Open a simulated case to inspect its saved detection reading, dependency/line-capacity snapshot, response journey and earlier scenario outcomes. These records remain distinct from verified operational repairs. Operational incident links retain their evidence view and carry the same case through authorized work and matching repair memory. See the [hackathon delivery scope](docs/product/hackathon-delivery.md).
+
 Plant opens as a hydraulic-forming reference factory using the configured equipment graph. Material enters forming presses, conveyors transfer formed components, and shared utilities support production. The supported scenario is pump pressure loss: a developing fault derates only downstream press lines, dispatches an operator, stops the line for inspection/repair, verifies recovery for 30 simulated seconds and restores output. Normal readings remain within synthetic reference envelopes.
 
 Use **Start pump pressure loss**, **Pause/Resume**, **1x/10x speed**, and **Reset scenario**. Reset retains records and marks interrupted work. The writing browser tab serializes controls across tabs. Simulation speed changes simulated durations; it is not physical repair timing. Output derating and readings are authored demonstration assumptions, not a calibrated hydraulic model. The scenario requires a configured pump with a dependency path to a press.

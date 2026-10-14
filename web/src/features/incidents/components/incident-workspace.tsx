@@ -14,6 +14,7 @@ import { EvidenceDetailsDialog } from '@/features/incidents/components/evidence/
 import { DependencyImpact } from '@/features/incidents/components/dependency-impact';
 import { IncidentDecision } from '@/features/incidents/components/incident-decision';
 import styles from '@/features/incidents/components/incidents.module.css';
+import { OperationalJourney } from './operational-journey';
 
 export function IncidentDetail({
   state,
@@ -99,7 +100,11 @@ export function IncidentDetail({
             <ArrowRight size={15} />
           </button>
           <Link
-            href={state.workspace ? `/plant?incident=${incident.id}` : '/plant'}
+            href={
+              state.workspace
+                ? `/plant?view=observations&incident=${incident.id}&asset=${encodeURIComponent(incident.asset_id)}`
+                : '/plant?view=observations'
+            }
             onClick={() => selectAsset(incident.asset_id)}
           >
             View equipment in Plant
@@ -132,6 +137,7 @@ export function IncidentDetail({
           Archived incident · its evidence and comparison are read-only.
         </p>
       )}
+      <OperationalJourney incident={incident} />
       <section className={styles.section} aria-labelledby="investigation-heading">
         <div className={styles.sectionHeading}>
           <div>
@@ -303,8 +309,8 @@ export default function IncidentWorkspace() {
           <span className={styles.eyebrow}>{state.plant.name.toUpperCase()} / RELIABILITY</span>
           <h1>Incidents</h1>
           <p>
-            Page the case table, then open a row to see occurred, attended, fixed times and the
-            operator note.
+            Open a case to trace detection, evidence, response and recovery. Synthetic scenarios
+            remain separate from operational incidents.
           </p>
         </div>
         <div className={styles.counts}>
