@@ -1,5 +1,20 @@
 # Implementation status
 
+## Simulation assignment and completion fixes — 14 October 2026
+
+Completed-assignment deep links now resolve the requested historical assignment before falling back to the first active job. Explicit active selection and default active-job behavior remain unchanged.
+
+New and unfinished synthetic cases now record completion at the end of the repair phases, before the operator returns to station. Reopening after elapsed simulated work uses the original timeline completion time rather than the reopening time. Already completed records retain their saved timestamps; this patch does not rewrite historical records.
+
+### Observed acceptance
+
+- **19 frontend unit checks passed in 2.7 seconds**. Two focused regressions also passed in 1.5 seconds after adding an explicit 161,000 ms high-severity completion assertion. Coverage includes historical selection alongside an active job, completion while returning, reopening after a day and preservation of existing completed timestamps.
+- **Two isolated production-browser regressions passed in 37.0 seconds**. An authored elapsed assignment retained its exact timeline completion through refresh and remained selected when a new active job appeared. Existing simulation navigation, refresh and cross-tab handoff also passed.
+- Prettier, ESLint, TypeScript and the native production build passed. No backend or API contracts changed, so backend tests were not rerun for this frontend-only patch.
+- Acceptance used ports 3002/8002 and the separate ignored `.runtime/statistics-integration/dispatch-fixes.db`. Test servers are stopped; main staff data received no acceptance writes.
+
+Live Gemini and Google voice remain pending matching evaluation reports. This patch does not activate live providers or deploy cloud services.
+
 ## Statistics/main integration — 14 October 2026
 
 Created `codex/statistics-main-integration` from `f_statistics` at `d05c512`. Main remains at `2de8d47`; neither existing branch was replaced. The branch retains automatic synthetic plant readings, OOC overlays, Operators navigation, machine records, incident tables, Operations redirect and guide-first Memory. Local sign-in labels now describe email/password authentication. The top bar labels the simulated plant.

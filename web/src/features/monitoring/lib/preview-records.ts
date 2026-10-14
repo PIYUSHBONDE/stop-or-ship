@@ -79,6 +79,15 @@ export function attendedAtFor(item: PreviewAssignment) {
   return item.openedAt + wait;
 }
 
+export function fixedAtFor(item: PreviewAssignment) {
+  return (
+    item.openedAt +
+    timelineFor(item.severity)
+      .filter((step) => step.ooc)
+      .reduce((total, step) => total + step.ms, 0)
+  );
+}
+
 export function caseMessage(item: PreviewAssignment) {
   const signal = item.signalId.replaceAll('_', ' ');
   return `${signal} reached ${item.value} ${item.unit}, outside preview limits ${item.low}–${item.high}. ${item.severity} OOC on ${item.assetId}. Operator note: inspect the ${signal} path, confirm the envelope, and restore the cell before release.`;
@@ -127,10 +136,10 @@ export function syncCases(
 ): PreviewLedger {
   const byId = new Map(ledger.cases.map((item) => [item.id, item]));
   for (const item of [...history].reverse()) {
-    byId.set(item.id, toCase(item, now, byId.get(item.id), true));
+    byId.set(item.id, toCase(item, now, byId.get(item.id)));
   }
   for (const item of open) {
-    byId.set(item.id, toCase(item, now, byId.get(item.id), false));
+    byId.set(item.id, toCase(item, now, byId.get(item.id)));
   }
   const cases = [...byId.values()]
     .sort((left, right) => right.openedAt - left.openedAt)
@@ -179,12 +188,13 @@ function toCase(
   item: PreviewAssignment,
   now: number,
   existing: MachineCase | undefined,
-  finished: boolean,
 ): MachineCase {
   const operator = OPERATORS.find((person) => person.id === item.operatorId);
   const attend = attendedAtFor(item);
   const attendedAt = existing?.attendedAt ?? (now >= attend ? attend : null);
-  const clearedAt = finished ? (existing?.clearedAt ?? existing?.fixedAt ?? now) : null;
+  const completion = fixedAtFor(item);
+  const clearedAt =
+    existing?.clearedAt ?? existing?.fixedAt ?? (now >= completion ? completion : null);
   return {
     id: item.id,
     assetId: item.assetId,

@@ -1,5 +1,81 @@
 import { test, expect } from '../support/staff-session';
 
+test('completed assignment links win over active jobs and retain timeline completion after refresh', async ({
+  page,
+}) => {
+  await page.goto('/workspace');
+  await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  const plant = await page.evaluate(() => localStorage.getItem('plantsense-workspace'));
+  const key = `plantsense-simulation-v2:${plant}`;
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          (k) => JSON.parse(localStorage.getItem(k) || '{}').snapshot?.open?.length || 0,
+          key,
+        ),
+      { timeout: 20000 },
+    )
+    .toBeGreaterThan(0);
+  const expected = await page.evaluate((k) => {
+    const saved = JSON.parse(localStorage.getItem(k)!);
+    const completed = {
+      ...saved.snapshot.open[0],
+      id: 'ASN-regression-completed',
+      openedAt: Date.now() - 600000,
+    };
+    saved.snapshot.open = [completed];
+    saved.snapshot.history = [];
+    saved.ledger.cases = [];
+    localStorage.setItem(k, JSON.stringify(saved));
+    return (
+      completed.openedAt +
+      25000 +
+      120000 +
+      (completed.severity === 'critical' ? 30000 : completed.severity === 'high' ? 15000 : 0)
+    );
+  }, key);
+  await page.goto('/operators?assignment=ASN-regression-completed');
+  // A document reload restores the authored elapsed assignment instead of using the old in-memory snapshot.
+  await page.reload();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (k) =>
+          JSON.parse(localStorage.getItem(k)!).ledger.cases.find(
+            (c: { id: string }) => c.id === 'ASN-regression-completed',
+          )?.fixedAt,
+        key,
+      ),
+    )
+    .toBe(expected);
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ASN-regression-completed' }),
+  ).toContainText('Back at station');
+  await expect
+    .poll(
+      () => page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).snapshot.open.length, key),
+      { timeout: 20000 },
+    )
+    .toBeGreaterThan(0);
+  await page.goto('/operators?assignment=ASN-regression-completed');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ASN-regression-completed' }),
+  ).toContainText('Back at station');
+  await page.reload();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (k) =>
+          JSON.parse(localStorage.getItem(k)!).ledger.cases.find(
+            (c: { id: string }) => c.id === 'ASN-regression-completed',
+          )?.fixedAt,
+        key,
+      ),
+    )
+    .toBe(expected);
+});
+
 test('simulation navigation, refresh and cross-tab ownership retain records', async ({
   page,
   context,

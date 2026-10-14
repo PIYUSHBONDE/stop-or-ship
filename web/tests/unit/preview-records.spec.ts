@@ -3,6 +3,7 @@ import { previewCatalog } from '../../src/features/plant/lib/preview-telemetry';
 import {
   appendSamples,
   attendedAtFor,
+  fixedAtFor,
   parseLedger,
   recordTick,
   sampleCount,
@@ -57,6 +58,7 @@ test('assignment history becomes a cleared case for the operator who fixed it', 
     [],
     1200,
   );
+  expect(fixedAtFor(opened)).toBe(161_000);
   expect(open.cases[0].clearedAt).toBeNull();
   expect(open.cases[0].operatorName).toBe('Maya Chen');
   expect(open.cases[0].message).toContain('pressure reached 160 bar');
@@ -74,11 +76,24 @@ test('assignment history becomes a cleared case for the operator who fixed it', 
     assets,
     catalog: previewCatalog(assets, 5, 9),
     tick: 5,
-    now: 20_000,
+    now: fixedAtFor(opened) + 60_000,
     open: [],
     history: [opened],
   });
-  expect(cleared.cases[0].clearedAt).toBe(20_000);
+  expect(cleared.cases[0].clearedAt).toBe(fixedAtFor(opened));
+  const repairing = syncCases(open, [opened], [], fixedAtFor(opened) - 1);
+  expect(repairing.cases[0].fixedAt).toBeNull();
+  const returning = syncCases(repairing, [opened], [], fixedAtFor(opened));
+  expect(returning.cases[0].fixedAt).toBe(fixedAtFor(opened));
+  const reopened = syncCases(open, [], [opened], fixedAtFor(opened) + 86400000);
+  expect(reopened.cases[0].fixedAt).toBe(fixedAtFor(opened));
+  const retained = syncCases(
+    { ...open, cases: [{ ...open.cases[0], fixedAt: 999, clearedAt: 999 }] },
+    [],
+    [opened],
+    fixedAtFor(opened) + 86400000,
+  );
+  expect(retained.cases[0].fixedAt).toBe(999);
   expect(sampleCount(cleared)).toBe(2);
 });
 

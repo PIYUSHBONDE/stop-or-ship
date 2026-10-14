@@ -51,6 +51,18 @@ export type DispatchSnapshot = {
   history: PreviewAssignment[];
 };
 
+export function selectAssignment<T extends { id: string; operatorId: string }>(
+  open: T[],
+  history: T[],
+  requested: string | null,
+) {
+  return (
+    open.find((item) => item.id === requested || item.operatorId === requested) ||
+    history.find((item) => item.id === requested || item.operatorId === requested) ||
+    open[0]
+  );
+}
+
 export type AssetRef = { id: string; type: string; position: number[] };
 
 export const OPERATORS: PreviewOperator[] = [

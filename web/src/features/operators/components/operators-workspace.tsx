@@ -9,6 +9,7 @@ import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-pr
 import {
   OPERATORS,
   PHASE_COPY,
+  selectAssignment,
   type LiveAssignment,
 } from '@/features/operators/lib/preview-dispatch';
 import { plantBounds, planPoint, planPosition } from '@/lib/plant-layout';
@@ -19,10 +20,7 @@ export function OperatorsWorkspace() {
   const preview = usePreviewDispatch();
   const query = useSearchParams();
   const requested = query.get('assignment') || query.get('operator');
-  const selected =
-    preview.assignments.find((item) => item.id === requested || item.operatorId === requested) ||
-    preview.assignments[0] ||
-    preview.history.find((item) => item.id === requested || item.operatorId === requested);
+  const selected = selectAssignment(preview.assignments, preview.history, requested);
   if (!state) return null;
   const bounds = plantBounds(state.assets);
   const available = OPERATORS.filter(
