@@ -295,7 +295,7 @@ export default function IncidentWorkspace() {
   if (!state) return null;
   const open =
     state.incidents.filter((candidate) => candidate.state !== 'resolved').length +
-    preview.ledger.cases.filter((item) => !item.fixedAt && !item.interrupted).length;
+    preview.ledger.cases.filter((item) => !item.clearedAt && !item.interrupted).length;
   return (
     <div className={styles.workspace}>
       <header className={styles.pageHeader}>

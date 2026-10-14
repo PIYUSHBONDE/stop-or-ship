@@ -80,7 +80,7 @@ test('assignment history becomes a cleared case for the operator who fixed it', 
     open: [],
     history: [opened],
   });
-  expect(cleared.cases[0].clearedAt).toBe(fixedAtFor(opened));
+  expect(cleared.cases[0].clearedAt).toBe(fixedAtFor(opened) + 30_000);
   const repairing = syncCases(open, [opened], [], fixedAtFor(opened) - 1);
   expect(repairing.cases[0].fixedAt).toBeNull();
   const returning = syncCases(repairing, [opened], [], fixedAtFor(opened));

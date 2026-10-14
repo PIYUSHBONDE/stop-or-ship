@@ -111,8 +111,10 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
                   {item.interrupted
                     ? 'interrupted simulation'
                     : item.clearedAt
-                      ? `cleared ${clock(item.clearedAt)}`
-                      : `assigned ${clock(item.openedAt)} · fix takes at least 2 minutes`}
+                      ? `recovered ${clock(item.clearedAt)}`
+                      : item.fixedAt
+                        ? `checking recovery · repaired ${clock(item.fixedAt)}`
+                        : `assigned ${clock(item.openedAt)} · fix takes at least 2 minutes`}
                 </small>
                 <Link href={`/incidents?case=${item.id}`}>Open case</Link>
               </div>

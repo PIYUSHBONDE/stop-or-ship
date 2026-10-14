@@ -4,6 +4,7 @@ import {
   type PreviewLedger,
 } from '@/features/monitoring/lib/preview-records';
 import type { DispatchSnapshot } from './preview-dispatch';
+import type { ProcessState } from '@/features/plant/lib/process-simulation';
 
 export type SimulationState = {
   version: 2;
@@ -13,6 +14,7 @@ export type SimulationState = {
   advancedAt: number;
   snapshot: DispatchSnapshot;
   ledger: PreviewLedger;
+  process?: ProcessState;
 };
 export const simulationKey = (plantId: string) => `plantsense-simulation-v2:${plantId}`;
 
@@ -36,6 +38,26 @@ export function restoreSimulation(
     )
       throw new Error('Invalid simulation state');
     validateLedger(state.ledger, plantId);
+    if (
+      state.process &&
+      (state.process.version !== 1 ||
+        !Number.isFinite(state.process.epoch) ||
+        !Number.isFinite(state.process.elapsed) ||
+        state.process.elapsed < 0 ||
+        typeof state.process.paused !== 'boolean' ||
+        ![1, 10].includes(state.process.speed) ||
+        !Number.isFinite(state.process.nextFaultAt) ||
+        typeof state.process.stage !== 'string' ||
+        !Array.isArray(state.process.events) ||
+        state.process.events.some(
+          (e) =>
+            !Number.isFinite(e.at) || typeof e.message !== 'string' || typeof e.id !== 'string',
+        ) ||
+        (state.process.fault &&
+          (typeof state.process.fault.assetId !== 'string' ||
+            !Number.isFinite(state.process.fault.startedAt))))
+    )
+      throw new Error('Invalid process state');
     for (const item of [...state.snapshot.open, ...state.snapshot.history]) {
       if (
         !item.id ||

@@ -183,6 +183,8 @@ function LiveDetail({ item, onWatch }: { item: LiveAssignment; onWatch: () => vo
     if (item.phase === 'on_site' || item.phase === 'correcting')
       return `${operator?.id} is on ${item.assetId} correcting the preview excursion.`;
     if (item.phase === 'cleared') return `${item.id} cleared. ${operator?.id} is leaving the cell.`;
+    if (item.phase === 'recovering')
+      return `${operator?.id} is checking stable pressure before the line returns to full simulated output.`;
     if (item.phase === 'returning')
       return `${operator?.id} is returning to station after ${item.id}.`;
     return `${item.id} is complete.`;

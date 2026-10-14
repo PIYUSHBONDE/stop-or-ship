@@ -88,6 +88,8 @@ test('assignment phases walk to the cell, clear OOC, then return', () => {
   expect(walking.travel).toBeLessThan(1);
   expect(liveAssignment(item, correctingAt).phase).toBe('correcting');
   expect(liveAssignment(item, correctingAt).ooc).toBe(true);
+  expect(liveAssignment(item, walkingAt, true).phase).toBe('en_route');
+  expect(liveAssignment(item, correctingAt, true).phase).toBe('correcting');
   expect(liveAssignment(item, timelineMs(item.severity) + 1).phase).toBe('returned');
   const mid = actorPosition(
     OPERATORS.find((operator) => operator.id === 'OP-12')!,

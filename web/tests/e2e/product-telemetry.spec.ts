@@ -48,7 +48,7 @@ test('expanded plant has unknown equipment and separate production measures', as
     data: { expected_version: current.version, configuration: template },
   });
   expect(activated.ok()).toBeTruthy();
-  await page.reload();
+  await page.goto('/plant?view=observations');
   await expect(
     page.getByRole('button', { name: /Start scenario|Play replay|Reset demo/ }),
   ).toHaveCount(0);
@@ -229,6 +229,7 @@ test('WebGL failure retains the plant plan and keyboard equipment access', async
     } as typeof original;
   });
   await owner(page);
+  await page.goto('/plant?view=observations');
   const plan = page.getByRole('region', { name: 'Accessible plant plan' });
   await expect(plan).toBeVisible();
   await expect(plan.getByRole('button')).toHaveCount(36);

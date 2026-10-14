@@ -4,7 +4,14 @@ import { plantBounds } from '@/lib/plant-layout';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
 
 export type AssignmentPhase =
-  'dispatched' | 'en_route' | 'on_site' | 'correcting' | 'cleared' | 'returning' | 'returned';
+  | 'dispatched'
+  | 'en_route'
+  | 'on_site'
+  | 'correcting'
+  | 'recovering'
+  | 'cleared'
+  | 'returning'
+  | 'returned';
 
 export type PreviewOperator = {
   id: string;
@@ -86,6 +93,7 @@ export const PHASE_COPY: Record<AssignmentPhase, string> = {
   en_route: 'Walking to cell',
   on_site: 'On station',
   correcting: 'Correcting OOC',
+  recovering: 'Checking recovery',
   cleared: 'OOC cleared',
   returning: 'Returning to station',
   returned: 'Back at station',
@@ -139,6 +147,7 @@ export function pickOperator(
 }
 
 export const MIN_FIX_MS = 120_000;
+export const RECOVERY_MS = 30_000;
 
 export function timelineFor(severity: Severity) {
   const extra = severity === 'critical' ? 30_000 : severity === 'high' ? 15_000 : 0;
@@ -147,6 +156,7 @@ export function timelineFor(severity: Severity) {
     { phase: 'en_route' as const, ms: 18_000, ooc: true },
     { phase: 'on_site' as const, ms: 5_000, ooc: true },
     { phase: 'correcting' as const, ms: MIN_FIX_MS + extra, ooc: true },
+    { phase: 'recovering' as const, ms: RECOVERY_MS, ooc: false },
     { phase: 'cleared' as const, ms: 3_000, ooc: false },
     { phase: 'returning' as const, ms: 18_000, ooc: false },
   ];
@@ -163,25 +173,11 @@ export function liveAssignment(
 ): LiveAssignment {
   const steps = timelineFor(item.severity);
   const elapsedMs = Math.max(0, now - item.openedAt);
-  if (reduceMotion) {
-    const correcting = steps.find((step) => step.phase === 'correcting')!;
-    if (elapsedMs < 200)
-      return finishLive(item, 'on_site', true, 1, elapsedMs, timelineMs(item.severity) - elapsedMs);
-    if (elapsedMs < 200 + correcting.ms)
-      return finishLive(
-        item,
-        'correcting',
-        true,
-        1,
-        elapsedMs,
-        timelineMs(item.severity) - elapsedMs,
-      );
-  }
   let cursor = 0;
   for (const step of steps) {
     if (elapsedMs < cursor + step.ms) {
       const travel =
-        step.phase === 'en_route' || step.phase === 'returning'
+        !reduceMotion && (step.phase === 'en_route' || step.phase === 'returning')
           ? (elapsedMs - cursor) / step.ms
           : 1;
       return finishLive(

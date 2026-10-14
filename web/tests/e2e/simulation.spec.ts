@@ -1,10 +1,17 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from '../support/staff-session';
+
+async function beginFault(page: Page) {
+  await page.getByLabel('Simulation speed', { exact: true }).selectOption('10');
+  await page.getByRole('button', { name: 'Start pump pressure loss', exact: true }).click();
+}
 
 test('completed assignment links win over active jobs and retain timeline completion after refresh', async ({
   page,
 }) => {
   await page.goto('/workspace');
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  await beginFault(page);
   const plant = await page.evaluate(() => localStorage.getItem('plantsense-workspace'));
   const key = `plantsense-simulation-v2:${plant}`;
   await expect
@@ -22,11 +29,13 @@ test('completed assignment links win over active jobs and retain timeline comple
     const completed = {
       ...saved.snapshot.open[0],
       id: 'ASN-regression-completed',
-      openedAt: Date.now() - 600000,
+      openedAt: saved.snapshot.open[0].openedAt,
     };
     saved.snapshot.open = [completed];
     saved.snapshot.history = [];
     saved.ledger.cases = [];
+    saved.process.elapsed = completed.openedAt - saved.process.epoch + 300000;
+    saved.advancedAt = Date.now();
     localStorage.setItem(k, JSON.stringify(saved));
     return (
       completed.openedAt +
@@ -52,6 +61,8 @@ test('completed assignment links win over active jobs and retain timeline comple
   await expect(
     page.getByRole('status').filter({ hasText: 'ASN-regression-completed' }),
   ).toContainText('Back at station');
+  await page.goto('/plant');
+  await beginFault(page);
   await expect
     .poll(
       () => page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).snapshot.open.length, key),
@@ -82,6 +93,7 @@ test('simulation navigation, refresh and cross-tab ownership retain records', as
 }) => {
   await page.goto('/workspace');
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  await beginFault(page);
   const plant = await page.evaluate(() => localStorage.getItem('plantsense-workspace'));
   const key = `plantsense-simulation-v2:${plant}`;
   await expect
@@ -155,6 +167,7 @@ test('unavailable simulation storage keeps the app usable', async ({ page }) => 
   });
   await page.goto('/workspace');
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  await beginFault(page);
   await expect(page.getByText(/Simulation persistence unavailable or invalid/)).toBeVisible();
   await page.getByRole('link', { name: 'Monitor', exact: true }).click();
   await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
@@ -165,6 +178,7 @@ test('invalid saved case metadata is preserved without breaking rendering', asyn
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/workspace');
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  await beginFault(page);
   const plant = await page.evaluate(() => localStorage.getItem('plantsense-workspace'));
   const key = `plantsense-simulation-v2:${plant}`;
   await expect

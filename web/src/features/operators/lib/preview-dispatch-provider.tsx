@@ -10,10 +10,20 @@ import {
 } from '@/features/operators/lib/preview-dispatch';
 import type { PreviewReading } from '@/features/plant/lib/preview-telemetry';
 import type { PreviewLedger } from '@/features/monitoring/lib/preview-records';
+import type {
+  ProcessState,
+  SimulationCommand,
+  processView,
+} from '@/features/plant/lib/process-simulation';
+import type { Asset } from '@/lib/types';
 
-const EMPTY: { id: string; type: string; position: number[] }[] = [];
+const EMPTY: Asset[] = [];
 
 type PreviewDispatch = {
+  process: ProcessState | null;
+  view: ReturnType<typeof processView> | null;
+  command: (command: SimulationCommand) => void;
+  controlError: string;
   storageError: string;
   seed: number;
   tick: number;
@@ -40,7 +50,14 @@ export function PreviewDispatchProvider({ children }: { children: ReactNode }) {
 
 function PlantDispatch({ children }: { children: ReactNode }) {
   const { state } = usePlant();
-  const dispatch = usePreviewDispatchState(state?.assets ?? EMPTY, state?.plant.id ?? '');
+  const dispatch = usePreviewDispatchState(
+    {
+      assets: state?.assets ?? EMPTY,
+      areas: state?.areas ?? [],
+      dependencies: state?.dependencies ?? [],
+    },
+    state?.plant.id ?? '',
+  );
   return (
     <PreviewDispatchContext.Provider value={{ ...dispatch, operators: OPERATORS }}>
       {children}

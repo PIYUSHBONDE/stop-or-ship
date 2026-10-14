@@ -1,25 +1,41 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { previewCatalog, oocAssetIds } from '@/features/plant/lib/preview-telemetry';
+import { oocAssetIds } from '@/features/plant/lib/preview-telemetry';
 import {
-  applyLatchedReadings,
-  floorActors,
-  liveAssignment,
-  reconcileDispatch,
-  type AssetRef,
-} from './preview-dispatch';
+  advanceProcess,
+  commandProcess,
+  freshProcess,
+  processView,
+  type ProcessCatalog,
+  type SimulationCommand,
+} from '@/features/plant/lib/process-simulation';
+import { floorActors, liveAssignment } from './preview-dispatch';
 import { emptyLedger, ledgerKey, recordTick } from '@/features/monitoring/lib/preview-records';
 import { restoreSimulation, simulationKey, type SimulationState } from './simulation-state';
 
-export function usePreviewDispatchState(assets: AssetRef[], plantId = '') {
+function hydrate(state: SimulationState) {
+  if (state.process) return state;
+  return {
+    ...state,
+    process: freshProcess(Date.now()),
+    snapshot: { open: [], history: state.snapshot.history },
+    ledger: {
+      ...state.ledger,
+      cases: state.ledger.cases.map((c) => (c.clearedAt ? c : { ...c, interrupted: true })),
+    },
+  };
+}
+
+export function usePreviewDispatchState(catalog: ProcessCatalog, plantId = '') {
   const [runtime, setRuntime] = useState<SimulationState | null>(null);
-  const [now, setNow] = useState(0);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [storageError, setStorageError] = useState('');
-  const assetsRef = useRef(assets);
-  assetsRef.current = assets;
+  const [controlError, setControlError] = useState('');
+  const catalogRef = useRef(catalog);
+  catalogRef.current = catalog;
+  const controller = useRef<((command: SimulationCommand) => void) | null>(null);
   useEffect(() => {
     const media = matchMedia('(prefers-reduced-motion: reduce)');
     const sync = () => setReduceMotion(media.matches);
@@ -32,76 +48,104 @@ export function usePreviewDispatchState(assets: AssetRef[], plantId = '') {
     let active = true;
     let writer = false;
     let persistent = true;
+    let saved = false;
     let current: SimulationState;
     const key = simulationKey(plantId);
     const load = () =>
-      restoreSimulation(
-        localStorage.getItem(key),
-        localStorage.getItem(ledgerKey(plantId)),
-        plantId,
-        Date.now(),
+      hydrate(
+        restoreSimulation(
+          localStorage.getItem(key),
+          localStorage.getItem(ledgerKey(plantId)),
+          plantId,
+          Date.now(),
+        ),
       );
     try {
       current = load();
     } catch {
       persistent = false;
-      current = restoreSimulation(null, null, plantId, Date.now());
+      current = hydrate(restoreSimulation(null, null, plantId, Date.now()));
       setStorageError(
         'Simulation persistence unavailable or invalid. This tab runs in memory; saved data was not overwritten.',
       );
     }
     setRuntime(current);
-    const publish = () => {
-      if (!active) return;
+    const pending = new Map<string, ReturnType<typeof setTimeout>>();
+    const channel =
+      typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(`${key}:controls`) : null;
+    const publish = (command?: SimulationCommand) => {
+      if (!active || !writer || !catalogRef.current.assets.length) return;
       const clock = Date.now();
-      setNow(clock);
-      if (!writer || !assetsRef.current.length) return;
-      const tick = clock - current.advancedAt >= 2500 ? current.tick + 1 : current.tick;
-      const catalog = previewCatalog(assetsRef.current, tick, current.seed);
-      const snapshot = reconcileDispatch(current.snapshot, {
-        assets: assetsRef.current,
-        catalog,
-        tick,
-        now: clock,
-      });
-      const readings = applyLatchedReadings(
-        catalog,
-        assetsRef.current,
-        snapshot.open.filter((a) => liveAssignment(a, clock).ooc).map((a) => a.assetId),
-        tick,
-        current.seed,
+      let base = current;
+      let process = current.process!;
+      if (command) {
+        process = commandProcess(process, command, catalogRef.current);
+        if (command.type === 'reset')
+          base = {
+            ...base,
+            snapshot: { open: [], history: base.snapshot.history },
+            ledger: {
+              ...base.ledger,
+              cases: base.ledger.cases.map((c) => (c.clearedAt ? c : { ...c, interrupted: true })),
+            },
+          };
+      }
+      const delta = command ? 0 : Math.max(0, clock - current.advancedAt);
+      const elapsed = process.elapsed + (process.paused ? 0 : delta * process.speed);
+      const nextTick =
+        base.tick +
+        Math.max(0, Math.floor(elapsed / 2500) - Math.floor(process.elapsed / 2500)) +
+        (command?.type === 'fault' || command?.type === 'reset' ? 1 : 0);
+      const advanced = advanceProcess(
+        process,
+        base.snapshot,
+        catalogRef.current,
+        delta,
+        nextTick,
+        base.seed,
       );
-      const ledger = recordTick(current.ledger, {
+      const view = processView(
+        advanced.process,
+        advanced.snapshot,
+        catalogRef.current,
+        nextTick,
+        base.seed,
+      );
+      const ledger = recordTick(base.ledger, {
         plantId,
-        assets: assetsRef.current,
-        catalog: readings,
-        tick,
-        now: clock,
-        open: snapshot.open,
-        history: snapshot.history,
+        assets: catalogRef.current.assets,
+        catalog: view.readings,
+        tick: nextTick,
+        now: view.now,
+        open: advanced.snapshot.open,
+        history: advanced.snapshot.history,
       });
-      const next = {
-        ...current,
-        tick,
-        advancedAt: tick === current.tick ? current.advancedAt : clock,
-        snapshot,
+      const next: SimulationState = {
+        ...base,
+        process: advanced.process,
+        snapshot: advanced.snapshot,
         ledger,
+        tick: nextTick,
+        advancedAt: clock,
       };
       if (
         persistent &&
-        (tick !== current.tick ||
-          JSON.stringify(snapshot) !== JSON.stringify(current.snapshot) ||
-          ledger.lastTick !== current.ledger.lastTick ||
+        (command ||
+          !saved ||
+          nextTick !== current.tick ||
+          JSON.stringify(next.snapshot) !== JSON.stringify(current.snapshot) ||
+          next.process!.stage !== current.process!.stage ||
           ledger.cases.length !== current.ledger.cases.length ||
           ledger.cases.some(
-            (item, index) =>
-              item.id !== current.ledger.cases[index]?.id ||
-              item.fixedAt !== current.ledger.cases[index]?.fixedAt ||
-              item.attendedAt !== current.ledger.cases[index]?.attendedAt,
+            (c, i) =>
+              c.fixedAt !== current.ledger.cases[i]?.fixedAt ||
+              c.clearedAt !== current.ledger.cases[i]?.clearedAt ||
+              c.attendedAt !== current.ledger.cases[i]?.attendedAt,
           ))
       ) {
         try {
           localStorage.setItem(key, JSON.stringify(next));
+          saved = true;
         } catch {
           persistent = false;
           setStorageError('Simulation storage unavailable. Changes remain in this tab only.');
@@ -110,8 +154,8 @@ export function usePreviewDispatchState(assets: AssetRef[], plantId = '') {
       current = next;
       setRuntime(next);
     };
-    const receive = (event: StorageEvent) => {
-      if (event.key !== key || writer) return;
+    const receive = (e: StorageEvent) => {
+      if (e.key !== key || writer) return;
       try {
         current = load();
         setRuntime(current);
@@ -120,6 +164,61 @@ export function usePreviewDispatchState(assets: AssetRef[], plantId = '') {
       }
     };
     window.addEventListener('storage', receive);
+    if (channel)
+      channel.onmessage = (e) => {
+        if (!active) return;
+        const message = e.data;
+        if (message?.type === 'command' && writer) {
+          try {
+            publish(message.command);
+            channel.postMessage({ type: 'ack', id: message.id, state: current });
+          } catch (cause) {
+            channel.postMessage({
+              type: 'ack',
+              id: message.id,
+              error: cause instanceof Error ? cause.message : 'Simulation command failed.',
+            });
+          }
+        } else if (message?.type === 'ack' && pending.has(message.id)) {
+          clearTimeout(pending.get(message.id));
+          pending.delete(message.id);
+          if (message.error) setControlError(message.error);
+          else {
+            try {
+              current = hydrate(
+                restoreSimulation(JSON.stringify(message.state), null, plantId, Date.now()),
+              );
+              setRuntime(current);
+              setControlError('');
+            } catch {
+              setControlError('Invalid simulation response. Reload and try again.');
+            }
+          }
+        }
+      };
+    controller.current = (command) => {
+      setControlError('');
+      if (writer) {
+        try {
+          publish(command);
+        } catch (cause) {
+          setControlError(cause instanceof Error ? cause.message : 'Simulation command failed.');
+        }
+      } else if (channel) {
+        const id = crypto.randomUUID();
+        pending.set(
+          id,
+          setTimeout(() => {
+            pending.delete(id);
+            if (active)
+              setControlError(
+                'The writing tab did not respond. Close inactive plant tabs and retry.',
+              );
+          }, 4000),
+        );
+        channel.postMessage({ type: 'command', id, command });
+      } else setControlError('This tab is read-only. Open the plant in its writing tab.');
+    };
     let release: (() => void) | undefined;
     if (navigator.locks) {
       void navigator.locks
@@ -130,6 +229,7 @@ export function usePreviewDispatchState(assets: AssetRef[], plantId = '') {
               current = load();
             } catch {
               persistent = false;
+              setStorageError('Saved simulation is invalid. This tab runs in memory.');
             }
           }
           writer = true;
@@ -148,63 +248,57 @@ export function usePreviewDispatchState(assets: AssetRef[], plantId = '') {
           publish();
         });
     } else {
-      setStorageError('Cross-tab coordination unavailable. Simulation runs in memory in this tab.');
       persistent = false;
       writer = true;
+      setStorageError('Cross-tab coordination unavailable. Simulation runs in memory in this tab.');
+      publish();
     }
-    const timer = window.setInterval(publish, 200);
+    const timer = window.setInterval(() => publish(), 200);
     return () => {
       active = false;
       clearInterval(timer);
       window.removeEventListener('storage', receive);
       release?.();
+      channel?.close();
+      for (const t of pending.values()) clearTimeout(t);
+      controller.current = null;
     };
   }, [plantId]);
   const seed = runtime?.seed ?? 0;
-  const tick = runtime?.tick ?? 2;
-  const assignments = useMemo(
-    () => runtime?.snapshot.open.map((a) => liveAssignment(a, now, reduceMotion)) ?? [],
-    [runtime, now, reduceMotion],
-  );
-  const history = useMemo(
+  const tick = runtime?.tick ?? 3;
+  const view = useMemo(
     () =>
-      runtime?.snapshot.history.map((a) => ({
-        ...liveAssignment(a, now),
-        phase: 'returned' as const,
-        ooc: false,
-        remainingMs: 0,
-      })) ?? [],
-    [runtime, now],
+      runtime?.process ? processView(runtime.process, runtime.snapshot, catalog, tick, seed) : null,
+    [runtime, catalog, tick, seed],
   );
-  const readings = useMemo(
-    () =>
-      runtime
-        ? applyLatchedReadings(
-            previewCatalog(assets, tick, seed),
-            assets,
-            assignments.filter((a) => a.ooc).map((a) => a.assetId),
-            tick,
-            seed,
-          )
-        : {},
-    [runtime, assets, tick, seed, assignments],
-  );
-  const oocIds = oocAssetIds(readings);
-  const scannedId = assets.length ? assets[tick % assets.length].id : null;
+  const now = view?.now ?? 0;
+  const assignments = runtime?.snapshot.open.map((a) => liveAssignment(a, now, reduceMotion)) ?? [];
+  const history =
+    runtime?.snapshot.history.map((a) => ({
+      ...liveAssignment(a, now),
+      phase: 'returned' as const,
+      ooc: false,
+      remainingMs: 0,
+    })) ?? [];
+  const readings = view?.readings ?? {};
   return {
     seed,
     tick,
     readings,
-    oocIds,
-    scannedId,
+    oocIds: oocAssetIds(readings),
+    scannedId: null,
     hoverId,
     setHoverId,
-    focusId: hoverId || scannedId,
+    focusId: hoverId,
     reduceMotion,
     assignments,
     history,
-    actors: floorActors(assignments, assets),
+    actors: floorActors(assignments, catalog.assets),
     ledger: runtime?.ledger ?? emptyLedger(plantId),
     storageError,
+    controlError,
+    process: runtime?.process ?? null,
+    view,
+    command: (command: SimulationCommand) => controller.current?.(command),
   };
 }

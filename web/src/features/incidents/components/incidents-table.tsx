@@ -165,11 +165,13 @@ function CaseRows({
   const status = preview
     ? preview.interrupted
       ? 'interrupted'
-      : preview.fixedAt
+      : preview.clearedAt
         ? 'cleared'
-        : preview.attendedAt
-          ? 'attended'
-          : 'assigned'
+        : preview.fixedAt
+          ? 'recovering'
+          : preview.attendedAt
+            ? 'attended'
+            : 'assigned'
     : incident
       ? stateNames[incident.state]
       : '';

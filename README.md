@@ -4,7 +4,7 @@ Plant reliability with configurable equipment, named staff access, observation-b
 
 ## Current product
 
-- **Plant:** dedicated 3D explorer and accessible 2D plan, adapting to reviewed two-to-eight-line configurations (up to 36 assets in supplied templates). Synthetic preview metrics, OOC flash and operators on the floor.
+- **Plant:** connected hydraulic-forming simulator with 3D/2D floor, line output, machine inspector and activity timeline. Configured layouts are preserved; reviewed operational observations have a separate view.
 - **Operators:** live assignment IDs, experience-based dispatch and walk-to-cell preview.
 - **Monitor:** machine cards, per-machine records/graphs, plus reviewed operational/historical sources.
 - **Incidents:** paginated case table for preview OOC records and operational incidents.
@@ -40,7 +40,7 @@ Open **http://127.0.0.1:3000/workspace**. Initial setup creates a named administ
 
 Administrators can invite staff and assign plant-scoped roles. Invitation links are copied manually; password recovery and invitation email delivery remain later release gates.
 
-A fresh plant has no readings or automatically asserted healthy condition. Open **Monitor → Add source**, review required units/envelopes/procedure, then accept observations or historical imports. See [source setup and CSV/API contracts](docs/data/telemetry-sources.md), [Docker controls](docs/operations/docker.md) and [security boundaries](SECURITY.md).
+A fresh plant has no operational readings or automatically asserted operational health. The default Plant page runs a clearly labeled browser simulation. Open **Monitor → Add source**, review required units/envelopes/procedure, then accept observations or historical imports. See [source setup and CSV/API contracts](docs/data/telemetry-sources.md), [Docker controls](docs/operations/docker.md) and [security boundaries](SECURITY.md).
 
 ## Native development
 
@@ -119,7 +119,7 @@ See [repository structure](docs/engineering/repository-structure.md), [contribut
 ## Recent local changes
 
 - Home is a local staff sign-in. Name, organization and plant are derived from the work email.
-- Plant overlay generates labeled synthetic preview readings, control limits and OOC flash. Unconnected equipment stays unknown.
+- Plant simulation connects machine modes, synthetic readings, line throughput and operator response. Unconnected equipment stays unknown.
 - Operators assign by experience and severity, walk to the cell and take at least two minutes to clear a preview OOC.
 - Monitor is card-first. Click a machine for `/monitoring/{id}` records, trend graphs and case history.
 - Each OOC case stores occurred, attended and fixed times, the operator note and metadata. Incidents shows a paginated table; the row arrow opens that record underneath.
@@ -134,3 +134,11 @@ The simulated plant starts automatically; no preview URL flag is required. Opera
 The read-only assistant can inspect explicitly synthetic browser snapshots through a separate citation. Browser simulation cannot establish measured plant health or authorize operational work. See [assistant configuration](docs/operations/assistant.md) and [Gemini gates](docs/operations/live-gemini.md).
 
 Simulation state is plant-scoped and browser-local. Seed, tick, samples, cases and dispatch survive refresh. A Web Lock elects one writing tab; other tabs follow saved updates. Legacy unfinished cases without dispatch state are marked interrupted. Storage or coordination failure falls back to a labeled in-memory simulation. Closing all tabs pauses generation; reopening reconciles elapsed simulated assignments without inventing missed samples.
+
+## Connected Plant simulator
+
+Plant opens as a hydraulic-forming reference factory using the configured equipment graph. Material enters forming presses, conveyors transfer formed components, and shared utilities support production. The supported scenario is pump pressure loss: a developing fault derates only downstream press lines, dispatches an operator, stops the line for inspection/repair, verifies recovery for 30 simulated seconds and restores output. Normal readings remain within synthetic reference envelopes.
+
+Use **Start pump pressure loss**, **Pause/Resume**, **1x/10x speed**, and **Reset scenario**. Reset retains records and marks interrupted work. The writing browser tab serializes controls across tabs. Simulation speed changes simulated durations; it is not physical repair timing. Output derating and readings are authored demonstration assumptions, not a calibrated hydraulic model. The scenario requires a configured pump with a dependency path to a press.
+
+Open **Reviewed operational observations** from Plant to inspect backend observations and authorization. Simulation does not submit observations or change work orders. Old browser samples and completed cases are retained; unfinished pre-process dispatch cases become interrupted history when adopted by the new controller.

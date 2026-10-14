@@ -1,5 +1,6 @@
 import {
   OPERATORS,
+  RECOVERY_MS,
   timelineFor,
   type PreviewAssignment,
 } from '@/features/operators/lib/preview-dispatch';
@@ -193,8 +194,10 @@ function toCase(
   const attend = attendedAtFor(item);
   const attendedAt = existing?.attendedAt ?? (now >= attend ? attend : null);
   const completion = fixedAtFor(item);
+  const fixedAt =
+    existing?.fixedAt ?? existing?.clearedAt ?? (now >= completion ? completion : null);
   const clearedAt =
-    existing?.clearedAt ?? existing?.fixedAt ?? (now >= completion ? completion : null);
+    existing?.clearedAt ?? (now >= completion + RECOVERY_MS ? completion + RECOVERY_MS : null);
   return {
     id: item.id,
     assetId: item.assetId,
@@ -209,7 +212,7 @@ function toCase(
     occurredAt: existing?.occurredAt ?? item.openedAt,
     attendedAt,
     clearedAt,
-    fixedAt: clearedAt,
+    fixedAt,
     message: existing?.message || caseMessage(item),
     metadata: existing?.metadata || {
       assignmentId: item.id,

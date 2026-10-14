@@ -56,6 +56,18 @@ export function PreviewCaseDetail({ item }: { item: MachineCase }) {
           </dd>
         </div>
         <div>
+          <dt>Recovered</dt>
+          <dd>
+            {item.clearedAt
+              ? clock(item.clearedAt)
+              : item.interrupted
+                ? 'Interrupted simulation'
+                : item.fixedAt
+                  ? 'Checking stable pressure'
+                  : 'Awaiting repair and recovery'}
+          </dd>
+        </div>
+        <div>
           <dt>Metric</dt>
           <dd>
             {item.signalId.replaceAll('_', ' ')} {item.value} {item.unit}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Activity,
   Factory,
@@ -28,6 +28,7 @@ const destinations = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const operational = useSearchParams().get('view') === 'observations';
   const { state, connected, error, busy, dismissError } = usePlant();
   const preview = usePreviewDispatch();
   if (pathname === '/' || pathname === '/evidence-preview' || pathname === '/workspace')
@@ -75,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span>{name}</span>
             {name === 'Incidents' &&
               ((state.incident && state.incident.state !== 'resolved') ||
-                preview.ledger.cases.some((item) => !item.fixedAt && !item.interrupted)) && (
+                preview.ledger.cases.some((item) => !item.clearedAt && !item.interrupted)) && (
                 <i className="rail-dot" />
               )}
             {name === 'Operators' && preview.assignments.length > 0 && <i className="rail-dot" />}
@@ -98,14 +99,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="topbar-right">
             <AssistantPanel />
-            <span className="demo-pill">Simulated plant</span>
             <span className="demo-pill">
+              {operational ? 'Reviewed observations' : 'Simulated plant'}
+            </span>
+            <span className="demo-pill operational-status">
               {state.sources?.some(
                 (source) =>
                   source.configuration.kind === 'operational' && source.quality === 'fresh',
               )
-                ? 'OBSERVATIONS AVAILABLE'
-                : 'NO CURRENT DATA'}
+                ? 'OPERATIONAL OBSERVATIONS'
+                : 'NO OPERATIONAL DATA'}
             </span>
             {state.workspace && (
               <span className="connection">

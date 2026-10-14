@@ -2346,3 +2346,9 @@ option {
 .plan-asset.unknown {
   border-color: #91a0b5;
 }
+
+@media (max-width: 800px) {
+  .topbar .operational-status {
+    display: none;
+  }
+}

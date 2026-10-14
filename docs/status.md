@@ -1,5 +1,27 @@
 # Implementation status
 
+## Connected Plant simulator — 14 October 2026
+
+The default Plant page now presents a hydraulic-forming reference factory using the configured layout and dependencies. It includes a simulation clock, production summary, line output, 3D/2D floor, equipment browser, unified inspector and activity timeline. Detailed readings are selected/hovered rather than cycling over unrelated equipment. The separate `?view=observations` page retains the operational inspector and source/authorization behavior without synthetic overlays.
+
+A deterministic browser process model replaces recurring arbitrary OOC generation. A pump-pressure-loss scenario develops over eight simulated seconds, derates only its downstream production line, dispatches an operator, stops output for inspection/repair, checks recovery for thirty simulated seconds, restores output and returns the operator to station. Motor idle, running, degraded, stopped, under-repair and recovering states share the same model as readings and production. Only the primary pressure fault dispatches; dependent symptoms do not create unrelated jobs. Repair and recovery timestamps are separate, and reduced-motion settings preserve lifecycle timing.
+
+Pause/resume, 1x/10x speed, pump selection and repeatable fault/reset controls run through the existing plant-scoped simulation owner. Web Locks keep one writer; BroadcastChannel commands receive acknowledgements or a visible timeout. Reset retains samples/cases and marks interrupted work. Old completed records remain; unfinished pre-process dispatch becomes interrupted history. Samples and cases retain their existing bounds and IDs remain monotonic. Activity events retain unique sequence IDs when virtual time is paused.
+
+### Observed acceptance
+
+- **21 frontend unit checks passed in 2.2 seconds**. New coverage verifies stable healthy operation, paused time, scheduled/explicit faults, dependency-based isolation, line shutdown, repair, recovery before case closure, and bounded activity IDs. Existing selection, timestamp, ledger migration, malformed storage and dispatch checks remain passing.
+- **All 19 browser checks passed in one 5.3-minute run** against the production build on ports 3002/8002 with ignored `.runtime/statistics-integration/plant-process.db`. This includes the complete pressure-loss journey, independent-line output, cross-tab pause/resume, pause across refresh, reset/record retention, unique subsequent fault IDs, assistant/voice doubles, storage failures, unknown operational data, historical provenance, dirty decisions, authorized repair, three actual operational recovery windows, verified memory and WebGL/keyboard fallback.
+- The connected-plant browser check compared backend incidents, sources and measured output before and after simulation and observed no simulation writes. The expanded 36-asset operational test now explicitly selects the operational view. A prior isolated two-check Plant journey run also passed in 46.8 seconds.
+- Prettier, ESLint, explicit TypeScript checks, native production build, Ruff lint/format, and read-only OpenAPI/TypeScript drift checks passed. Backend code, contracts and lockfiles are unchanged, so backend unit tests were not rerun for this frontend-only iteration. One old ledger assertion was updated to account for recovery finishing thirty simulated seconds after repair completion.
+- Desktop repair/restored-output and 430px mobile screenshots were visually inspected. The floor no longer duplicates a permanently pinned reading card; the mobile header hides the redundant operational badge. No private-key/provider-token patterns matched the inspected new/changed feature sources; this is not a security audit.
+
+### Review and limits
+
+A separate two-line review plant is running at **http://127.0.0.1:3002/**, backed by ignored `.runtime/statistics-integration/plant-review-v1.db` on API port 8002. It uses the documented product-test account and scripted AI. Acceptance records are retained in their separate database. Main staff data received no writes. Stop the standalone frontend before rebuilding; inspect occupied ports before starting other servers.
+
+This first slice supports one pump-pressure-loss scenario at a time and requires a configured pump-to-press dependency path. Readings, output derating, repair durations and recovery are authored demonstration assumptions, not calibrated hydraulic physics or material-inventory modeling. Browser persistence remains origin-local. No continuous samples are invented for closed tabs. Live Gemini/voice evaluation, hardware acquisition, cloud deployment and other equipment fault families remain outside this iteration. Nothing was pushed or deployed to cloud.
+
 ## Simulation assignment and completion fixes — 14 October 2026
 
 Completed-assignment deep links now resolve the requested historical assignment before falling back to the first active job. Explicit active selection and default active-job behavior remain unchanged.

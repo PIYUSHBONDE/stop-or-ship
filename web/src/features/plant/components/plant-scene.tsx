@@ -402,6 +402,8 @@ function SceneContent({
   overlay,
   onSlowDevice,
   preview,
+  isSimulation,
+  simulationPaused,
 }: {
   state: State;
   selected: string;
@@ -412,6 +414,8 @@ function SceneContent({
   overlay: 'health' | 'impact';
   onSlowDevice?: () => void;
   preview?: PlantPreview;
+  isSimulation?: boolean;
+  simulationPaused?: boolean;
 }) {
   const { gl } = useThree();
   const bounds = plantBounds(state.assets);
@@ -488,13 +492,18 @@ function SceneContent({
               ooc={preview?.oocIds.includes(a.id) || false}
               onSelect={onSelect}
               onHover={preview?.onHover || (() => undefined)}
-              reduced={reduced || !!state.workspace || a.status === 'unknown'}
+              reduced={
+                reduced ||
+                !!simulationPaused ||
+                (!isSimulation && !!state.workspace) ||
+                ['unknown', 'stopped', 'investigating'].includes(a.status)
+              }
             />
           ))}
         </CylinderInstances>
       </BoxInstances>
       {preview?.actors?.map((actor) => (
-        <OperatorFigure key={actor.id} actor={actor} reduced={reduced} />
+        <OperatorFigure key={actor.id} actor={actor} reduced={reduced || !!simulationPaused} />
       ))}
       {preview?.focusId &&
         state.assets
@@ -550,6 +559,8 @@ export default function PlantScene({
   quality = 'detail',
   onSlowDevice,
   preview,
+  isSimulation = false,
+  simulationPaused = false,
 }: {
   state: State;
   selected: string;
@@ -561,6 +572,8 @@ export default function PlantScene({
   quality?: 'detail' | 'balanced';
   onSlowDevice?: () => void;
   preview?: PlantPreview;
+  isSimulation?: boolean;
+  simulationPaused?: boolean;
 }) {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [reduced, setReduced] = useState(false);
@@ -674,6 +687,8 @@ export default function PlantScene({
           overlay={overlay}
           onSlowDevice={onSlowDevice}
           preview={preview}
+          isSimulation={isSimulation}
+          simulationPaused={simulationPaused}
         />
       </Canvas>
     </SceneBoundary>
