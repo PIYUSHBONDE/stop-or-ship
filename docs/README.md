@@ -10,6 +10,7 @@
 - [Telemetry sources, CSV and API contracts](data/telemetry-sources.md)
 - [Dataset attribution](data/attribution.md)
 - [Docker operation](operations/docker.md) and [future cloud deployment](operations/deployment.md)
+- [Gemini evaluation and quotas](operations/live-gemini.md) and [contextual assistant and voice](operations/assistant.md)
 
 ## Retained records
 

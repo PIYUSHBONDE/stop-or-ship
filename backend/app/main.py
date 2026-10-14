@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.ai.agent import investigate
+from app.api.assistant import router as assistant_router
 from app.api.dependencies import Storage
 from app.api.middleware import RequestBoundary
 from app.api.monitoring import router as monitoring_router
@@ -23,10 +24,15 @@ from app.telemetry.datasets import sample
 log = logging.getLogger("plantsense.api")
 
 
-def create_app(store: Store | None = None, *, shared_runtime=True) -> FastAPI:
+def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cache=None) -> FastAPI:
+    from app.ai.assistant import AssistantCache
+
+    cache = assistant_cache if assistant_cache is not None else AssistantCache()
+
     @asynccontextmanager
     async def lifespan(application: FastAPI):
         application.state.store = store if store is not None else Store()
+        application.state.assistant_cache = cache
         # Validate and warm trusted replay/model artifacts before accepting judge traffic.
         if config.INTERNAL_TEST_MODE:
             await asyncio.to_thread(sample, 0, None)
@@ -49,6 +55,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True) -> FastAPI:
     application.include_router(workspace_router)
     application.include_router(monitoring_router)
     application.include_router(source_router)
+    application.include_router(assistant_router)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_input(request: Request, exc: RequestValidationError):

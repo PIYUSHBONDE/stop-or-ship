@@ -1,21 +1,10 @@
-import { test, expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test, expect } from '../support/staff-session';
 
 test.describe.configure({ mode: 'serial' });
-const password = 'testing-only strong passphrase!';
-const email = 'product-owner@example.test';
 
 async function owner(page: Page) {
-  await page.goto('/');
-  const access = await (await page.request.get('/api/v1/access/state')).json();
-  await page.getByRole('button', { name: 'Continue with Google' }).click();
-  await page.getByLabel('Email', { exact: true }).fill(email);
-  await page.getByLabel('Password', { exact: true }).fill(password);
-  await page
-    .getByRole('button', {
-      name: access.setup_required ? 'Get started' : 'Sign in',
-      exact: true,
-    })
-    .click();
+  await page.goto('/workspace');
   await expect(page.getByRole('heading', { name: 'Welcome, Product Owner' })).toBeVisible({
     timeout: 30000,
   });
@@ -31,16 +20,20 @@ async function csvPreview(page: Page, csv: string) {
   await expect(page.getByRole('button', { name: 'Confirm import' })).toBeVisible();
 }
 
-test('staff access is required; no anonymous fallback', async ({ page }) => {
-  const anonymous: string[] = [];
-  page.on('request', (request) => {
-    if (/local-identity|\/sessions/.test(request.url())) anonymous.push(request.url());
+test.describe('anonymous access', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('staff access is required; no anonymous fallback', async ({ page }) => {
+    const anonymous: string[] = [];
+    page.on('request', (request) => {
+      if (/local-identity|\/sessions/.test(request.url())) anonymous.push(request.url());
+    });
+    await page.goto('/plant');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('button', { name: 'Continue with email' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open isolated demo' })).toHaveCount(0);
+    expect(anonymous).toEqual([]);
   });
-  await page.goto('/plant');
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Open isolated demo' })).toHaveCount(0);
-  expect(anonymous).toEqual([]);
 });
 
 test('expanded plant has unknown equipment and separate production measures', async ({ page }) => {
@@ -66,10 +59,14 @@ test('expanded plant has unknown equipment and separate production measures', as
   expect(state.assets.every((asset: { status: string }) => asset.status === 'unknown')).toBe(true);
   expect(state.measured_output_per_hour).toBeNull();
   await page.getByRole('button', { name: '2D plan', exact: true }).click();
-  await page.screenshot({ path: '../docs/artifacts/product-plant.png' });
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-plant.png' });
   await expect(page.getByText(/measured parts\/h/)).toBeVisible();
   await expect(page.getByText(/parts\/h rated capacity/)).toBeVisible();
-  await page.screenshot({ path: '../docs/artifacts/product-operations.png' });
+  await expect(page.getByText('synthetic preview � not plant health')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Maintenance', exact: true })).toHaveCount(0);
+  await page.goto('/operations');
+  await expect(page).toHaveURL(/plant/);
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-operations.png' });
 });
 
 test('reviewed historical import preserves provenance and cannot authorize', async ({ page }) => {
@@ -111,7 +108,7 @@ test('reviewed historical import preserves provenance and cannot authorize', asy
   await page.setViewportSize({ width: 430, height: 900 });
   await expect(card).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: '../docs/artifacts/product-monitor-mobile.png' });
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-monitor-mobile.png' });
 });
 
 test('operational incident, dirty decisions, authorized repair and incoming recovery', async ({
@@ -215,7 +212,7 @@ test('operational incident, dirty decisions, authorized repair and incoming reco
   await page.goto('/memory');
   await expect(page.getByText('VERIFIED FROM OPERATIONAL OBSERVATIONS')).toBeVisible();
   await expect(page.getByText('Valve bypass confirmed by inspection').first()).toBeVisible();
-  await page.screenshot({ path: '../docs/artifacts/product-memory.png' });
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-memory.png' });
   expect(errors).toEqual([]);
 });
 
@@ -240,4 +237,25 @@ test('WebGL failure retains the plant plan and keyboard equipment access', async
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Cooling unit', exact: true })).toBeVisible();
   await expect(page.getByText('No data connected · Condition unknown')).toBeVisible();
+});
+
+test('simulation runs automatically and remains separate from operational snapshots', async ({
+  page,
+}) => {
+  const plant = await owner(page);
+  await page.goto('/monitoring');
+  await expect(page.getByRole('heading', { name: 'Machine records', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await page.getByRole('link', { name: 'Operators', exact: true }).click();
+  await expect(page).toHaveURL(/operators/);
+  await page.getByRole('link', { name: 'Monitor', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  const snapshot = await (await page.request.get(`/api/v1/plants/${plant}/snapshot`)).json();
+  expect(
+    snapshot.incidents.every(
+      (incident: { record_origin: string }) =>
+        incident.record_origin === 'plant_observation' ||
+        incident.record_origin === 'historical_import',
+    ),
+  ).toBeTruthy();
 });

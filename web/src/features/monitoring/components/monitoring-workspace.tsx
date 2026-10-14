@@ -33,7 +33,9 @@ export function MonitoringWorkspace() {
       .includes(query.toLowerCase()),
   );
   const stored = sampleCount(preview.ledger);
-  const openCases = preview.ledger.cases.filter((item) => !item.clearedAt).length;
+  const openCases = preview.ledger.cases.filter(
+    (item) => !item.clearedAt && !item.interrupted,
+  ).length;
   return (
     <div className={styles.page}>
       <header className={styles.heading}>

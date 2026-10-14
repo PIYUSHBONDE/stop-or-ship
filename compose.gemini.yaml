@@ -1,0 +1,25 @@
+# Explicit local Vertex opt-in. Credentials and evaluation evidence are read-only runtime mounts.
+services:
+  api:
+    environment:
+      PLANTSENSE_AI_PROVIDER: vertex
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:?Set the evaluated Google project}
+      GOOGLE_CLOUD_LOCATION: global
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_adc.json
+      PLANTSENSE_AI_EVALUATION_FILE: /run/secrets/gemini_evaluation.json
+      DAILY_AI_SPEND_MICRO_USD: ${DAILY_AI_SPEND_MICRO_USD:-2000000}
+      INVESTIGATION_AI_SPEND_MICRO_USD: ${INVESTIGATION_AI_SPEND_MICRO_USD:-750000}
+    volumes:
+      - type: bind
+        source: ${PLANTSENSE_ADC_FILE:?Set the absolute local ADC file path}
+        target: /run/secrets/google_adc.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${PLANTSENSE_AI_EVALUATION_HOST_FILE:?Set the absolute passing evaluation report path}
+        target: /run/secrets/gemini_evaluation.json
+        read_only: true
+        bind:
+          create_host_path: false

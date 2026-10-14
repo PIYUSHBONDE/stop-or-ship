@@ -16,6 +16,13 @@ if AI_PROVIDER not in {"scripted", "gemini_api", "vertex"}:
 DATA = Path(os.getenv("PLANTSENSE_DATA_DIR", str(ROOT / "data")))
 DB = os.getenv("PLANTSENSE_DB", str(DATA / "local.db"))
 DAILY_LIMIT = int(os.getenv("DAILY_AI_LIMIT", "60"))
+DAILY_AI_SPEND_MICRO_USD = int(os.getenv("DAILY_AI_SPEND_MICRO_USD", "2000000"))
+INVESTIGATION_AI_SPEND_MICRO_USD = int(os.getenv("INVESTIGATION_AI_SPEND_MICRO_USD", "750000"))
+AI_EVALUATION_FILE = os.getenv("PLANTSENSE_AI_EVALUATION_FILE", "")
+ASSISTANT_EVALUATION_FILE = os.getenv("PLANTSENSE_ASSISTANT_EVALUATION_FILE", "")
+# Standard global text pricing, reviewed 2026-10-09. These are estimates, not invoices.
+AI_INPUT_MICRO_USD_PER_MILLION = int(os.getenv("AI_INPUT_MICRO_USD_PER_MILLION", "1500000"))
+AI_OUTPUT_MICRO_USD_PER_MILLION = int(os.getenv("AI_OUTPUT_MICRO_USD_PER_MILLION", "9000000"))
 WORKER_URL = os.getenv("WORKER_URL", "")
 TASK_REGION = os.getenv("TASK_REGION", "us-central1")
 TASK_QUEUE = os.getenv("TASK_QUEUE", "plantsense-investigations")
@@ -28,5 +35,15 @@ if SERVICE_ROLE not in {"api", "worker"}:
     raise RuntimeError("SERVICE_ROLE must be api or worker")
 if DAILY_LIMIT < 0:
     raise RuntimeError("DAILY_AI_LIMIT must be non-negative")
+if (
+    min(
+        DAILY_AI_SPEND_MICRO_USD,
+        INVESTIGATION_AI_SPEND_MICRO_USD,
+        AI_INPUT_MICRO_USD_PER_MILLION,
+        AI_OUTPUT_MICRO_USD_PER_MILLION,
+    )
+    < 0
+):
+    raise RuntimeError("AI spending limits and pricing must be non-negative")
 if MODE == "cloud" and not PROJECT:
     raise RuntimeError("GOOGLE_CLOUD_PROJECT is required in cloud mode")

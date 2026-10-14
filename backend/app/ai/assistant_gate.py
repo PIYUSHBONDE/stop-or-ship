@@ -1,0 +1,37 @@
+"""Separate assistant/speech activation report, tied to evaluated code."""
+
+import json
+from pathlib import Path
+
+from app.ai.evaluation_gate import fingerprint, require_evaluation
+from app.core import config
+
+
+def require_assistant_evaluation(*, voice=False):
+    require_evaluation()
+    try:
+        report = json.loads(Path(config.ASSISTANT_EVALUATION_FILE).read_text(encoding="utf-8"))
+        valid = (
+            report["passed"] is True
+            and report["fingerprint"] == fingerprint()
+            and report["real_model_responses"] is True
+            and report["model"] == config.MODEL
+            and report["provider"] == config.AI_PROVIDER
+            and {c["name"] for c in report["cases"]}
+            == {
+                "missing_readings",
+                "history_injection",
+                "historical_boundary",
+                "saved_costs",
+                "approval_blockers",
+            }
+            and len(report["cases"]) == 5
+            and all(c["passed"] is True for c in report["cases"])
+            and (not voice or report.get("voice_passed") is True)
+        )
+    except (OSError, ValueError, KeyError, TypeError):
+        valid = False
+    if not valid:
+        from fastapi import HTTPException
+
+        raise HTTPException(503, "Assistant activation requires matching local text/voice evaluation")

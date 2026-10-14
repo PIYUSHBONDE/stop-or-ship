@@ -15,7 +15,7 @@ Operations and Maintenance are no longer in the rail. `/operations` goes to Plan
 
 ## Local admin sign-in
 
-Open **http://127.0.0.1:3000/**, continue with Google or Microsoft, then use the work-email form.
+Open **http://127.0.0.1:3000/**, choose Continue with email, then use the work-email form.
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Open **http://127.0.0.1:3000/**, continue with Google or Microsoft, then use the
 
 There is no default password for a new plant. Staff sessions use expiring HttpOnly cookies; only password hashes are stored. These local accounts do not grant cloud access.
 
-**AI remains explicitly scripted locally.** Live Gemini is wired separately but has not passed live evaluation. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
+**This branch defaults to scripted AI locally.** Gemini investigation, contextual assistant and Google voice are available behind matching evaluation reports; earlier main reports do not validate this changed implementation. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
 
 ## Run with Docker
 
@@ -118,7 +118,7 @@ See [repository structure](docs/engineering/repository-structure.md), [contribut
 
 ## Recent local changes
 
-- Home is an SSO-style sign-in. Name, organization and plant are derived from the work email.
+- Home is a local staff sign-in. Name, organization and plant are derived from the work email.
 - Plant overlay generates labeled synthetic preview readings, control limits and OOC flash. Unconnected equipment stays unknown.
 - Operators assign by experience and severity, walk to the cell and take at least two minutes to clear a preview OOC.
 - Monitor is card-first. Click a machine for `/monitoring/{id}` records, trend graphs and case history.
@@ -126,3 +126,11 @@ See [repository structure](docs/engineering/repository-structure.md), [contribut
 - Memory is a plant-guide card list (floor address, what can break, what can be fixed, station guide). Click a card for `/memory/{id}`.
 - Operations and Maintenance were removed from navigation. `/operations` goes to Plant. `/maintenance` remains for authorized repair opened from an approved incident.
 - Preview records stay in a plant-scoped browser ledger. They do not write operational sources or authorize work.
+
+## Statistics integration branch
+
+The simulated plant starts automatically; no preview URL flag is required. Operators, machine graphs, incident tables and plant guides retain the statistics branch layout. The top bar labels the simulated plant, while backend observations and repair authorization remain separate.
+
+The read-only assistant can inspect explicitly synthetic browser snapshots through a separate citation. Browser simulation cannot establish measured plant health or authorize operational work. See [assistant configuration](docs/operations/assistant.md) and [Gemini gates](docs/operations/live-gemini.md).
+
+Simulation state is plant-scoped and browser-local. Seed, tick, samples, cases and dispatch survive refresh. A Web Lock elects one writing tab; other tabs follow saved updates. Legacy unfinished cases without dispatch state are marked interrupted. Storage or coordination failure falls back to a labeled in-memory simulation. Closing all tabs pauses generation; reopening reconciles elapsed simulated assignments without inventing missed samples.

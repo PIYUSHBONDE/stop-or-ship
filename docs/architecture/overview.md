@@ -27,7 +27,7 @@ flowchart LR
   Analysis --> Store
 ```
 
-The API scheduler maintains investigation dispatch/leases; it never creates product measurements. UTC maintenance eligibility and observation freshness use server time. Source changes invalidate authorization and reset consecutive-window context. The existing dataset detectors are restricted to compatible historical features; operational diagnosis uses explicitly reviewed source envelopes. Current AI is scripted and clearly identified. These local changes do not complete managed cloud identity, distributed ingestion or live Gemini evaluation.
+The API scheduler maintains investigation dispatch/leases; it never creates product measurements. UTC maintenance eligibility and observation freshness use server time. Source changes invalidate authorization and reset consecutive-window context. The existing dataset detectors are restricted to compatible historical features; operational diagnosis uses explicitly reviewed source envelopes. Compose defaults to the clearly identified scripted investigator. An explicit local override enables Vertex Gemini only with a passing real-response report matching the implementation and model. These local changes do not complete managed cloud identity or distributed ingestion. See [local Gemini investigation](../operations/live-gemini.md) for evidence, evaluation and accounting boundaries.
 
 The sections below retain the implementation history and the isolated adapter's deployment architecture; replay behavior is enabled only through the explicit internal test setting.
 
@@ -104,7 +104,7 @@ Raw data stays outside source control. Deployment bundles small replay/model art
 
 Explicit alternate states are `investigation_failed` and `proposal_rejected`. A rejected proposal can be reopened. A failed recovery remains `verifying` and never becomes a confirmed case. Reset changes the session generation so stale worker results cannot affect the new demo.
 
-SQLite uses `BEGIN IMMEDIATE`; Firestore uses transactions. Worker claim leases prevent duplicate execution, and polling surfaces expired investigations. Retries retain an eight-model-call budget and a sixty-second investigation deadline. The task queue retries once; exhausted/expired investigation is shown as incomplete rather than substituting a scripted cloud diagnosis.
+SQLite uses `BEGIN IMMEDIATE`; Firestore uses transactions. Worker claim leases prevent duplicate execution, and polling surfaces expired investigations. Retries retain an eight-model-call budget. Scripted investigations have a sixty-second deadline; live investigations have a shared 120-second deadline and a 135-second claim lease. A transient live stage failure permits one retry within the same call and spend allowances. The task queue retries once; exhausted/expired investigation is shown as incomplete rather than substituting a scripted cloud diagnosis.
 
 Each investigation attempt also owns a unique claim token. Old progress, completion or failure callbacks cannot overwrite a replacement claim or timed-out state. Queued jobs that do not start within ninety seconds become recoverable failures. Local SQLite uses WAL so readers can continue during serialized writes.
 
@@ -144,6 +144,12 @@ Repair completion stores the technician's correction, preserves the original hyp
 
 One active incident is permitted. Starting another scenario archives the resolved record, including evidence, approval and work order. Recurrence targets the most recently verified equipment. Reads of archived cases are ownership checked. Client actions carry `X-Incident-ID`, checked inside the same transaction as the transition; exact calculation versions still gate approval. Failed verification can return to the existing approved intervention, retaining earlier technician outcomes.
 
-AI identity is independent of storage mode through `ai_client.py`. Live execution uses an ADK investigator with at most five calls, two independent specialist agents in parallel (one call each), and an evidence reviewer (one call). Both specialists receive identical computed options and facts; the Python cost engine ranks feasible actions. Output validation checks source IDs, role names, option feasibility and monetary claims. This is bounded orchestration, not open-ended autonomous negotiation.
+AI identity is independent of storage mode through `ai_client.py`. Live execution uses an ADK investigator with at most five calls, two independent specialist agents called serially with bounded transient retries, and an evidence reviewer (one call). Both specialists receive identical computed options and facts; the Python cost engine ranks feasible actions. Output validation checks source IDs, role names, option feasibility and monetary claims. This is bounded orchestration, not open-ended autonomous negotiation.
 
 Knowledge documents retain equipment-family metadata. Local retrieval filters equipment context before ranking. Cloud vector queries use an equipment-family equality prefilter and a matching composite vector index; reviewed shared documents are indexed for each applicable family. Verified cases remain session scoped and prioritized. Cloud index execution and model grounding still require live validation.
+
+## Automatic browser simulation and assistant context
+
+Simulation starts automatically and stays visibly labeled. A plant-keyed provider owns a versioned browser record containing seed, monotonic tick, bounded ledger and dispatch snapshot. Hydration precedes writes. Web Locks elect one writer per origin and plant; storage events update followers. Unavailable storage or coordination uses an explicit in-memory fallback. Existing ledgers migrate without deleting samples or cases; unfinished legacy cases become interrupted history.
+
+Assistant questions may carry a bounded synthetic snapshot with capture time, equipment readings, selected case, assignments and recent cases. Python contracts enforce finite numbers and bounded fields; ownership-checked plant reads validate every asset ID. Synthetic context has a separate citation and remains untrusted input. It does not modify authoritative evidence, economics, approval or verification. Retries retain the captured body and key. The default provider remains scripted; changed backend fingerprints invalidate earlier live evaluation reports.

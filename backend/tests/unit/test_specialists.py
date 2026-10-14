@@ -85,3 +85,41 @@ def test_reviewer_failure_is_explicit_and_positions_share_facts():
     )
     assert len(result["roles"]) == 2
     assert any("review unavailable" in note for note in result["missing_information"])
+
+
+def test_transient_specialist_retries_once_with_unchanged_shared_facts():
+    table = calculate()
+    diagnosis = {
+        "summary": "Provisional",
+        "hypotheses": [
+            {
+                "cause": "Possible cause",
+                "confidence": "low",
+                "supporting_evidence": ["e1"],
+                "conflicting_evidence": [],
+            }
+        ],
+        "roles": [],
+        "citations": ["e1"],
+        "missing_information": ["Independent inspection"],
+    }
+    attempts = {}
+    messages = []
+
+    async def stage(name, instruction, schema, payload):
+        attempts[name] = attempts.get(name, 0) + 1
+        assert payload["calculation"] == table
+        if name == "EvidenceReviewer":
+            return EvidenceReview()
+        if name == "Reliability" and attempts[name] == 1:
+            raise TimeoutError("Provider unavailable")
+        return RolePosition(
+            role=name, preferred_option=table["recommended"], explanation="Review configured tradeoffs"
+        )
+
+    result = asyncio.run(
+        specialists(None, [{"id": "e1"}], diagnosis, table, None, messages.append, run_stage=stage)
+    )
+    assert attempts == {"EvidenceReviewer": 1, "Reliability": 2, "Production": 1}
+    assert len(result["roles"]) == 2
+    assert any("retrying once" in message for message in messages)

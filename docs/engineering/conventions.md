@@ -86,3 +86,7 @@ Keep superseded authorizations inactive, retain their original approval/cost sna
 `telemetry/legacy_monitoring.py` owns the transactional clock/source checkpoints, `telemetry/legacy_quality.py` owns trusted local source adaptation, and `api/monitoring.py` owns thin HTTP contracts. Mapping changes are versioned, permission checked and audited. Observe original values and source IDs alongside replay timestamps; label any overridden values synthetic. Invalid observations cannot count toward detection or recovery and block new approval or repair start.
 
 Use shared `usePlantSession` operations for monitoring settings and clock commands. All monitoring reads, polling and human mutations remain serialized. While monitoring is enabled, presentation directs users to the coordinated clock instead of issuing independent scenario/replay commands. Deferred repairs wait on that shared clock; no asset may advance it independently.
+
+## Statistics integration boundaries
+
+Automatic browser simulation is presentation data, never operational evidence. Persist simulation through its plant-scoped provider, with hydration before writes and one Web Lock writer. Preserve bounded records across migration. Keep interrupted legacy cases out of active counts. Assistant snapshots are untrusted, finite and bounded; validate their asset IDs against authenticated plant ownership and expose separate synthetic citations. Assistant requests stay serialized through `usePlantSession`.

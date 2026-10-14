@@ -63,9 +63,51 @@ def check_runtime(service: str, uid: str) -> dict:
         host["Memory"] > 0 and host["PidsLimit"] > 0 and host["NanoCpus"] > 0,
         f"{service} lacks limits",
     )
+    environment = dict(
+        item.split("=", 1) for item in inspected["Config"].get("Env", []) if "=" in item
+    )
+    allowed_bind_paths = set()
+    if service == "api" and environment.get("PLANTSENSE_AI_PROVIDER") == "vertex":
+        require(
+            environment.get("PLANTSENSE_MODE") == "local",
+            "Vertex override is not local",
+        )
+        allowed_bind_paths = {
+            "/run/secrets/google_adc.json",
+            "/run/secrets/gemini_evaluation.json",
+        }
+        if environment.get("PLANTSENSE_ASSISTANT_EVALUATION_FILE"):
+            require(
+                environment["PLANTSENSE_ASSISTANT_EVALUATION_FILE"]
+                == "/run/secrets/assistant_evaluation.json",
+                "Unexpected assistant evaluation path",
+            )
+            allowed_bind_paths.add("/run/secrets/assistant_evaluation.json")
+        require(
+            environment.get("GOOGLE_APPLICATION_CREDENTIALS")
+            == "/run/secrets/google_adc.json"
+            and environment.get("PLANTSENSE_AI_EVALUATION_FILE")
+            == "/run/secrets/gemini_evaluation.json",
+            "Vertex override has unexpected credential or evaluation paths",
+        )
     require(
-        all(mount["Type"] != "bind" for mount in inspected["Mounts"]),
-        f"{service} has host bind mounts",
+        all(
+            mount["Type"] != "bind"
+            or (mount["Destination"] in allowed_bind_paths and not mount["RW"])
+            for mount in inspected["Mounts"]
+        ),
+        f"{service} has an unexpected or writable host bind mount",
+    )
+    require(
+        not allowed_bind_paths
+        or allowed_bind_paths.issubset(
+            {
+                mount["Destination"]
+                for mount in inspected["Mounts"]
+                if mount["Type"] == "bind"
+            }
+        ),
+        "Vertex override lacks its read-only credential or evaluation mount",
     )
     executable, expression = (
         ("python", "import os; print(os.geteuid())")

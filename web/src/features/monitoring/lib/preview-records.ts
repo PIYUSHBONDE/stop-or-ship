@@ -28,6 +28,7 @@ export type CaseMetadata = {
 };
 
 export type MachineCase = {
+  interrupted?: boolean;
   id: string;
   assetId: string;
   assetType: string;

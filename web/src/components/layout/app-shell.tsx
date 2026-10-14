@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
+import { AssistantPanel } from '@/features/assistant/assistant-panel';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 
 const destinations = [
@@ -74,7 +75,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span>{name}</span>
             {name === 'Incidents' &&
               ((state.incident && state.incident.state !== 'resolved') ||
-                preview.ledger.cases.some((item) => !item.fixedAt)) && <i className="rail-dot" />}
+                preview.ledger.cases.some((item) => !item.fixedAt && !item.interrupted)) && (
+                <i className="rail-dot" />
+              )}
             {name === 'Operators' && preview.assignments.length > 0 && <i className="rail-dot" />}
           </Link>
         ))}
@@ -94,6 +97,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <small>{state.plant.name.toUpperCase()}</small>
           </div>
           <div className="topbar-right">
+            <AssistantPanel />
+            <span className="demo-pill">Simulated plant</span>
             <span className="demo-pill">
               {state.sources?.some(
                 (source) =>
@@ -113,6 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
         </header>
+        {preview.storageError && <p role="status">{preview.storageError}</p>}
         {error && (
           <div className="error-banner" role="alert">
             {error}

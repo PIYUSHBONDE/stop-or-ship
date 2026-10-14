@@ -14,6 +14,7 @@ import type { PreviewLedger } from '@/features/monitoring/lib/preview-records';
 const EMPTY: { id: string; type: string; position: number[] }[] = [];
 
 type PreviewDispatch = {
+  storageError: string;
   seed: number;
   tick: number;
   readings: Record<string, PreviewReading[]>;
@@ -33,6 +34,11 @@ type PreviewDispatch = {
 const PreviewDispatchContext = createContext<PreviewDispatch | null>(null);
 
 export function PreviewDispatchProvider({ children }: { children: ReactNode }) {
+  const { state } = usePlant();
+  return <PlantDispatch key={state?.plant.id || ''}>{children}</PlantDispatch>;
+}
+
+function PlantDispatch({ children }: { children: ReactNode }) {
   const { state } = usePlant();
   const dispatch = usePreviewDispatchState(state?.assets ?? EMPTY, state?.plant.id ?? '');
   return (

@@ -1,0 +1,12 @@
+# Add only after the separate assistant text and voice report passes locally.
+services:
+  api:
+    environment:
+      PLANTSENSE_ASSISTANT_EVALUATION_FILE: /run/secrets/assistant_evaluation.json
+    volumes:
+      - type: bind
+        source: ${PLANTSENSE_ASSISTANT_EVALUATION_HOST_FILE:?Set the absolute passing assistant report path}
+        target: /run/secrets/assistant_evaluation.json
+        read_only: true
+        bind:
+          create_host_path: false

@@ -108,9 +108,11 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
                 </strong>
                 <small>
                   {item.signalId.replaceAll('_', ' ')} {item.value} {item.unit} · {item.severity} ·{' '}
-                  {item.clearedAt
-                    ? `cleared ${clock(item.clearedAt)}`
-                    : `assigned ${clock(item.openedAt)} · fix takes at least 2 minutes`}
+                  {item.interrupted
+                    ? 'interrupted simulation'
+                    : item.clearedAt
+                      ? `cleared ${clock(item.clearedAt)}`
+                      : `assigned ${clock(item.openedAt)} · fix takes at least 2 minutes`}
                 </small>
                 <Link href={`/incidents?case=${item.id}`}>Open case</Link>
               </div>

@@ -19,6 +19,9 @@ jobs:
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with:
           version: '0.12.23'
+          # Avoid setup-uv's post-job cache prune racing another uv cleanup process.
+          # The locked sync remains deterministic; npm keeps its separate cache.
+          enable-cache: false
       - run: uv sync --frozen --extra dev --project backend
       - run: uv run --project backend pytest backend/tests -q
       - run: uv run --project backend ruff check backend/app backend/scripts backend/tests

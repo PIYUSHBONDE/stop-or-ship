@@ -24,7 +24,6 @@ export function SignInLanding({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<Mode>(inviteOnly ? 'invitation' : 'sso');
-  const [provider, setProvider] = useState<Provider>('google');
   const [token, setToken] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -84,7 +83,7 @@ export function SignInLanding({
   }
 
   function openProvider(next: Provider) {
-    setProvider(next);
+    void next;
     setMode('credentials');
     setError('');
   }
@@ -139,16 +138,14 @@ export function SignInLanding({
             {mode === 'sso' && (
               <div className={styles.methods}>
                 <button className={styles.sso} type="button" onClick={() => openProvider('google')}>
-                  <GoogleMark />
-                  Continue with Google
+                  Continue with email
                 </button>
                 <button
                   className={`${styles.sso} ${styles.microsoft}`}
                   type="button"
                   onClick={() => openProvider('microsoft')}
                 >
-                  <MicrosoftMark />
-                  Continue with Microsoft
+                  Local account sign-in
                 </button>
               </div>
             )}
@@ -156,8 +153,7 @@ export function SignInLanding({
               <form className={styles.form} onSubmit={submit}>
                 {mode === 'credentials' && (
                   <p className={styles.hint}>
-                    Continue with {provider === 'google' ? 'Google' : 'Microsoft'} using your work
-                    email.
+                    Use your local staff email and password. Provider SSO is not connected.
                   </p>
                 )}
                 {mode === 'invitation' && (
@@ -217,7 +213,7 @@ export function SignInLanding({
                     setError('');
                   }}
                 >
-                  Back to SSO
+                  Back to sign-in
                 </button>
               </form>
             )}
@@ -247,27 +243,5 @@ export function SignInLanding({
         </div>
       </section>
     </main>
-  );
-}
-
-function GoogleMark() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-      <path
-        fill="#EA4335"
-        d="M9 7.3v3.5h4.9c-.2 1.2-1.5 3.5-4.9 3.5A5.4 5.4 0 1 1 9 3.6c1.5 0 2.5.6 3.1 1.2l2.1-2.1C12.8 1.3 11.1.5 9 .5 4.6.5 1 4.1 1 8.5S4.6 16.5 9 16.5c4.6 0 7.6-3.2 7.6-7.7 0-.5 0-.9-.1-1.3H9Z"
-      />
-    </svg>
-  );
-}
-
-function MicrosoftMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-      <rect fill="#F25022" x="0" y="0" width="7.4" height="7.4" />
-      <rect fill="#7FBA00" x="8.6" y="0" width="7.4" height="7.4" />
-      <rect fill="#00A4EF" x="0" y="8.6" width="7.4" height="7.4" />
-      <rect fill="#FFB900" x="8.6" y="8.6" width="7.4" height="7.4" />
-    </svg>
   );
 }

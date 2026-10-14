@@ -53,7 +53,7 @@ export function MachineRecords({ assets }: { assets: Asset[] }) {
             />
             <small>
               {lastCase
-                ? `${lastCase.operatorId} ${lastCase.operatorName} · ${lastCase.id}${lastCase.clearedAt ? ' cleared' : ' assigned'}`
+                ? `${lastCase.operatorId} ${lastCase.operatorName} · ${lastCase.id}${lastCase.interrupted ? ' interrupted' : lastCase.clearedAt ? ' cleared' : ' assigned'}`
                 : 'No preview case yet'}
             </small>
             <span className={styles.open}>Open machine →</span>

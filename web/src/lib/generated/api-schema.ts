@@ -840,6 +840,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plants/{plant_id}/assistant/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Question */
+        post: operations["question_api_v1_plants__plant_id__assistant_questions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/assistant/transcriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transcription */
+        post: operations["transcription_api_v1_plants__plant_id__assistant_transcriptions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/assistant/speech": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Playback */
+        post: operations["playback_api_v1_plants__plant_id__assistant_speech_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -947,6 +998,80 @@ export interface components {
             status: components["schemas"]["Status"];
             /** Diagnostic Profile */
             diagnostic_profile?: ("pump" | "bearing" | "valve" | "cooler") | null;
+        };
+        /** AssistantAnswer */
+        AssistantAnswer: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Answer */
+            answer: string;
+            /** Citations */
+            citations: components["schemas"]["AssistantSource"][];
+            /** Navigation */
+            navigation: string[];
+            /** Calculation Version */
+            calculation_version: string | null;
+            /** Configuration Version */
+            configuration_version: number;
+            /** Costs */
+            costs: components["schemas"]["AssistantCost"][];
+            /** Provider */
+            provider: string;
+            /** Answer Reference */
+            answer_reference: string;
+            usage?: components["schemas"]["AssistantUsage"] | null;
+        };
+        /** AssistantCost */
+        AssistantCost: {
+            /** Option Id */
+            option_id: string;
+            /** Name */
+            name: string;
+            /** Total Paise */
+            total_paise: number;
+            /** Feasible */
+            feasible: boolean;
+        };
+        /** AssistantQuestion */
+        AssistantQuestion: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Question */
+            question: string;
+            /**
+             * Screen
+             * @enum {string}
+             */
+            screen: "plant" | "monitoring" | "operators" | "operations" | "incidents" | "maintenance" | "memory" | "plant-setup";
+            /** History */
+            history?: components["schemas"]["Exchange"][];
+            simulation_context?: components["schemas"]["SimulationContext"] | null;
+        };
+        /** AssistantSource */
+        AssistantSource: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+        };
+        /** AssistantUsage */
+        AssistantUsage: {
+            /** Request Id */
+            request_id: string;
+            /** Status */
+            status: string;
+            /** Charged Micro Usd */
+            charged_micro_usd: number;
+            /** Audio Seconds */
+            audio_seconds?: number | null;
+            /** Synthesis Characters */
+            synthesis_characters?: number | null;
         };
         /** AuditEvent */
         AuditEvent: {
@@ -1150,6 +1275,13 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** Exchange */
+        Exchange: {
+            /** Question */
+            question: string;
+            /** Answer */
+            answer: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1166,11 +1298,8 @@ export interface components {
             confidence: "low" | "medium" | "high";
             /** Supporting Evidence */
             supporting_evidence: string[];
-            /**
-             * Conflicting Evidence
-             * @default []
-             */
-            conflicting_evidence: string[];
+            /** Conflicting Evidence */
+            conflicting_evidence?: string[];
         };
         /** ImportPreview */
         ImportPreview: {
@@ -1283,6 +1412,35 @@ export interface components {
         MemoryResponse: {
             /** Cases */
             cases: components["schemas"]["VerifiedCase"][];
+        };
+        /** ModelUsage */
+        ModelUsage: {
+            /** Request Id */
+            request_id: string;
+            /** Stage */
+            stage: string;
+            /** Model */
+            model: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "reserved" | "completed" | "unknown";
+            /** Input Tokens */
+            input_tokens?: number | null;
+            /** Output Tokens */
+            output_tokens?: number | null;
+            /** Thought Tokens */
+            thought_tokens?: number | null;
+            /** Reserved Micro Usd */
+            reserved_micro_usd: number;
+            /** Charged Micro Usd */
+            charged_micro_usd: number;
+            /**
+             * Cost Basis
+             * @default Estimated USD model cost; not a provider invoice
+             */
+            cost_basis: string;
         };
         /** MonitoringControl */
         MonitoringControl: {
@@ -1574,8 +1732,11 @@ export interface components {
              * @enum {string}
              */
             role: "Reliability" | "Production";
-            /** Preferred Option */
-            preferred_option: string;
+            /**
+             * Preferred Option
+             * @enum {string}
+             */
+            preferred_option: "stop" | "defer" | "derate" | "continue";
             /** Explanation */
             explanation: string;
         };
@@ -1692,6 +1853,8 @@ export interface components {
              * @default 0
              */
             model_calls: number;
+            /** Ai Usage */
+            ai_usage?: components["schemas"]["ModelUsage"][];
         };
         /** ScenarioDefinition */
         ScenarioDefinition: {
@@ -1865,6 +2028,57 @@ export interface components {
             /** Upper */
             upper?: number | null;
         };
+        /** SimulationCase */
+        SimulationCase: {
+            /** Id */
+            id: string;
+            /** Asset Id */
+            asset_id: string;
+            /** Operator Id */
+            operator_id: string;
+            /** Status */
+            status: string;
+            /** Note */
+            note: string;
+        };
+        /** SimulationContext */
+        SimulationContext: {
+            /**
+             * Captured At
+             * Format: date-time
+             */
+            captured_at: string;
+            /** Selected Case Id */
+            selected_case_id?: string | null;
+            /** Equipment */
+            equipment: components["schemas"]["SimulationEquipment"][];
+            /** Assignments */
+            assignments: components["schemas"]["SimulationCase"][];
+            /** Cases */
+            cases: components["schemas"]["SimulationCase"][];
+        };
+        /** SimulationEquipment */
+        SimulationEquipment: {
+            /** Asset Id */
+            asset_id: string;
+            /** Readings */
+            readings: components["schemas"]["SimulationReading"][];
+        };
+        /** SimulationReading */
+        SimulationReading: {
+            /** Signal Id */
+            signal_id: string;
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+            /** Low */
+            low: number;
+            /** High */
+            high: number;
+            /** Ooc */
+            ooc: boolean;
+        };
         /** SourceBinding */
         SourceBinding: {
             /** Asset Id */
@@ -1984,6 +2198,27 @@ export interface components {
             /** Incident Id */
             incident_id?: string | null;
         };
+        /** SpeechRequest */
+        SpeechRequest: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Answer Reference */
+            answer_reference: string;
+        };
+        /** SpeechResponse */
+        SpeechResponse: {
+            /** Audio Base64 */
+            audio_base64: string;
+            /**
+             * Mime Type
+             * @default audio/mpeg
+             * @constant
+             */
+            mime_type: "audio/mpeg";
+            usage: components["schemas"]["AssistantUsage"];
+        };
         /** StaffUser */
         StaffUser: {
             /** Id */
@@ -2060,6 +2295,21 @@ export interface components {
             lines: number;
             /** Name */
             name: string;
+        };
+        /** TranscriptionRequest */
+        TranscriptionRequest: {
+            /** Incident Id */
+            incident_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Audio Base64 */
+            audio_base64: string;
+        };
+        /** TranscriptionResponse */
+        TranscriptionResponse: {
+            /** Transcript */
+            transcript: string;
+            usage: components["schemas"]["AssistantUsage"];
         };
         /** ValidationError */
         ValidationError: {
@@ -4009,6 +4259,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngestionResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    question_api_v1_plants__plant_id__assistant_questions_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistantQuestion"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantAnswer"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transcription_api_v1_plants__plant_id__assistant_transcriptions_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TranscriptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    playback_api_v1_plants__plant_id__assistant_speech_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie?: {
+                plantsense_staff?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpeechRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpeechResponse"];
                 };
             };
             /** @description Validation Error */
