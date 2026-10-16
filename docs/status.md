@@ -1,6 +1,18 @@
 # Implementation status
 
-Latest work: [Mumbai rollout resumed](#mumbai-rollout-resumed--16-october-2026). Deployment resumed with explicit permission for the specified runtime IAM resources. No public application is deployed yet.
+Latest work: [Mumbai pilot deployed](#mumbai-pilot-deployed--16-october-2026). The application is live; first GitHub publication/automatic-release verification is the remaining rollout step.
+
+## Mumbai pilot deployed — 16 October 2026
+
+Live web: https://plantsense-web-nponfirhaa-el.a.run.app. Cloud Run API and worker are private; web/API/worker each have min 0/max 1 instance. API and worker use 1 GiB; web uses 512 MiB. Mumbai Cloud SQL remains the single-zone PostgreSQL 16 `db-f1-micro` instance with bounded 10 GB storage. Existing UI/navigation were preserved.
+
+Private backup restoration into a temporary PostgreSQL schema passed **38-table/200-row count and SHA-256 proof**, then rolled back the rehearsal schema. Actual import separately passed the same **38 tables and 200 rows**. Migration and restore were one-shot jobs using the dedicated migration identity; original SQLite data remains intact. Known published seed passwords were rotated only in the cloud copy; private credentials are saved in ignored `.runtime/cloud-pilot/login-credentials.txt`, never in this document or Git. Native Cloud SQL backup restoration remains an unperformed operational drill.
+
+The final security-patched backend fingerprint is `3d0a0ea04bd290e7af7dd67f634826d72947ef22497a614bcb48225e003676bb`. All fresh full live gates passed: **5 investigation cases, 6 assistant cases, voice, and 4 case cases including human resume**. Patched backend/PostgreSQL acceptance passed **211 tests**; two deployment rollback/setup-protection tests passed. Backend and frontend dependency audits are clean. Ruff, frontend formatting/lint, contract drift, production build/TypeScript, 28 frontend unit tests and 12 focused desktop/mobile browser tests passed. The final release reuses the exact unchanged web image and patched backend base, adding only its matching private reports.
+
+Observed deployed checks: sign-in with the migrated account passed; one plant was retained; unauthenticated direct API and worker health requests both returned **403**. A real deployed assistant question returned a cited `Gemini · gemini-3.8-flash` answer. Real playback returned **200,064 MP3 bytes**; transcription retained the fixture equipment identifier. Authenticated Scheduler reconciliation succeeded. These cloud requests used the actual API identity and PostgreSQL, not the fixture provider. No fabricated staff report, physical measurement, approval or repair was inserted for smoke testing.
+
+Remaining limitations: first automatic GitHub release has not yet been verified. Backend changes still require fresh matching reports before promotion; no live gates were weakened. Single-zone/shared-CPU sizing is a pilot without HA or established production capacity. Tenant access is enforced by tested domain services; PostgreSQL row policies are not implemented. Global Gemini/voice processing is not an India-only residency guarantee. Browser-generated history belongs to each browser origin and was not imported into PostgreSQL; localhost history remains local. Factory hardware connections and managed SSO remain outside this deployment slice.
 
 ## Mumbai rollout resumed — 16 October 2026
 
