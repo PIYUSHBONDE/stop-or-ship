@@ -41,6 +41,8 @@ type Turn = {
   scope: string;
   capturedAt?: string;
   assignmentId?: string;
+  contextLabel?: string;
+  contextVersion?: string;
 };
 
 function sourceLabel(id: string, title: string) {
@@ -48,6 +50,7 @@ function sourceLabel(id: string, title: string) {
     (
       {
         'plant-state': 'Plant records',
+        'factory-case': 'Selected case, tasks and findings',
         'browser-simulation': 'Simulated readings',
         'browser-simulation-process': 'Simulated production and response',
         'browser-simulation-case': 'Saved simulated case',
@@ -63,13 +66,11 @@ function invalidateVoice(epoch: { current: number }) {
 export function AssistantPanel() {
   const { state } = usePlant();
   if (!state?.workspace) return null;
-  return (
-    <Panel key={`${state.workspace.user.id}:${state.workspace.id}:${state.incident?.id || ''}`} />
-  );
+  return <Panel key={`${state.workspace.user.id}:${state.workspace.id}`} />;
 }
 
 function Panel() {
-  const { state, selected, assistantRequest, busy } = usePlant();
+  const { state, selected, assistantRequest, caseRequest, busy } = usePlant();
   const pathname = usePathname();
   const query = useSearchParams();
   const simulation = usePreviewDispatch();
@@ -92,6 +93,41 @@ function Panel() {
   const [error, setError] = useState('');
   const [recording, setRecording] = useState(false);
   const [playing, setPlaying] = useState('');
+  const [caseDetail, setCaseDetail] = useState<Schema['CaseDetail'] | null>(null);
+  const [caseError, setCaseError] = useState('');
+  const caseController = useRef(caseRequest);
+  caseController.current = caseRequest;
+  const factoryCaseId = pathname === '/incidents' ? query.get('workcase') : null;
+  useEffect(() => {
+    let active = true;
+    setCaseDetail(null);
+    setCaseError('');
+    if (!factoryCaseId) return;
+    const load = async () => {
+      try {
+        const value = await caseController.current<Schema['CaseDetail']>(
+          `/cases/${encodeURIComponent(factoryCaseId)}`,
+        );
+        if (active) {
+          setCaseDetail(value);
+          setCaseError('');
+        }
+      } catch (cause) {
+        if (active)
+          setCaseError(cause instanceof Error ? cause.message : 'Case records unavailable.');
+      }
+    };
+    void load();
+    const timer = open
+      ? setInterval(() => {
+          if (!document.hidden) void load();
+        }, 10000)
+      : null;
+    return () => {
+      active = false;
+      if (timer) clearInterval(timer);
+    };
+  }, [factoryCaseId, open]);
   const alive = useRef(true);
   const stopRecording = useRef<((discard?: boolean) => void) | null>(null);
   const player = useRef<HTMLAudioElement | null>(null);
@@ -111,10 +147,21 @@ function Panel() {
     selected,
     { assets: state?.assets ?? [], incident: state?.incident ?? null },
     simulation,
+    caseDetail?.case,
   );
   const { context, synthetic } = selection;
   const currentContext = useRef(selection.key);
   currentContext.current = selection.key;
+  const contextLabel =
+    caseDetail?.case.id === factoryCaseId
+      ? caseDetail.case.title
+      : state?.assets.find((asset) => asset.id === context.asset_id)?.name || 'All equipment';
+  const contextVersion = JSON.stringify([
+    state?.configuration_version,
+    caseDetail?.case.revision,
+    synthetic ? simulation.process?.stage : null,
+    context.incident_id ? state?.incident?.calculation_version : null,
+  ]);
 
   function changeLayout(next: boolean) {
     layoutScroll.current = conversation.current?.scrollTop ?? 0;
@@ -178,8 +225,8 @@ function Panel() {
 
   async function send() {
     if (!input.trim() || pending || recording || busy) return;
-    if (selection.error) {
-      setError(selection.error);
+    if (selection.error || caseError) {
+      setError(caseError || selection.error || 'Case unavailable.');
       return;
     }
     const question = input.trim();
@@ -230,7 +277,17 @@ function Panel() {
             question,
             response,
             scope: expected,
-            capturedAt: body.simulation_context?.captured_at,
+            capturedAt:
+              response.captured_at ||
+              body.simulation_context?.captured_at ||
+              new Date().toISOString(),
+            contextLabel,
+            contextVersion: JSON.stringify([
+              response.configuration_version,
+              response.case_revision ?? caseDetail?.case.revision,
+              body.simulation_context?.process?.phase ?? null,
+              response.calculation_version,
+            ]),
             assignmentId:
               body.simulation_context?.selected_assignment_id ||
               body.simulation_context?.selected_case_id ||
@@ -334,6 +391,7 @@ function Panel() {
           {
             incident_id: response.incident_id,
             asset_id: response.asset_id,
+            case_id: response.case_id,
             answer_reference: response.answer_reference,
           },
           response.answer_reference,
@@ -456,6 +514,7 @@ function Panel() {
             </Dialog.Close>
           </div>
           <Dialog.Description className={styles.context}>
+            {factoryCaseId ? `Case: ${caseDetail?.case.title || 'Loading selected case…'} · ` : ''}
             {state?.assets.find((a) => a.id === context.asset_id)?.name || state?.plant.name} ·{' '}
             {context.asset_id || 'All equipment'}{' '}
             {context.incident_id ? `· Incident ${context.incident_id.slice(0, 8)}` : ''}
@@ -526,6 +585,29 @@ function Panel() {
                 id={`assistant-turn-${turn.response.answer_reference}`}
                 className={styles.turn}
               >
+                <div className={styles.answerMeta}>
+                  <span>
+                    Saved answer · {turn.contextLabel || turn.response.asset_id || 'Plant'}
+                  </span>
+                  {turn.capturedAt && (
+                    <time dateTime={turn.capturedAt}>
+                      {new Date(turn.capturedAt).toLocaleString()}
+                    </time>
+                  )}
+                </div>
+                {(turn.scope !== selection.key || turn.contextVersion !== contextVersion) && (
+                  <p className={styles.contextChanged}>
+                    Context changed since this answer.{' '}
+                    <button
+                      onClick={() => {
+                        setInput(turn.question);
+                        composer.current?.focus();
+                      }}
+                    >
+                      Ask for an update
+                    </button>
+                  </p>
+                )}
                 <p className={styles.question}>{turn.question}</p>
                 <div className={styles.answer}>
                   <ChatAnswer
@@ -666,9 +748,17 @@ function Panel() {
           )}
           {state?.workspace?.role !== 'viewer' && (
             <div className={styles.caseActions}>
-              <button onClick={() => setIntake(!intake)}>
-                {intake ? 'Close case form' : 'Start case'}
-              </button>
+              {!factoryCaseId && (
+                <button onClick={() => setIntake(!intake)}>
+                  {intake ? 'Close case form' : 'Start case'}
+                </button>
+              )}
+              {factoryCaseId && (
+                <span>
+                  Following this case ·{' '}
+                  {caseDetail?.case.phase.replaceAll('_', ' ') || 'Loading records'}
+                </span>
+              )}
               {createdCase && (
                 <Link
                   href={`/incidents?workcase=${encodeURIComponent(createdCase)}`}

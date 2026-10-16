@@ -162,6 +162,7 @@ async def process(store, job, *, provider=None, collector=collect, evaluation=Fa
         context_hash = f"analysis:{run['analysis_version']}"
         context = jobs.step(store, job, "context", context_hash)
         if context is None:
+            jobs.start_step(store, job, "context", context_hash)
             context = await asyncio.wait_for(collector(store, job), 30)
             jobs.step(store, job, "context", context_hash, context)
         allowed = allowed_ids(context)
@@ -172,6 +173,7 @@ async def process(store, job, *, provider=None, collector=collect, evaluation=Fa
             digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
             result = jobs.step(store, job, stage, digest)
             if result is None:
+                jobs.start_step(store, job, stage, digest)
                 if provider:
                     result = await provider(stage, payload)
                 elif config.AI_PROVIDER == "scripted":
@@ -198,15 +200,39 @@ async def process(store, job, *, provider=None, collector=collect, evaluation=Fa
             outstanding = db.execute(
                 "SELECT 1 FROM issue_tasks WHERE case_id=? AND state IN ('open','claimed')", (case["id"],)
             ).fetchone()
+            repeated_request = False
             if selected["request_information"] and not outstanding:
                 for proposal in proposals:
+                    suffix = ":" + proposal["kind"] + ":" + proposal["target_role"]
+                    # A completed request is a human answer, including unavailable data.
+                    # Do not create an endless request loop across analysis revisions.
+                    answered = db.execute(
+                        "SELECT 1 FROM issue_tasks WHERE case_id=? AND state='completed' AND request_key LIKE ?",
+                        (case["id"], "analysis:%" + suffix),
+                    ).fetchone()
+                    if answered:
+                        repeated_request = True
+                        event(
+                            db,
+                            case,
+                            "analysis.evidence_gap",
+                            "Previous finding retained. Required evidence remains unresolved; a reviewer must decide the next information request.",
+                        )
+                        continue
                     # Bounded fixed questions, not executable instructions authored by a model.
+                    asset = case.get("asset_id") or "this plant"
+                    claim = "; ".join(outputs["reviewer"].get("unsupported_claims", []))[:600]
                     create_task(
                         db,
                         case,
-                        QUESTIONS[proposal["kind"]],
-                        proposal["reason"],
-                        "Record a finding, measurement with explicit units, or why the information is unavailable. This does not verify a repair.",
+                        QUESTIONS[proposal["kind"]] + " Equipment: " + asset + ".",
+                        proposal["reason"]
+                        + (
+                            " Claim needing review: " + claim
+                            if proposal["kind"] == "review_evidence" and claim
+                            else ""
+                        ),
+                        "State what was checked, when, and the result. Include available measurements with units and capture time, or explain what cannot be checked. Use only site-approved procedures. A statement does not verify a repair.",
                         proposal["target_role"],
                         request_key="analysis:"
                         + str(case["analysis_version"])
@@ -222,7 +248,7 @@ async def process(store, job, *, provider=None, collector=collect, evaluation=Fa
                     "analysis.findings",
                     "Advisory findings recorded; human/domain authorization unchanged",
                 )
-        jobs.finish(store, job, "awaiting_decision")
+        jobs.finish(store, job, "blocked" if repeated_request else "awaiting_decision")
     except asyncio.CancelledError:
         # A killed worker leaves its lease for reconciliation; no successful result is invented.
         raise

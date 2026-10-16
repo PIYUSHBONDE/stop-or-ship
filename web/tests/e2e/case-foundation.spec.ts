@@ -34,6 +34,21 @@ test('chat intake, durable human request, stable retry and manager outcome form 
   await expect(
     detail.getByRole('heading', { name: 'Line A output review', exact: true }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Ask PlantSense', exact: true }).click();
+  await expect(chat).toContainText('Case: Line A output review');
+  await page.getByLabel('Question or editable transcript').fill('What is this case waiting for?');
+  const caseQuestion = page.waitForRequest(
+    (request) => request.url().endsWith('/assistant/questions') && request.method() === 'POST',
+  );
+  await chat.getByRole('button', { name: 'Send question', exact: true }).click();
+  expect((await caseQuestion).postDataJSON().case_id).toBe(caseId);
+  await expect(chat.getByText(/Saved answer · Line A output review/)).toBeVisible();
+  await expect(chat.getByRole('button', { name: 'Start case', exact: true })).toHaveCount(0);
+  await chat.getByRole('button', { name: 'Close assistant', exact: true }).click();
+  await detail
+    .locator('summary')
+    .filter({ hasText: /^Case controls and human decisions$/ })
+    .click();
   await page
     .locator('summary')
     .filter({ hasText: /^Automation policy/ })
@@ -53,9 +68,18 @@ test('chat intake, durable human request, stable retry and manager outcome form 
       timeout: 30000,
     })
     .toBe('waiting_for_input');
-  await page.getByRole('button', { name: 'Human requests', exact: true }).click();
-  const inbox = page.getByRole('dialog', { name: 'Human requests', exact: true });
-  await inbox.getByRole('button', { name: 'Claim request', exact: true }).click();
+  await page.getByRole('button', { name: 'Refresh cases', exact: true }).click();
+  await expect(detail.getByText('Available to claim', { exact: true }).first()).toBeVisible();
+  await expect(detail.getByText('Record production output', { exact: true })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: '../.runtime/case-ux-waiting-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 430, height: 950 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '../.runtime/case-ux-waiting-mobile.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: 'My tasks', exact: true }).click();
+  const inbox = page.getByRole('dialog', { name: 'My tasks', exact: true });
+  await inbox.getByRole('button', { name: 'Claim task', exact: true }).click();
   await inbox
     .getByLabel('Your finding', { exact: true })
     .fill('Manager reports 65 parts/hour over the last hour; reviewed operating conditions.');
@@ -74,7 +98,12 @@ test('chat intake, durable human request, stable retry and manager outcome form 
   await inbox.getByRole('button', { name: 'Submit finding', exact: true }).click();
   await expect.poll(() => attempts.length).toBe(2);
   expect(attempts[1]).toEqual(attempts[0]);
-  await expect(inbox.getByText('No open requests for your role.', { exact: true })).toBeVisible();
+  await expect(
+    inbox.getByText(
+      'No open tasks for your role in this plant. Tasks assigned to other roles remain visible in their case.',
+      { exact: true },
+    ),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Close requests', exact: true }).click();
   await expect
     .poll(async () => (await (await page.request.get(endpoint)).json()).case.phase, {
@@ -83,19 +112,17 @@ test('chat intake, durable human request, stable retry and manager outcome form 
     .toBe('awaiting_decision');
   await page.getByRole('button', { name: 'Refresh cases', exact: true }).click();
   await expect(detail).toContainText('Analysis revision 2');
-  await detail
-    .locator('summary')
-    .filter({ hasText: /^Revision 2 · scripted/ })
-    .click();
-  await expect(detail).toContainText('Read-only MCP tools completed');
+  await expect(
+    detail.getByRole('heading', { name: 'Evidence behind this assessment' }),
+  ).toBeVisible();
+  await detail.getByRole('button', { name: /Equipment configuration/ }).click();
+  await expect(detail.getByRole('region', { name: 'Selected evidence source' })).toBeVisible();
   await page.screenshot({ path: '../.runtime/case-foundation-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 430, height: 950 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: '../.runtime/case-foundation-mobile.png', fullPage: true });
-  await detail
-    .locator('summary')
-    .filter({ hasText: /^Record manager outcome$/ })
-    .click();
+  await detail.getByRole('button', { name: 'Record outcome', exact: true }).click();
+  await expect(detail.locator('[data-case-control="outcome"]')).toHaveAttribute('open', '');
   await detail
     .getByLabel('Outcome', { exact: true })
     .fill('Reviewed the reported output and recorded the planning response.');
@@ -128,6 +155,10 @@ test('other categories remain human triage and cancelled requests retain their a
   await expect(
     detail.getByRole('heading', { name: 'Packing material review', exact: true }),
   ).toBeVisible();
+  await detail
+    .locator('summary')
+    .filter({ hasText: /^Case controls and human decisions$/ })
+    .click();
   await expect(
     detail.getByRole('button', { name: 'Request analysis / retry', exact: true }),
   ).toBeDisabled();
@@ -157,10 +188,10 @@ test('other categories remain human triage and cancelled requests retain their a
     .getByLabel('Cancellation reason', { exact: true })
     .fill('Duplicate staff planning request; history retained.');
   await detail.getByRole('button', { name: 'Cancel reported case', exact: true }).click();
-  await expect(detail).toContainText('cancelled');
+  await expect(detail).toContainText('Cancelled');
   await detail
     .locator('summary')
-    .filter({ hasText: /^Recorded activity$/ })
+    .filter({ hasText: /^View complete recorded activity$/ })
     .click();
   await expect(detail).toContainText('Duplicate staff planning request; history retained.');
 });

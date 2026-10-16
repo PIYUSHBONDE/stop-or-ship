@@ -168,6 +168,8 @@ async def speak(cache, store, token, plant_id, body, key, *, evaluation=False):
     answer = cache.get(body.answer_reference, scope)
     if answer is None:
         raise HTTPException(404, "Answer expired; ask again before playback")
+    if body.case_id and answer.case_revision != state["factory_case"]["case"]["revision"]:
+        raise HTTPException(409, "Case changed; ask again before playback")
     if answer.configuration_version != state["configuration_version"] or answer.calculation_version != (
         state.get("incident") or {}
     ).get("calculation_version"):

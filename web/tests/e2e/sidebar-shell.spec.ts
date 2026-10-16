@@ -53,7 +53,7 @@ test('desktop sidebar replaces header/footer, expands without remounting Plant a
   await page.screenshot({ path: '../.runtime/sidebar-desktop-plant.png' });
   await navigate(page, 'Incidents');
   await expect(page.getByRole('heading', { name: 'Incidents', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Human requests', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'My tasks', exact: true })).toBeVisible();
   await page.screenshot({ path: '../.runtime/sidebar-desktop-records.png' });
 });
 
@@ -81,10 +81,10 @@ test('mobile uses a left drawer with layered focus, usable requests and full-hei
   await page.keyboard.press('Escape');
   await expect(disclosure).toBeHidden();
   await expect(drawer).toBeVisible();
-  await page.getByRole('button', { name: 'Human requests', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Human requests', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'My tasks', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'My tasks', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Close requests', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Human requests', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'My tasks', exact: true })).toBeFocused();
   await page.screenshot({ path: '../.runtime/sidebar-mobile-navigation.png' });
   await page.keyboard.press('Escape');
   await expect(drawer).toBeHidden();

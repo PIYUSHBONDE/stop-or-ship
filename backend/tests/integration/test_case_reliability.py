@@ -35,7 +35,11 @@ def test_restart_reuses_completed_stages_and_fences_stale_worker(shared):
     asyncio.run(run_once(store, provider=provider))
     state = detail(admin, plant, case["id"])
     assert state["case"]["phase"] == "blocked"
-    assert {s["stage"] for s in state["runs"][0]["steps"]} == {"context", "investigator"}
+    assert {s["stage"] for s in state["runs"][0]["steps"] if s["state"] == "completed"} == {
+        "context",
+        "investigator",
+    }
+    assert next(s for s in state["runs"][0]["steps"] if s["stage"] == "reviewer")["state"] == "failed"
     assert (
         post(
             admin, plant, f"/cases/{case['id']}/analysis", {"expected_revision": state["case"]["revision"]}

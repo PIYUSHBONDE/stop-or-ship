@@ -484,6 +484,30 @@
   max-height: 180px;
   overflow: auto;
 }
+.answerMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px 10px;
+  color: #bdd3d1;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.contextChanged {
+  color: #efdbb9;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.contextChanged button {
+  border: 0;
+  background: none;
+  color: #a2e2c5;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 4px 0;
+}
 .history strong {
   color: #dae7e4;
   display: block;

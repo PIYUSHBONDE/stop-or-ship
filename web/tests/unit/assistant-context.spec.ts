@@ -48,6 +48,34 @@ function fixture() {
 }
 const state = { ...catalog, incident: null };
 
+test('selected factory case is explicit and waits for its server-loaded record', () => {
+  const query = new URLSearchParams('workcase=case-1');
+  const simulation = fixture();
+  const loading = assistantSelection('/incidents', query, 'asset-0', state, simulation);
+  expect(loading.context.case_id).toBe('case-1');
+  expect(loading.error).toContain('still loading');
+  const selected = assistantSelection('/incidents', query, 'asset-0', state, simulation, {
+    id: 'case-1',
+    organization_id: 'org',
+    plant_id: 'plant',
+    title: 'Reported pump issue',
+    description: 'Needs review',
+    category: 'equipment',
+    asset_id: 'asset-41',
+    incident_id: null,
+    phase: 'waiting_for_input',
+    revision: 2,
+    analysis_version: 1,
+    created_at: '',
+    updated_at: '',
+    created_by: 'staff',
+    origin: 'staff_report',
+  });
+  expect(selected.error).toBeNull();
+  expect(selected.context).toEqual({ case_id: 'case-1', asset_id: 'asset-41', incident_id: null });
+  expect(selected.synthetic).toBe(false);
+});
+
 test('route and operator selection override stale global equipment; list pages clear it', () => {
   const simulation = fixture();
   for (const route of ['/monitoring/asset-41', '/memory/asset-41']) {

@@ -98,6 +98,7 @@ class Exchange(RequestModel):
 class AssistantContext(RequestModel):
     incident_id: str | None = Field(default=None, pattern=r"^[a-f0-9-]{36}$")
     asset_id: str | None = Field(default=None, min_length=1, max_length=80)
+    case_id: str | None = Field(default=None, pattern=r"^[a-f0-9-]{36}$")
 
 
 class AssistantQuestion(AssistantContext):
@@ -131,6 +132,8 @@ class AssistantUsage(RequestModel):
 
 
 class AssistantAnswer(AssistantContext):
+    case_revision: int | None = None
+    captured_at: datetime | None = None
     answer: str
     citations: list[AssistantSource]
     navigation: list[str]

@@ -15,6 +15,7 @@ from app.ai.validation import validate_narrative
 from app.contracts.assistant import AssistantAnswer, AssistantSource
 from app.contracts.models import GroundedAnswer
 from app.core import config
+from app.core.events import now
 from app.identity.staff_access import authorize
 from app.persistence.workspace_store import plant_snapshot
 
@@ -55,6 +56,8 @@ SYSTEM = (
     "including INR, rupees and paise, even when describing missing costs. "
     "Explain cost tradeoffs qualitatively; exact amounts appear only in the saved calculation cards. "
     "Approval requires existing human controls and the exact saved calculation version."
+    " When a selected factory-case source is supplied, explain that case's state, outstanding tasks "
+    "and evidence gaps first. Human statements and advisory findings do not become verified observations."
 )
 
 
@@ -119,6 +122,18 @@ class AssistantCache:
 
 def scope_for(store, token, plant_id, body):
     state = plant_snapshot(store, token, plant_id, body.incident_id)
+    case_id = getattr(body, "case_id", None)
+    if case_id:
+        from app.cases.service import get_detail
+
+        case = get_detail(store, token, plant_id, case_id)
+        if getattr(body, "simulation_context", None):
+            raise HTTPException(422, "Factory case and browser context must be requested separately")
+        if body.asset_id and case["case"]["asset_id"] != body.asset_id:
+            raise HTTPException(409, "Selected case and equipment differ")
+        if body.incident_id and case["case"]["incident_id"] != body.incident_id:
+            raise HTTPException(409, "Selected case and incident differ")
+        state = {**state, "factory_case": case}
     simulation = getattr(body, "simulation_context", None)
     if simulation:
         if body.incident_id:
@@ -172,7 +187,8 @@ def scope_for(store, token, plant_id, body):
         # A plant snapshot selects its latest incident by default. An equipment-only
         # question must not silently inherit another equipment's diagnosis or costs.
         state = {**state, "incident": None}
-    return (state["workspace"]["user"]["id"], plant_id, body.incident_id, body.asset_id), state
+    scope = (state["workspace"]["user"]["id"], plant_id, body.incident_id, body.asset_id)
+    return (*scope, case_id) if case_id else scope, state
 
 
 def request_identity(scope, stage, key):
@@ -283,6 +299,58 @@ def sources_for(state, body):
             ),
         )
     ]
+    if selected_case := state.get("factory_case"):
+        # Server-selected case records remain distinct from verified observations.
+        # Notes and prior model outputs are untrusted data, not instructions.
+        current = selected_case["case"]
+        latest = next(
+            (r for r in selected_case["runs"] if r["analysis_version"] == current["analysis_version"]),
+            None,
+        )
+        evidence.append(
+            AssistantSource(
+                id="factory-case",
+                title="Selected factory case · reports, tasks and advisory findings",
+                text=json.dumps(
+                    {
+                        "case": current,
+                        "tasks": [
+                            {
+                                k: t.get(k)
+                                for k in (
+                                    "question",
+                                    "reason",
+                                    "target_role",
+                                    "owner_name",
+                                    "state",
+                                    "due_at",
+                                )
+                            }
+                            for t in selected_case["tasks"][:5]
+                        ],
+                        "submissions": [
+                            {**e, "text": e["text"][:1000]} for e in selected_case["evidence"][:10]
+                        ],
+                        "latest_analysis": {
+                            "state": latest["state"],
+                            "steps": [
+                                {
+                                    "stage": s["stage"],
+                                    "state": s["state"],
+                                    "summary": s.get("summary", "")[:600],
+                                }
+                                for s in latest["steps"]
+                                if s["stage"] != "context"
+                            ],
+                        }
+                        if latest
+                        else None,
+                        "authority": "Staff statements and AI findings do not verify physical cause, approval or repair.",
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+        )
     for doc in (incident or {}).get("evidence", [])[:6]:
         if doc.get("id") and doc.get("text"):
             evidence.append(
@@ -334,6 +402,7 @@ def sources_for(state, body):
 
 async def question(cache, store, token, plant_id, body, key, *, evaluation=False):
     scope, state = scope_for(store, token, plant_id, body)
+    captured_at = body.simulation_context.captured_at if body.simulation_context else now()
     if config.AI_PROVIDER != "scripted" and not evaluation:
         from app.ai.assistant_gate import require_assistant_evaluation
 
@@ -440,6 +509,9 @@ async def question(cache, store, token, plant_id, body, key, *, evaluation=False
             navigation=navigation,
             incident_id=body.incident_id,
             asset_id=body.asset_id,
+            case_id=body.case_id,
+            case_revision=state.get("factory_case", {}).get("case", {}).get("revision"),
+            captured_at=captured_at,
             calculation_version=incident.get("calculation_version") if incident else None,
             configuration_version=state["configuration_version"],
             costs=[

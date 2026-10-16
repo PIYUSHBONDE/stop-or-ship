@@ -26,7 +26,9 @@ export function assistantSelection(
   selected: string,
   state: Pick<State, 'assets' | 'incident'>,
   simulation: Pick<Simulation, 'assignments' | 'history' | 'ledger'>,
+  factoryCase?: Schema['CaseView'] | null,
 ) {
+  const factoryCaseId = pathname === '/incidents' ? query.get('workcase') : null;
   const caseScreen = pathname === '/incidents' && !query.get('incident');
   const caseId = caseScreen ? query.get('case') || query.get('assignment') : null;
   const selectedCase = simulation.ledger.cases.find((c) => c.id === caseId);
@@ -61,21 +63,24 @@ export function assistantSelection(
     routeAssetId ||
     caseRecord?.assetId ||
     operatorResponse?.assetId ||
-    incident?.asset_id ||
+    (factoryCaseId ? factoryCase?.asset_id : incident?.asset_id) ||
     (pathname === '/plant' ? selected : null);
   const assetId = state.assets.some((a) => a.id === candidate) ? candidate : null;
   const context = {
     asset_id: assetId,
-    incident_id: incident?.asset_id === assetId ? incident.id : null,
+    incident_id: !factoryCaseId && incident?.asset_id === assetId ? incident.id : null,
+    ...(factoryCaseId ? { case_id: factoryCaseId } : {}),
   };
   const error =
-    requestedIncident && !synthetic && incident?.id !== requestedIncident
-      ? 'The selected incident is still loading. Try again when its evidence is available.'
-      : caseId && !selectedCase
-        ? 'The selected simulated case is not available. Wait for its records or select another case.'
-        : routeAssetId && !assetId
-          ? 'The selected equipment is not in this plant.'
-          : null;
+    factoryCaseId && factoryCase?.id !== factoryCaseId
+      ? 'The selected factory case is still loading. Wait for its records before asking.'
+      : requestedIncident && !synthetic && incident?.id !== requestedIncident
+        ? 'The selected incident is still loading. Try again when its evidence is available.'
+        : caseId && !selectedCase
+          ? 'The selected simulated case is not available. Wait for its records or select another case.'
+          : routeAssetId && !assetId
+            ? 'The selected equipment is not in this plant.'
+            : null;
   return {
     context,
     synthetic,

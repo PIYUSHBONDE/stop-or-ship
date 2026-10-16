@@ -107,6 +107,8 @@ class CaseView(CaseCreate):
     created_by: str | None
     origin: Literal["staff_report", "plant_observation"]
     outcome: str | None = None
+    next_action: str | None = None
+    next_owner: str | None = None
 
 
 class HumanTask(ViewModel):
@@ -116,6 +118,7 @@ class HumanTask(ViewModel):
     case_id: str
     target_role: TaskRole
     owner_id: str | None
+    owner_name: str | None = None
     state: Literal["open", "claimed", "completed", "cancelled"]
     revision: int
     due_at: str | None
@@ -129,6 +132,7 @@ class HumanTask(ViewModel):
 class EvidenceSubmission(ViewModel):
     id: str
     actor_id: str | None
+    actor_name: str | None = None
     created_at: str
     origin: Literal["staff_report", "technician_statement", "manager_outcome"]
     text: str
@@ -147,6 +151,13 @@ class AgentStepView(ViewModel):
     unsupported_claims: list[str] = Field(default_factory=list)
 
 
+class CaseSource(ViewModel):
+    id: str
+    title: str
+    status: Literal["recorded", "missing", "reference"]
+    text: str
+
+
 class AgentRunView(ViewModel):
     id: str
     analysis_version: int
@@ -155,6 +166,7 @@ class AgentRunView(ViewModel):
     created_at: str
     steps: list[AgentStepView]
     error: str | None = None
+    sources: list[CaseSource] = Field(default_factory=list)
 
 
 class CaseEvent(ViewModel):

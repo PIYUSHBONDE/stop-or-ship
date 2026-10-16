@@ -4815,6 +4815,13 @@
               }
             ],
             "title": "Error"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSource"
+            },
+            "type": "array",
+            "title": "Sources"
           }
         },
         "type": "object",
@@ -5079,6 +5086,41 @@
             ],
             "title": "Asset Id"
           },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9-]{36}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "case_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Revision"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
           "answer": {
             "type": "string",
             "title": "Answer"
@@ -5207,6 +5249,18 @@
               }
             ],
             "title": "Asset Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9-]{36}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
           },
           "question": {
             "type": "string",
@@ -5720,6 +5774,39 @@
         ],
         "title": "CasePage"
       },
+      "CaseSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "missing",
+              "reference"
+            ],
+            "title": "Status"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status",
+          "text"
+        ],
+        "title": "CaseSource"
+      },
       "CaseView": {
         "properties": {
           "title": {
@@ -5843,6 +5930,28 @@
               }
             ],
             "title": "Outcome"
+          },
+          "next_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Action"
+          },
+          "next_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Owner"
           }
         },
         "type": "object",
@@ -6351,6 +6460,17 @@
             ],
             "title": "Actor Id"
           },
+          "actor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Name"
+          },
           "created_at": {
             "type": "string",
             "title": "Created At"
@@ -6494,6 +6614,17 @@
               }
             ],
             "title": "Owner Id"
+          },
+          "owner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Name"
           },
           "state": {
             "type": "string",
@@ -9610,6 +9741,18 @@
             ],
             "title": "Asset Id"
           },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9-]{36}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
           "answer_reference": {
             "type": "string",
             "pattern": "^[a-f0-9]{32}$",
@@ -10015,6 +10158,18 @@
               }
             ],
             "title": "Asset Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9-]{36}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
           },
           "audio_base64": {
             "type": "string",

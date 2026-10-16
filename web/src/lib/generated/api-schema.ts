@@ -1146,6 +1146,8 @@ export interface components {
             steps: components["schemas"]["AgentStepView"][];
             /** Error */
             error?: string | null;
+            /** Sources */
+            sources?: components["schemas"]["CaseSource"][];
         };
         /** AgentStepView */
         AgentStepView: {
@@ -1233,6 +1235,12 @@ export interface components {
             incident_id?: string | null;
             /** Asset Id */
             asset_id?: string | null;
+            /** Case Id */
+            case_id?: string | null;
+            /** Case Revision */
+            case_revision?: number | null;
+            /** Captured At */
+            captured_at?: string | null;
             /** Answer */
             answer: string;
             /** Citations */
@@ -1268,6 +1276,8 @@ export interface components {
             incident_id?: string | null;
             /** Asset Id */
             asset_id?: string | null;
+            /** Case Id */
+            case_id?: string | null;
             /** Question */
             question: string;
             /**
@@ -1428,6 +1438,20 @@ export interface components {
             /** Next Cursor */
             next_cursor: number | null;
         };
+        /** CaseSource */
+        CaseSource: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "recorded" | "missing" | "reference";
+            /** Text */
+            text: string;
+        };
         /** CaseView */
         CaseView: {
             /** Title */
@@ -1471,6 +1495,10 @@ export interface components {
             origin: "staff_report" | "plant_observation";
             /** Outcome */
             outcome?: string | null;
+            /** Next Action */
+            next_action?: string | null;
+            /** Next Owner */
+            next_owner?: string | null;
         };
         /** ConfigurationUpdate */
         ConfigurationUpdate: {
@@ -1640,6 +1668,8 @@ export interface components {
             id: string;
             /** Actor Id */
             actor_id: string | null;
+            /** Actor Name */
+            actor_name?: string | null;
             /** Created At */
             created_at: string;
             /**
@@ -1692,6 +1722,8 @@ export interface components {
             target_role: "reliability" | "manager" | "technician";
             /** Owner Id */
             owner_id: string | null;
+            /** Owner Name */
+            owner_name?: string | null;
             /**
              * State
              * @enum {string}
@@ -2761,6 +2793,8 @@ export interface components {
             incident_id?: string | null;
             /** Asset Id */
             asset_id?: string | null;
+            /** Case Id */
+            case_id?: string | null;
             /** Answer Reference */
             answer_reference: string;
         };
@@ -2893,6 +2927,8 @@ export interface components {
             incident_id?: string | null;
             /** Asset Id */
             asset_id?: string | null;
+            /** Case Id */
+            case_id?: string | null;
             /** Audio Base64 */
             audio_base64: string;
         };

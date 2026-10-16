@@ -598,8 +598,18 @@ def list_cases(store, token, plant_id, cursor=0, limit=25):
             "SELECT * FROM issue_cases WHERE organization_id=? AND plant_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
             (scope["organization_id"], plant_id, limit + 1, cursor),
         )
+        items = [unpack(r) for r in found[:limit]]
+        for item in items:
+            task = row(
+                db,
+                "SELECT t.data,t.target_role,u.display_name FROM issue_tasks t LEFT JOIN staff_users u ON u.id=t.owner_id WHERE t.case_id=? AND t.organization_id=? AND t.plant_id=? AND t.state IN ('open','claimed') ORDER BY t.created_at,t.id LIMIT 1",
+                (item["id"], scope["organization_id"], plant_id),
+            )
+            if task:
+                item["next_action"] = json.loads(task["data"])["question"]
+                item["next_owner"] = task["display_name"] or task["target_role"]
         return {
-            "items": [unpack(r) for r in found[:limit]],
+            "items": items,
             "next_cursor": cursor + limit if len(found) > limit else None,
         }
 
@@ -610,7 +620,7 @@ def list_tasks(store, token, plant_id, cursor=0, limit=25):
         role = scope["role"]
         found = rows(
             db,
-            "SELECT * FROM issue_tasks WHERE organization_id=? AND plant_id=? AND state IN ('open','claimed') AND (?='admin' OR target_role=?) ORDER BY created_at,id LIMIT ? OFFSET ?",
+            "SELECT t.*,u.display_name AS owner_name FROM issue_tasks t LEFT JOIN staff_users u ON u.id=t.owner_id WHERE t.organization_id=? AND t.plant_id=? AND t.state IN ('open','claimed') AND (?='admin' OR t.target_role=?) ORDER BY t.created_at,t.id LIMIT ? OFFSET ?",
             (scope["organization_id"], plant_id, role, role, limit + 1, cursor),
         )
         return {
@@ -626,6 +636,7 @@ def detail(db, scope, case_id):
     )
     for run in runs:
         run.update(json.loads(run.pop("data")))
+        run["sources"] = []
         run["steps"] = [
             unpack(r)
             for r in rows(
@@ -635,21 +646,61 @@ def detail(db, scope, case_id):
         for step in run["steps"]:
             if step["stage"] == "context":
                 names = [name for name, item in step.items() if isinstance(item, dict) and "id" in item]
-                step["summary"] = "Read-only MCP tools completed: " + ", ".join(names)
+                step["summary"] = (
+                    "Read-only MCP tools completed: " + ", ".join(names)
+                    if step["state"] == "completed"
+                    else "Evidence collection " + step["state"]
+                )
                 step["citations"] = [step[name]["id"] for name in names]
+                for name in names:
+                    source = step[name]
+                    title, status = {
+                        "equipment_context": ("Equipment configuration", "recorded"),
+                        "equipment_trends": (
+                            "Saved operational readings",
+                            "recorded" if source.get("readings") else "missing",
+                        ),
+                        "production_context": ("Production areas and dependencies", "reference"),
+                        "search_knowledge": ("Procedures and confirmed repair references", "reference"),
+                        "case_evidence": ("Staff reports and human findings", "recorded"),
+                        "intervention_comparison": (
+                            "Saved intervention comparison",
+                            "recorded" if source.get("calculation") else "missing",
+                        ),
+                    }.get(name, (name.replace("_", " "), "recorded"))
+                    run["sources"].append(
+                        {
+                            "id": source["id"],
+                            "title": title,
+                            "status": status,
+                            "text": json.dumps(source, ensure_ascii=False),
+                        }
+                    )
+                    # Nested procedure IDs stay inspectable rather than becoming dead citations.
+                    for reference in source.get("shared_references", []) + source.get("verified_repairs", []):
+                        run["sources"].append(
+                            {
+                                "id": reference["id"],
+                                "title": "Procedure or confirmed repair reference",
+                                "status": "reference",
+                                "text": reference["text"],
+                            }
+                        )
     return {
         "case": case,
         "tasks": [
             unpack(r)
             for r in rows(
-                db, "SELECT * FROM issue_tasks WHERE case_id=? ORDER BY created_at DESC LIMIT 50", (case_id,)
+                db,
+                "SELECT t.*,u.display_name AS owner_name FROM issue_tasks t LEFT JOIN staff_users u ON u.id=t.owner_id WHERE t.case_id=? ORDER BY t.created_at DESC LIMIT 50",
+                (case_id,),
             )
         ],
         "evidence": [
             unpack(r)
             for r in rows(
                 db,
-                "SELECT * FROM issue_evidence WHERE case_id=? ORDER BY created_at DESC,id DESC LIMIT 50",
+                "SELECT e.*,u.display_name AS actor_name FROM issue_evidence e LEFT JOIN staff_users u ON u.id=e.actor_id WHERE e.case_id=? ORDER BY e.created_at DESC,e.id DESC LIMIT 50",
                 (case_id,),
             )
         ],

@@ -156,6 +156,29 @@ def heartbeat(store, job):
         db.execute("UPDATE issue_jobs SET lease_until=? WHERE id=?", (time.time() + LEASE_SECONDS, job["id"]))
 
 
+def start_step(store, job, stage, input_hash):
+    """Record real stage execution before external work; completed checkpoints stay reusable."""
+    if stage not in STAGES:
+        raise ValueError("Unknown analysis stage")
+    with store.connection() as db:
+        db.execute("BEGIN IMMEDIATE")
+        _, _, case, _ = validate(db, job["id"], job["lease_token"])
+        db.execute(
+            "INSERT INTO issue_steps VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(run_id,stage) DO UPDATE SET state=excluded.state,input_hash=excluded.input_hash,updated_at=excluded.updated_at,data=excluded.data",
+            (
+                job["run_id"],
+                stage,
+                job["organization_id"],
+                job["plant_id"],
+                "running",
+                input_hash,
+                now(),
+                "{}",
+            ),
+        )
+        event(db, case, "analysis.step_started", stage + " started")
+
+
 def step(store, job, stage, input_hash, output=None):
     if stage not in STAGES:
         raise ValueError("Unknown analysis stage")
@@ -245,6 +268,11 @@ def finish(store, job, phase, *, error=None):
             phase = "waiting_for_input"
         if case["phase"] not in {"in_progress", "verifying"}:
             save_case(db, case, phase="blocked" if error else phase)
+        if error:
+            db.execute(
+                "UPDATE issue_steps SET state='failed',updated_at=?,data=json_set(data,'$.error',?) WHERE run_id=? AND state='running'",
+                (now(), error, job["run_id"]),
+            )
         db.execute(
             "UPDATE issue_runs SET state=?,data=json_set(data,'$.error',?) WHERE id=?",
             ("blocked" if error else phase, error, job["run_id"]),
