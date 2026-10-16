@@ -3,6 +3,9 @@ import { expect, type Page } from '@playwright/test';
 export async function openNavigation(page: Page) {
   await expect(page.locator('#workspace-content')).toBeVisible();
   const navigation = page.getByRole('navigation', { name: 'Application navigation', exact: true });
+  // Wait for the responsive drawer to replace the desktop rail before inspecting its state.
+  if ((page.viewportSize()?.width ?? Infinity) <= 760)
+    await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toBeVisible();
   if (!(await navigation.isVisible()))
     await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
   await expect(navigation).toBeVisible();
