@@ -1,5 +1,7 @@
 # Mumbai pilot release
 
+For routine code updates, start with the [deployment quickstart](release-quickstart.md). The initial provisioning/import commands below are not normal release steps.
+
 Origin recovery: `python infra/gcp/pilot.py origins` updates only the API's trusted web origins from the exact HTTPS aliases recorded in Cloud Run service metadata. Both the numeric and hashed web URLs must permit sign-in. Keep external origins blocked; do not use wildcard origins or remove CSRF checks.
 
 ## Current rollout and architecture

@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import {
   casePresentation,
+  eventTitle,
+  sourceSummary,
   taskTitle,
   type CaseDetail,
 } from '../../src/features/cases/presentation';
@@ -27,6 +29,46 @@ const fixture = (): CaseDetail => ({
   evidence: [],
   runs: [],
   events: [],
+});
+
+test('specialist completion cannot imply completed factory production; custom audit text survives', () => {
+  const event = {
+    sequence: 1,
+    at: '2026-10-16T10:00:00Z',
+    actor_id: null,
+    action: 'analysis.step_completed',
+    message: 'Production completed',
+  };
+  expect(eventTitle(event)).toBe('Production impact review completed');
+  expect(eventTitle({ ...event, action: 'staff.note' })).toBe('Production completed');
+  expect(eventTitle({ ...event, message: 'Custom finding' })).toBe('Custom finding');
+});
+
+test('source summaries preserve missing evidence and reported provenance without trusting arbitrary content', () => {
+  const source = {
+    id: 'equipment-trends',
+    title: 'Readings',
+    status: 'missing' as const,
+    text: '{"readings":[1,2]}',
+  };
+  expect(sourceSummary(source)).toContain('No usable records');
+  expect(sourceSummary({ ...source, status: 'recorded', text: '{"readings":[{},{}]}' })).toContain(
+    '2 saved observations',
+  );
+  expect(
+    sourceSummary({ ...source, status: 'recorded', text: '<script>attack()</script>' }),
+  ).toContain('Saved evidence');
+  expect(sourceSummary({ ...source, status: 'recorded', text: 'null' })).toContain(
+    'Saved evidence',
+  );
+  expect(
+    sourceSummary({
+      ...source,
+      id: 'case-evidence',
+      status: 'recorded',
+      text: '{"submissions":[{}]}',
+    }),
+  ).toContain('distinct from verified measurements');
 });
 
 test('claimed ownership takes precedence over role when explaining the next action', () => {

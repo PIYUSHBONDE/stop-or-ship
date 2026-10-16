@@ -75,6 +75,13 @@ test('chat intake, durable human request, stable retry and manager outcome form 
   await page.screenshot({ path: '../.runtime/case-ux-waiting-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 430, height: 950 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const assessmentPosition = await detail
+    .getByRole('heading', { name: 'What we know', exact: true })
+    .boundingBox();
+  const activityPosition = await detail
+    .getByRole('heading', { name: 'AI activity', exact: true })
+    .boundingBox();
+  expect(assessmentPosition!.y).toBeLessThan(activityPosition!.y);
   await page.screenshot({ path: '../.runtime/case-ux-waiting-mobile.png', fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: 'My tasks', exact: true }).click();
@@ -117,6 +124,18 @@ test('chat intake, durable human request, stable retry and manager outcome form 
   ).toBeVisible();
   await detail.getByRole('button', { name: /Equipment configuration/ }).click();
   await expect(detail.getByRole('region', { name: 'Selected evidence source' })).toBeVisible();
+  await expect(detail.getByRole('region', { name: 'Selected evidence source' })).toContainText(
+    'Configuration does not establish current condition.',
+  );
+  await detail.getByRole('button', { name: 'Close source', exact: true }).click();
+  await expect(detail.getByRole('button', { name: /Equipment configuration/ })).toBeFocused();
+  await expect(detail.getByRole('button', { name: /Equipment configuration/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await page.setViewportSize({ width: 1024, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: '../.runtime/case-foundation-desktop.png', fullPage: true });
   await page.setViewportSize({ width: 430, height: 950 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

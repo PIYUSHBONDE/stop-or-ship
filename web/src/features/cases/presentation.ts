@@ -29,6 +29,63 @@ export const stageNames: Record<string, string> = {
   Production: 'Production impact',
 };
 
+// Translate only known system events; custom staff text and the audit record stay intact.
+export function eventTitle(event: CaseDetail['events'][number]) {
+  if (['analysis.step_started', 'analysis.step_completed'].includes(event.action)) {
+    const match =
+      /^(context|investigator|reviewer|Reliability|Production) (started|completed)$/.exec(
+        event.message,
+      );
+    if (match) {
+      const names: Record<string, string> = {
+        context: 'Evidence gathering',
+        investigator: 'Investigation',
+        reviewer: 'Evidence review',
+        Reliability: 'Reliability review',
+        Production: 'Production impact review',
+      };
+      return `${names[match[1]]} ${match[2]}`;
+    }
+  }
+  if (
+    event.action === 'analysis.findings' &&
+    event.message === 'Advisory findings recorded; human/domain authorization unchanged'
+  )
+    return 'AI assessment saved for human review';
+  if (event.action === 'analysis.paused' && event.message === 'Analysis waiting for input')
+    return 'Human finding requested';
+  if (event.action === 'analysis.claimed' && event.message === 'Worker claimed durable analysis')
+    return 'AI evidence review started';
+  return event.message;
+}
+
+type CaseSource = NonNullable<CaseDetail['runs'][number]['sources']>[number];
+export function sourceSummary(source: CaseSource): string {
+  if (source.status === 'missing')
+    return 'No usable records in this analysis. More evidence may be needed.';
+  try {
+    const data = JSON.parse(source.text) as Record<string, unknown>;
+    const count = (key: string) => (Array.isArray(data?.[key]) ? data[key].length : null);
+    if (source.id === 'equipment-context' && count('assets') !== null)
+      return `${count('assets')} configured equipment ${count('assets') === 1 ? 'record' : 'records'}. Configuration does not establish current condition.`;
+    if (source.id === 'equipment-trends' && count('readings') !== null)
+      return `${count('readings')} saved observations. Check observation time and quality before use.`;
+    if (
+      source.id === 'production-context' &&
+      count('areas') !== null &&
+      count('dependencies') !== null
+    )
+      return `${count('areas')} production areas and ${count('dependencies')} dependencies. Rated capacity is not measured output.`;
+    if (source.id === 'case-evidence' && count('submissions') !== null)
+      return `${count('submissions')} staff ${count('submissions') === 1 ? 'submission' : 'submissions'}. Reported findings remain distinct from verified measurements.`;
+  } catch {
+    // Older sources may contain plain text; preserve their complete original details.
+  }
+  return source.status === 'reference'
+    ? 'Reference material for this assessment. Applicability requires review.'
+    : 'Saved evidence for this analysis. Inspect its origin and timestamps.';
+}
+
 export function casePresentation(detail: CaseDetail, userId?: string, role?: string) {
   const terminal = ['resolved', 'cancelled'].includes(detail.case.phase);
   const activeTasks = terminal

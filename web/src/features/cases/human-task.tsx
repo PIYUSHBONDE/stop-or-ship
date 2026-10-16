@@ -97,10 +97,18 @@ export function HumanTaskCard({
           : ' · No deadline set'}
         {task.escalated ? ' · Escalated to manager' : ''}
       </p>
+      {inCase && active && (
+        <div className={styles.taskChecklist}>
+          <strong>Include in your finding</strong>
+          <p>{task.completion_requirements}</p>
+        </div>
+      )}
       <details className={styles.taskRequirements} open={responding || undefined}>
         <summary>Request and completion requirements</summary>
-        {taskTitle(task.question) !== task.question && <p>{task.question}</p>}
-        <p>{task.completion_requirements}</p>
+        {((inCase && active) || taskTitle(task.question) !== task.question) && (
+          <p>{task.question}</p>
+        )}
+        {(!inCase || !active) && <p>{task.completion_requirements}</p>}
       </details>
       {!inCase && (
         <Link href={`/incidents?workcase=${encodeURIComponent(task.case_id)}`} onClick={onNavigate}>

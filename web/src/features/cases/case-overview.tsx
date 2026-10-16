@@ -2,10 +2,25 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Clock3, ShieldCheck, ArrowRight, FileText } from 'lucide-react';
+import {
+  Check,
+  Clock3,
+  ShieldCheck,
+  ArrowRight,
+  FileText,
+  GitBranch,
+  CircleAlert,
+} from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { HumanTaskCard } from './human-task';
-import { casePresentation, stageNames, sourceNames, type CaseDetail } from './presentation';
+import {
+  casePresentation,
+  stageNames,
+  sourceNames,
+  eventTitle,
+  sourceSummary,
+  type CaseDetail,
+} from './presentation';
 import styles from './cases.module.css';
 
 export function CaseOverview({
@@ -68,7 +83,7 @@ export function CaseOverview({
           ? 0
           : 3;
   return (
-    <>
+    <div className={styles.caseWorkspace}>
       <header className={styles.caseHeading}>
         <div>
           <h1>{detail.case.title}</h1>
@@ -98,6 +113,11 @@ export function CaseOverview({
           <strong>{view.status}</strong>
           <p>{view.explanation}</p>
         </div>
+        {view.next && (
+          <span className={styles.ownerBadge}>
+            {view.next.target_role} · {view.mine ? 'You' : view.next.owner_name || 'Unclaimed'}
+          </span>
+        )}
       </div>
       {feedback && (
         <p role="status" className={styles.success}>
@@ -128,7 +148,7 @@ export function CaseOverview({
       </ol>
       <div className={styles.caseColumns}>
         <div className={styles.caseMain}>
-          <section aria-label="Latest case assessment">
+          <section className={styles.assessmentSection} aria-label="Latest case assessment">
             <div className={styles.line}>
               <h3>What we know</h3>
               <span>Analysis revision {detail.case.analysis_version}</span>
@@ -138,16 +158,23 @@ export function CaseOverview({
                 'The report is recorded. No completed assessment is available for the current evidence revision.'}
             </p>
             {!!view.missing.length && (
-              <p className={styles.gap}>
-                <strong>Still missing:</strong> {view.missing.map((item) => item.title).join('; ')}.
-                Missing evidence does not confirm a fault.
-              </p>
+              <div className={styles.evidenceGap}>
+                <CircleAlert size={18} aria-hidden="true" />
+                <div>
+                  <strong>What still needs checking</strong>
+                  <p>{view.missing.map((item) => item.title).join('; ')}.</p>
+                  <small>Missing evidence does not confirm a fault.</small>
+                </div>
+              </div>
             )}
             {view.production && (
-              <details>
-                <summary>Production impact</summary>
-                <p>{view.production.summary}</p>
-              </details>
+              <div className={styles.productionImpact}>
+                <GitBranch size={18} aria-hidden="true" />
+                <div>
+                  <h4>Production impact</h4>
+                  <p>{view.production.summary}</p>
+                </div>
+              </div>
             )}
             <p className={styles.note}>
               Staff reports and AI findings do not verify physical cause, spending approval or
@@ -219,7 +246,7 @@ export function CaseOverview({
               </details>
             )}
           </section>
-          <section aria-labelledby="case-evidence-heading">
+          <section className={styles.evidenceSection} aria-labelledby="case-evidence-heading">
             <h3 id="case-evidence-heading">Evidence behind this assessment</h3>
             {detail.evidence.map((item) => (
               <details className={styles.evidenceRow} key={item.id}>
@@ -251,10 +278,14 @@ export function CaseOverview({
                 <button
                   className={styles.sourceRow}
                   key={item.id}
+                  aria-expanded={sourceId === item.id}
                   onClick={(event) => openSource(item.id, event.currentTarget)}
                 >
-                  <span>{item.title}</span>
                   <span>
+                    <strong>{item.title}</strong>
+                    <small>{sourceSummary(item)}</small>
+                  </span>
+                  <span className={styles.sourceStatus} data-status={item.status}>
                     {item.status === 'missing'
                       ? 'Not available'
                       : item.status === 'reference'
@@ -301,11 +332,7 @@ export function CaseOverview({
                     Close source
                   </button>
                 </div>
-                <p>
-                  {source.status === 'missing'
-                    ? 'This source did not provide usable records in the saved analysis. This is an evidence gap, not proof of a fault.'
-                    : 'Saved source used by this analysis. Inspect its origin and timestamps before relying on it.'}
-                </p>
+                <p>{sourceSummary(source)}</p>
                 {source.status === 'reference' && !source.text.trim().startsWith('{') && (
                   <p>{source.text}</p>
                 )}
@@ -316,13 +343,13 @@ export function CaseOverview({
               </section>
             )}
           </section>
-          <section>
+          <section className={styles.timeline}>
             <h3>What happened</h3>
             {detail.events.slice(0, 3).map((event) => (
               <div key={event.sequence} className={styles.activityItem}>
                 <span className={styles.activityDot} />
                 <div>
-                  <p>{event.message}</p>
+                  <p>{eventTitle(event)}</p>
                   <time dateTime={event.at}>{new Date(event.at).toLocaleString()}</time>
                 </div>
               </div>
@@ -331,7 +358,7 @@ export function CaseOverview({
               <summary>View complete recorded activity</summary>
               {detail.events.slice(3).map((event) => (
                 <p className={styles.note} key={event.sequence}>
-                  {new Date(event.at).toLocaleString()} · {event.message}
+                  {new Date(event.at).toLocaleString()} · {eventTitle(event)}
                 </p>
               ))}
             </details>
@@ -414,7 +441,7 @@ export function CaseOverview({
             {view.run?.steps.map((step) => (
               <p key={step.stage}>
                 <span>{stageNames[step.stage] || step.stage}</span>
-                <strong>{step.state.replaceAll('_', ' ')}</strong>
+                <strong data-state={step.state}>{step.state.replaceAll('_', ' ')}</strong>
               </p>
             ))}
             {!view.run && <p>No analysis has started for this revision.</p>}
@@ -440,6 +467,6 @@ export function CaseOverview({
         <ShieldCheck size={15} aria-hidden="true" /> AI findings are advisory. Approvals and repair
         verification stay with authorized staff.
       </p>
-    </>
+    </div>
   );
 }

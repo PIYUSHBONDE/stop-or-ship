@@ -4,6 +4,8 @@ Plant reliability with configurable equipment, named staff access, observation-b
 
 ## Current product
 
+Cloud updates: follow the [deployment quickstart](docs/operations/release-quickstart.md) for the existing Mumbai deployment. Routine releases preserve the database and use GitHub Actions.
+
 - **Plant:** connected hydraulic-forming simulator with 3D/2D floor, line output, machine inspector and activity timeline. Configured layouts are preserved; reviewed operational observations have a separate view.
 - **Operators:** live assignment IDs, experience-based dispatch and walk-to-cell preview.
 - **Monitor:** machine cards, per-machine records/graphs, plus reviewed operational/historical sources.

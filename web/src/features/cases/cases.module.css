@@ -1,3 +1,81 @@
+.caseWorkspace {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  min-width: 0;
+}
+.caseWorkspace :focus-visible {
+  outline: 2px solid #88dabc;
+  outline-offset: 4px;
+}
+.caseWorkspace ::selection {
+  background: #a2e2c5;
+  color: #10232a;
+}
+.caseWorkspace p {
+  max-width: 72ch;
+}
+.assessmentSection > details {
+  margin-top: 16px;
+}
+.taskChecklist {
+  padding: 14px 0;
+  border-top: 1px solid #42606a;
+}
+.taskChecklist strong {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.taskChecklist p {
+  color: #c7ddda;
+}
+.ownerBadge {
+  margin-left: auto;
+  font-size: 12px;
+  color: #deeeea;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+.evidenceGap,
+.productionImpact {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: #192f34;
+  font-size: 13px;
+}
+.evidenceGap {
+  background: #302f27;
+  color: #efdbb9;
+}
+.evidenceGap svg,
+.productionImpact svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.evidenceGap p,
+.productionImpact p {
+  margin: 6px 0 0;
+}
+.evidenceGap small {
+  display: block;
+  margin-top: 6px;
+  color: #e1d4bc;
+}
+.evidenceSection,
+.timeline {
+  border-top: 1px solid #34515a;
+  padding-top: 24px;
+}
+.timeline .activityItem + .activityItem {
+  border-top: 1px solid #29434b;
+}
+.timeline > details {
+  margin-top: 14px;
+}
 .board {
   border: 1px solid #34515a;
   border-radius: 12px;
@@ -50,7 +128,7 @@
 }
 .caseHeading h1 {
   margin: 0;
-  font-size: clamp(22px, 2.5vw, 30px);
+  font-size: 28px;
   letter-spacing: -0.03em;
   line-height: 1.25;
 }
@@ -107,6 +185,7 @@
   background: #283a31;
   border-radius: 11px;
   color: #efdbb9;
+  margin: 22px 0;
 }
 .statusBand > svg {
   flex-shrink: 0;
@@ -155,8 +234,9 @@
 }
 .caseColumns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 40px;
+  margin-top: 28px;
 }
 .caseMain,
 .caseAside {
@@ -166,15 +246,15 @@
   min-width: 0;
 }
 .caseMain h3 {
-  font-size: 16px;
+  font-size: 18px;
   margin-bottom: 13px;
 }
 .caseMain section {
   min-width: 0;
 }
 .assessment {
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: 18px;
+  line-height: 1.65;
   margin: 14px 0;
 }
 .gap {
@@ -183,7 +263,7 @@
   padding: 10px 0;
 }
 .nextAction {
-  padding: 20px;
+  padding: 24px;
   border-radius: 12px;
   background: #1c353b;
 }
@@ -191,6 +271,19 @@
   color: #a2e2c5;
   font-size: 14px;
   margin: 0 0 13px;
+}
+.nextAction .task > .line > strong {
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.nextAction .task > .line {
+  align-items: start;
+}
+.nextAction .task > button,
+.nextAction .form > button {
+  width: 100%;
+  min-height: 44px;
 }
 .nextAction > h4 {
   font-size: 19px;
@@ -239,6 +332,32 @@
   gap: 5px;
   color: #b6d0cd;
   font-size: 12px;
+}
+.sourceRow > span:first-child {
+  min-width: 0;
+}
+.sourceRow strong {
+  font-weight: 500;
+}
+.sourceRow small {
+  display: block;
+  margin-top: 6px;
+  line-height: 1.6;
+  color: #b6d0cd;
+  font-size: 12px;
+  max-width: 68ch;
+}
+.sourceRow:hover {
+  background: #193038;
+}
+.sourceRow[aria-expanded='true'] {
+  background: #203d3d;
+}
+.sourceStatus {
+  flex-shrink: 0;
+}
+.sourceStatus[data-status='missing'] {
+  color: #efdbb9 !important;
 }
 .sourceLinks {
   display: flex;
@@ -309,6 +428,18 @@
   font-weight: 500;
   color: #a2e2c5;
 }
+.aiActivity p strong[data-state='failed'] {
+  color: #ffd0b9;
+}
+.aiActivity {
+  padding: 0 8px;
+}
+.aiActivity p {
+  align-items: baseline;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #29434b;
+  padding: 8px 0;
+}
 .aiActivity small {
   color: #b6d0cd;
   font-size: 12px;
@@ -329,7 +460,7 @@
   display: flex;
   gap: 8px;
   align-items: start;
-  margin: 0;
+  margin: 28px 0 0;
   border-top: 1px solid #34515a;
   padding-top: 16px;
   font-size: 12px;
@@ -556,13 +687,57 @@
   font-size: 12px;
   color: #b6d0cd;
 }
+@media (max-width: 1050px) {
+  .caseColumns {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 24px;
+  }
+  .nextAction {
+    padding: 18px;
+  }
+}
+@media (max-width: 850px) {
+  .caseColumns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 25px;
+  }
+  .caseMain,
+  .caseAside {
+    display: contents;
+  }
+  .nextAction {
+    order: -2;
+  }
+  .assessmentSection {
+    order: -1;
+  }
+}
 @media (max-width: 760px) {
+  .caseHeading h1 {
+    font-size: 24px;
+  }
+  .statusBand {
+    flex-wrap: wrap;
+    margin: 18px 0;
+  }
+  .statusBand > div {
+    flex: 1;
+    min-width: 180px;
+  }
+  .ownerBadge {
+    margin-left: 33px;
+  }
+  .sourceRow {
+    flex-direction: column;
+    gap: 8px;
+  }
   .boardHeading {
     padding: 20px 14px 0;
   }
   .caseColumns {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 25px;
   }
   .caseAside {

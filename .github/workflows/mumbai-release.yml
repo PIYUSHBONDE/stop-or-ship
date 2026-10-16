@@ -55,6 +55,7 @@ jobs:
           uv run --project backend python -c 'from app.ai.assistant_gate import require_assistant_evaluation; from app.cases.worker import require_case_evaluation; require_assistant_evaluation(voice=True); require_case_evaluation()'
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
       - name: Build immutable release images in Mumbai
+        id: build
         env:
           RELEASE_SHA: ${{ github.sha }}
           BUILD_ACCOUNT: projects/project-970d28ee-835b-4ca2-866/serviceAccounts/plantsense-build-exec@project-970d28ee-835b-4ca2-866.iam.gserviceaccount.com
@@ -81,9 +82,52 @@ jobs:
           service_account: plantsense-release@project-970d28ee-835b-4ca2-866.iam.gserviceaccount.com
           project_id: project-970d28ee-835b-4ca2-866
       - name: Promote evaluated images with rollback
+        id: promote
         if: vars.PLANTSENSE_AUTO_DEPLOY_ENABLED != 'false'
         env:
           RELEASE_SHA: ${{ github.sha }}
         run: python infra/gcp/promote.py --tag "$RELEASE_SHA"
-      - name: Record release boundary
-        run: echo 'Promotion requires matching live reports and explicit auto-deploy enablement. Database migrations remain separate.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Save previous revision traffic for rollback
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mumbai-previous-traffic-${{ github.sha }}
+          path: .runtime/cloud-pilot/previous-traffic.json
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Record release stages
+        if: always()
+        env:
+          REPORTS: ${{ steps.evidence.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          PROMOTION: ${{ steps.promote.outcome }}
+        shell: bash
+        run: |
+          {
+            echo '### Mumbai release stages'
+            echo "Matching live reports: $REPORTS"
+            echo "Immutable image build: $BUILD"
+            echo "Traffic promotion and health checks: $PROMOTION"
+            echo 'Skipped promotion means this run did not release the images.'
+            echo 'Database migrations remain separate. See docs/operations/release-quickstart.md.'
+          } >> "$GITHUB_STEP_SUMMARY"
+  summary:
+    needs: [validation, images]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Explain release result
+        env:
+          VALIDATION: ${{ needs.validation.result }}
+          RELEASE: ${{ needs.images.result }}
+        run: |
+          {
+            echo '### PlantSense release result'
+            echo "Code and browser validation: $VALIDATION"
+            echo "Image/release job: $RELEASE"
+            echo 'Open the image job summary to confirm traffic promotion succeeded.'
+            echo 'Validation failure stops image publication and deployment.'
+            echo 'Live app: https://plantsense-web-nponfirhaa-el.a.run.app'
+          } >> "$GITHUB_STEP_SUMMARY"
