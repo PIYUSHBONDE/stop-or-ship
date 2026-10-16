@@ -117,6 +117,8 @@ jobs:
       - run: docker compose config --quiet
       - run: docker compose up --build --wait --wait-timeout 120
       - run: python3 scripts/check_containers.py
+      - name: Start explicitly isolated browser fixtures
+        run: docker compose -f compose.yaml -f .github/compose.browser-fixture.yaml up --build --wait --wait-timeout 120
       - run: npm ci
         working-directory: web
       - run: npx playwright install --with-deps chromium
@@ -133,5 +135,5 @@ jobs:
         with:
           name: container-browser-results
           path: web/test-results
-      - run: docker compose down
+      - run: docker compose -f compose.yaml -f .github/compose.browser-fixture.yaml down
         if: always()

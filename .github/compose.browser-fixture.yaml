@@ -1,0 +1,30 @@
+# Isolated CI browser fixtures only. Production Compose defaults remain live-provider/manual-only.
+services:
+  api:
+    environment:
+      PLANTSENSE_INTERNAL_TEST_MODE: "true"
+      PLANTSENSE_AI_PROVIDER: scripted
+  case-worker:
+    build:
+      context: ./backend
+    command: [python, -m, app.cases.worker]
+    environment:
+      PLANTSENSE_MODE: local
+      PLANTSENSE_AI_PROVIDER: scripted
+      PLANTSENSE_INTERNAL_TEST_MODE: "true"
+      PLANTSENSE_DB: /var/lib/plantsense/local.db
+      SERVICE_ROLE: worker
+    volumes:
+      - plant-data:/var/lib/plantsense
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1.0
+    depends_on:
+      api:
+        condition: service_healthy
