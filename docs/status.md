@@ -1,5 +1,9 @@
 # Implementation status
 
+## Cloud release validation resumed - 16 October 2026
+
+The requested GitHub push exposed a container CI failure: the fixture-only case worker inherited the backend image HTTP health check despite running a background loop. The browser-fixture override now checks for the exact worker process argument instead. Production image and Cloud Run health checks are unchanged. Compose configuration validation passed; local Docker daemon is unavailable, so actual container startup remains pending GitHub CI. The fresh live investigation gate passed all five authored fixtures for the current backend fingerprint. Assistant/voice and case evaluations are running separately in isolated fixture databases under existing limits; production data and traffic remain unchanged.
+
 ## Local preview restored - 16 October 2026
 
 The preview frontend and fixture API were no longer listening when access was reported unavailable. Restarted the existing isolated API on 8013, case worker and built frontend on 3013 using the retained acceptance database. The frontend incidents route returned HTTP 200, web health returned ok, and API startup completed without errors. UI source and the served build retain the case readability changes. This preview still uses explicit internal-test mode and scripted AI; it is not the live-provider application or cloud deployment. No application code, data reset, provider calls or cloud changes were needed.

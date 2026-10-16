@@ -8,6 +8,19 @@ services:
     build:
       context: ./backend
     command: [python, -m, app.cases.worker]
+    # This fixture runs the worker loop, not the image's default HTTP server.
+    healthcheck:
+      test:
+        [
+          CMD,
+          python,
+          -c,
+          "from pathlib import Path; import sys; sys.exit(not any(b'app.cases.worker' in p.read_bytes().split(bytes([0])) for p in Path('/proc').glob('[0-9]*/cmdline') if p.exists()))",
+        ]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     environment:
       PLANTSENSE_MODE: local
       PLANTSENSE_AI_PROVIDER: scripted
