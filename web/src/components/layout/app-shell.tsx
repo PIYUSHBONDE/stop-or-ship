@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -36,6 +36,7 @@ const destinations = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
   const query = useSearchParams();
   const operational = query.get('view') === 'observations';
@@ -98,7 +99,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       aria-current={pathname === href || pathname.startsWith(`${href}/`) ? 'page' : undefined}
       aria-label={name}
       aria-describedby={count ? `rail-count-${name}` : undefined}
-      onNavigate={() => queueMicrotask(() => setMenuOpen(false))}
+      onNavigate={(event) => {
+        event.preventDefault();
+        router.push(
+          state.workspace && state.incident ? `${href}?incident=${state.incident.id}` : href,
+        );
+        queueMicrotask(() => setMenuOpen(false));
+      }}
     >
       <Icon size={20} />
       <span>{name}</span>

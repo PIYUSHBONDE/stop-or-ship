@@ -1,5 +1,9 @@
 # Implementation status
 
+## Prototype release exception - 16 October 2026
+
+The user explicitly requested immediate prototype deployment without waiting for the remaining full browser CI cycle. All fresh matching live investigation, assistant/voice and case gates remain required and passed. Backend/PostgreSQL/static/contract/build CI passed; the most recent packaged UI run passed 25 browser checks before a five-second simulation navigation timeout. The sidebar now dispatches through the router before drawer cleanup; its desktop/mobile and simulation continuity checks both passed against the final local production build (two tests, 40.9 seconds). ESLint, formatting and TypeScript/build passed. CI browser tests are split across three isolated runners for future releases, preserving all 39 checks and separate operational fixtures. Complete current packaged browser acceptance remains deferred under this explicit prototype exception. Manual promotion retains immutable images, startup release gates, health checks and rollback. No IAM expansion, database migration/reset or spending-limit change is part of this release.
+
 ## Cloud release validation resumed - 16 October 2026
 
 Fresh complete live reports passed for fingerprint `de2dce8eaf8670d1e084ec42d866cbc43286a2781413e883faeb913873f94be1`: five investigation scenarios, six assistant scenarios plus voice, and four case scenarios including human response/resume. Reports were validated through all existing activation gates and uploaded to the existing private release bucket. Calls used isolated authored fixtures under unchanged limits. The first assistant attempt had one historical-boundary failure and its report could not serialize captured timestamps; JSON-mode serialization fixed reporting, and the complete rerun passed. No evidence check or activation gate was weakened.

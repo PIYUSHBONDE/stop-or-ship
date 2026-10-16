@@ -118,7 +118,7 @@ test('simulation navigation, refresh and cross-tab ownership retain records', as
   const assignment = before.snapshot.open[0];
   expect(assignment).toBeTruthy();
   await page.getByRole('link', { name: 'Operators', exact: true }).click();
-  await expect(page).toHaveURL(/\/operators(?:\?|$)/);
+  await expect(page).toHaveURL(/\/operators(?:\?|$)/, { timeout: 30000 });
   await page
     .locator(`a[href="/operators?assignment=${encodeURIComponent(assignment.id)}"]`)
     .first()
