@@ -98,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       aria-current={pathname === href || pathname.startsWith(`${href}/`) ? 'page' : undefined}
       aria-label={name}
       aria-describedby={count ? `rail-count-${name}` : undefined}
-      onClick={() => setMenuOpen(false)}
+      onNavigate={() => queueMicrotask(() => setMenuOpen(false))}
     >
       <Icon size={20} />
       <span>{name}</span>
@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         className={styles.brand}
         href="/plant"
         aria-label="PlantSense home"
-        onClick={() => setMenuOpen(false)}
+        onNavigate={() => queueMicrotask(() => setMenuOpen(false))}
       >
         <span className={styles.brandMark}>
           <Workflow size={23} />

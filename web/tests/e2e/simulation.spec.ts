@@ -104,19 +104,27 @@ test('simulation navigation, refresh and cross-tab ownership retain records', as
   await expect
     .poll(() => page.evaluate((k) => JSON.parse(localStorage.getItem(k) || '{}').tick || 0, key))
     .toBeGreaterThan(2);
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          (k) => JSON.parse(localStorage.getItem(k) || '{}').snapshot?.open?.length || 0,
+          key,
+        ),
+      { timeout: 20000 },
+    )
+    .toBeGreaterThan(0);
   const before = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), key);
+  const assignment = before.snapshot.open[0];
+  expect(assignment).toBeTruthy();
   await page.getByRole('link', { name: 'Operators', exact: true }).click();
-  await expect(page.getByRole('link', { name: /^ASN-/ }).first()).toBeVisible();
-  await page.getByRole('link', { name: /^ASN-/ }).first().click();
+  await expect(page).toHaveURL(/\/operators(?:\?|$)/);
+  await page
+    .locator(`a[href="/operators?assignment=${encodeURIComponent(assignment.id)}"]`)
+    .first()
+    .click();
   await expect(page).toHaveURL(/assignment=ASN-/);
-  const assignmentId = new URL(page.url()).searchParams.get('assignment');
-  const assetId = await page.evaluate(
-    ({ key, assignmentId }) =>
-      JSON.parse(localStorage.getItem(key)!).snapshot.open.find(
-        (a: { id: string }) => a.id === assignmentId,
-      ).assetId,
-    { key, assignmentId },
-  );
+  const assetId = assignment.assetId;
   await expect(page.getByText('No operational dispatch connector is configured.')).toHaveCount(0);
   await page.getByRole('link', { name: 'Monitor', exact: true }).click();
   await page.getByRole('listitem', { name: `${assetId} preview records`, exact: true }).click();

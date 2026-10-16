@@ -762,7 +762,7 @@ function Panel() {
               {createdCase && (
                 <Link
                   href={`/incidents?workcase=${encodeURIComponent(createdCase)}`}
-                  onClick={() => close(false)}
+                  onNavigate={() => queueMicrotask(() => close(false))}
                 >
                   Open recorded case
                 </Link>
