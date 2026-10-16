@@ -1,5 +1,11 @@
 # Implementation status
 
+## Release-report download permission fix - 16 October 2026
+
+Validation: all three YAML configurations parsed and exact report object names were checked; all 10 infrastructure tests and `git diff --check` passed. Actual cloud object reads were not exercised in this local check.
+
+The reported GitHub failure occurred while downloading `releases/FINGERPRINT/*.json`: expanding a cloud wildcard requires `storage.objects.list`, which the build submitter was denied. Replaced the wildcard with exact `investigation.json`, `assistant.json` and `cases.json` reads in GitHub and both Cloud Build release configurations. Existing object-read permission is still required; an exact-object `storage.objects.get` denial would be a separate IAM issue. No IAM privileges, report gates, model calls or cloud resources were changed. The fix remains local until committed and pushed; rerunning the old workflow revision retains the old wildcard.
+
 ## Deployment handoff simplified locally - 16 October 2026
 
 Observed checks: release YAML parsed and expected job/dependency structure validated; all 10 infrastructure tests passed with an isolated workspace temporary directory; `git diff --check` passed. The first test invocation could not create the sandbox's default temporary directories (8 passed, 2 setup errors); rerunning with a new ignored workspace test directory passed. No application rebuild was needed for documentation/workflow-only changes. GitHub execution remains a separate validation step after publication.

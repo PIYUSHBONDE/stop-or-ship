@@ -3,7 +3,7 @@ steps:
   - name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
     id: reports
     entrypoint: gcloud
-    args: ['storage', 'cp', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/*.json', 'backend/release/']
+    args: ['storage', 'cp', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/investigation.json', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/assistant.json', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/cases.json', 'backend/release/']
   - name: gcr.io/cloud-builders/docker
     id: backend
     args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/plantsense/backend:${_COMMIT_SHA}', 'backend']

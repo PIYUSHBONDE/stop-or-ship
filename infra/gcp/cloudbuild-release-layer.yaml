@@ -2,7 +2,7 @@
 steps:
   - name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
     entrypoint: gcloud
-    args: ['storage', 'cp', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/*.json', 'backend/release/']
+    args: ['storage', 'cp', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/investigation.json', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/assistant.json', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/cases.json', 'backend/release/']
   - name: gcr.io/cloud-builders/docker
     args: ['build', '--build-arg', 'BASE_IMAGE=${_BASE_IMAGE}', '-f', 'infra/gcp/release-layer.Dockerfile', '-t', '${_REGISTRY}/backend:${_TAG}', 'backend']
   - name: gcr.io/cloud-builders/docker

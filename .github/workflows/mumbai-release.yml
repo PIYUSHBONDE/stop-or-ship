@@ -51,7 +51,10 @@ jobs:
           uv sync --frozen --project backend
           fingerprint=$(uv run --project backend python -c 'from app.ai.evaluation_gate import fingerprint; print(fingerprint())')
           [[ "$fingerprint" =~ ^[a-f0-9]{64}$ ]]
-          gcloud storage cp "gs://project-970d28ee-835b-4ca2-866-plantsense-releases/releases/$fingerprint/*.json" backend/release/
+          # Exact object reads do not require bucket-list permission.
+          for report in investigation assistant cases; do
+            gcloud storage cp "gs://project-970d28ee-835b-4ca2-866-plantsense-releases/releases/$fingerprint/$report.json" "backend/release/$report.json"
+          done
           uv run --project backend python -c 'from app.ai.assistant_gate import require_assistant_evaluation; from app.cases.worker import require_case_evaluation; require_assistant_evaluation(voice=True); require_case_evaluation()'
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
       - name: Build immutable release images in Mumbai
