@@ -83,7 +83,7 @@ async def evaluate(output, audio):
                     "name": name,
                     "passed": all(checks.values()),
                     "checks": checks,
-                    "answer": answer.model_dump(),
+                    "answer": answer.model_dump(mode="json"),
                     "elapsed_seconds": round(time.monotonic() - started, 2),
                 }
             )
