@@ -2,7 +2,7 @@ name: Release PlantSense Mumbai
 on:
   workflow_dispatch:
   push:
-    branches: [codex/statistics-main-integration]
+    branches: [f_statistics-main-integration]
 permissions:
   contents: read
 concurrency:
@@ -14,7 +14,7 @@ jobs:
   images:
     needs: validation
     # Publish only after initial migration and service acceptance. Either variable can disable rollout.
-    if: github.ref == 'refs/heads/codex/statistics-main-integration' && vars.PLANTSENSE_RELEASE_BUILDS_ENABLED != 'false'
+    if: github.ref == 'refs/heads/f_statistics-main-integration' && vars.PLANTSENSE_RELEASE_BUILDS_ENABLED != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     permissions:

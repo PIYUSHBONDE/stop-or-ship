@@ -20,7 +20,7 @@ $pools = Cloud @('iam','workload-identity-pools','list','--location=global','--p
 if ($pools -notcontains "projects/$projectNumber/locations/global/workloadIdentityPools/$pool") {
   Cloud @('iam','workload-identity-pools','create',$pool,'--location=global','--project',$Project,'--display-name=PlantSense GitHub release')
 }
-$condition = "assertion.repository_id == '1402708267' && assertion.repository_owner_id == '80165705' && assertion.ref == 'refs/heads/codex/statistics-main-integration' && assertion.workflow_ref == 'PIYUSHBONDE/stop-or-ship/.github/workflows/mumbai-release.yml@refs/heads/codex/statistics-main-integration' && assertion.event_name in ['push', 'workflow_dispatch']"
+$condition = "assertion.repository_id == '1402708267' && assertion.repository_owner_id == '80165705' && assertion.ref == 'refs/heads/f_statistics-main-integration' && assertion.workflow_ref == 'PIYUSHBONDE/stop-or-ship/.github/workflows/mumbai-release.yml@refs/heads/f_statistics-main-integration' && assertion.event_name in ['push', 'workflow_dispatch']"
 $mapping = 'google.subject=assertion.sub,attribute.repository_id=assertion.repository_id'
 $providers = Cloud @('iam','workload-identity-pools','providers','list','--workload-identity-pool',$pool,'--location=global','--project',$Project,'--format=value(name)')
 $resource = "projects/$projectNumber/locations/global/workloadIdentityPools/$pool/providers/$provider"

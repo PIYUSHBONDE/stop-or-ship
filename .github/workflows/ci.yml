@@ -1,7 +1,7 @@
 name: Validate PlantSense
 on:
   push:
-    branches-ignore: [codex/statistics-main-integration]
+    branches-ignore: [f_statistics-main-integration]
   pull_request:
   workflow_call:
 permissions:

@@ -2,7 +2,7 @@
 
 System documentation for development and product reference
 
-Snapshot: 16 October 2026. Repository: PIYUSHBONDE/stop-or-ship (private). Branch: codex/statistics-main-integration. Source commit: 2e8f38a.
+Snapshot: 16 October 2026. Repository: PIYUSHBONDE/stop-or-ship (private). Branch: f_statistics-main-integration. Source commit: 2e8f38a.
 
 This document describes the implemented PlantSense application, its data, AI capabilities, workflows, deployment and current boundaries. It is a reference to the existing solution, not a proposed development plan. Credentials, private database connection strings and customer evidence are excluded.
 
