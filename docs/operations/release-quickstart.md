@@ -23,7 +23,7 @@ To redeploy the current branch without another commit: Actions, **Release PlantS
 
 | Stage | Location | What it does |
 | --- | --- | --- |
-| Validation | GitHub Actions | Tests, browser acceptance, contracts, formatting, types, security checks and production build |
+| Validation | GitHub Actions | Backend/infrastructure tests, database compatibility, frontend unit tests, contracts, formatting, types, security checks and production build |
 | AI report check | GitHub Actions and private report bucket | Matches the backend/model fingerprint to existing passing reports; does not call models |
 | Image build | Mumbai Cloud Build | Builds immutable web and backend images in Artifact Registry |
 | Promotion | Mumbai Cloud Run | Creates worker/API/web candidates, checks readiness and web-to-private-API/database access, then switches traffic |
@@ -31,7 +31,9 @@ To redeploy the current branch without another commit: Actions, **Release PlantS
 
 This is not an atomic three-service switch: worker and API switch before web. Changes must remain compatible with the preceding release. Failed promotion attempts restore the captured traffic map. Health checks do not replace checking sign-in and case access yourself.
 
-Frontend-only changes reuse reports when the evaluated fingerprint is unchanged. Backend changes also reuse reports if that fingerprint remains unchanged. Changes to fingerprinted AI code, dependencies, model or configuration need fresh complete passing reports published through the existing evaluation process. Missing reports stop deployment; routine release never silently runs paid evaluations or weakens gates. The workflow still runs full code/browser validation for frontend changes.
+Frontend-only changes reuse reports when the evaluated fingerprint is unchanged. Backend changes also reuse reports if that fingerprint remains unchanged. Changes to fingerprinted AI code, dependencies, model or configuration need fresh complete passing reports published through the existing evaluation process. Missing reports stop deployment; routine release never silently runs paid evaluations or weakens AI gates.
+
+For the prototype, routine releases skip the three full packaged-container/browser jobs. Other validation and production startup/health/rollback gates still block release on failure. To run full browser coverage, open Actions, choose **Validate PlantSense**, and run it manually for the branch. Pull requests and other branches also retain the full suite. Skipping browser tests reduces release coverage; it does not establish that all browser flows passed.
 
 ## If a release fails
 

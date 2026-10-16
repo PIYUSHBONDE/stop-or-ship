@@ -11,6 +11,8 @@ concurrency:
 jobs:
   validation:
     uses: ./.github/workflows/ci.yml
+    with:
+      skip_browser: true
   images:
     needs: validation
     # Publish only after initial migration and service acceptance. Either variable can disable rollout.
@@ -132,5 +134,6 @@ jobs:
             echo "Image/release job: $RELEASE"
             echo 'Open the image job summary to confirm traffic promotion succeeded.'
             echo 'Validation failure stops image publication and deployment.'
+            echo 'Prototype release: full container/browser matrix is deferred; run Validate PlantSense manually for that coverage.'
             echo 'Live app: https://plantsense-web-nponfirhaa-el.a.run.app'
           } >> "$GITHUB_STEP_SUMMARY"

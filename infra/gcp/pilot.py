@@ -86,7 +86,10 @@ def foundation():
             "--role=roles/iam.serviceAccountUser",
             "--quiet",
         )
-    for suffix, readers in (("migration", ["migrate"]), ("releases", ["build-exec"])):
+    for suffix, readers in (
+        ("migration", ["migrate"]),
+        ("releases", ["build-exec", "build-submit"]),
+    ):
         bucket = f"gs://{PROJECT}-plantsense-{suffix}"
         if (
             cloud(
@@ -118,6 +121,17 @@ def foundation():
                 f"--project={PROJECT}",
                 f"--member=serviceAccount:{account(reader)}",
                 "--role=roles/storage.objectViewer",
+                *(
+                    [
+                        (
+                            "--condition=expression=resource.name.startsWith("
+                            f"'projects/_/buckets/{PROJECT}-plantsense-releases/objects/releases/'"
+                            "),title=read-release-evaluation-reports"
+                        )
+                    ]
+                    if reader == "build-submit"
+                    else []
+                ),
                 "--quiet",
             )
     queue = "plantsense-cases"

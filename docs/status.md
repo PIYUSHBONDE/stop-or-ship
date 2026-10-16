@@ -1,5 +1,13 @@
 # Implementation status
 
+## Prototype release checks narrowed at user request - 16 October 2026
+
+Routine Mumbai releases now pass `skip_browser: true` to reusable CI, removing the three complete packaged-container/browser jobs from the deployment critical path. Application/backend/infrastructure tests, PostgreSQL compatibility tests, frontend unit tests, contract drift, security/secret scanning, lint/types, production build, existing matching live AI reports, startup readiness, health checks and automatic rollback remain. Full container/browser acceptance stays available through manual **Validate PlantSense**, pull requests and other branch pushes; its default remains enabled. No AI gate, permission check, database workflow or spending limit was removed. This reduces automated browser coverage for prototype releases and does not claim those skipped tests pass. Workflow changes affect new runs, not a currently running workflow revision.
+
+## Missing GitHub report-reader permission corrected - 16 October 2026
+
+Cloud inspection confirmed the matching investigation object exists and the private release bucket granted object viewing to build-exec but not build-submit. GitHub's pre-build gate authenticates as build-submit, so its exact object download correctly failed with `storage.objects.get` denied. Applied the previously authorized build report-read access as a conditional bucket binding for build-submit: `roles/storage.objectViewer` restricted to object resource names under the bucket's `releases/` prefix. No object writes, other bucket access, runtime identity changes or model calls were added. Updated foundation configuration to reproduce this restricted binding. The earlier wildcard fix remains necessary because the conditional prefix grant does not establish bucket-list permission. A GitHub rerun is required to prove the actual federated identity can now download all reports; current IAM policy was inspected locally.
+
 ## Release-report download permission fix - 16 October 2026
 
 Validation: all three YAML configurations parsed and exact report object names were checked; all 10 infrastructure tests and `git diff --check` passed. Actual cloud object reads were not exercised in this local check.

@@ -3,7 +3,13 @@ on:
   push:
     branches-ignore: [f_statistics-main-integration]
   pull_request:
+  workflow_dispatch:
   workflow_call:
+    inputs:
+      skip_browser:
+        description: Skip the full packaged browser matrix for prototype releases
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -95,6 +101,7 @@ jobs:
           /tmp/gitleaks git . --redact --log-opts='--all' --no-banner
 
   containers:
+    if: ${{ !inputs.skip_browser }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
