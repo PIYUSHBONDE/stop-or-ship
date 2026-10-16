@@ -6,7 +6,8 @@ services:
       context: ./backend
     environment:
       PLANTSENSE_MODE: local
-      PLANTSENSE_AI_PROVIDER: scripted
+      PLANTSENSE_AI_PROVIDER: ${PLANTSENSE_AI_PROVIDER:-vertex}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
       SERVICE_ROLE: api
       PLANTSENSE_DB: /var/lib/plantsense/local.db
       PLANTSENSE_STAFF_WEB_ORIGINS: http://localhost:${PLANTSENSE_WEB_PORT:-3000},http://127.0.0.1:${PLANTSENSE_WEB_PORT:-3000}

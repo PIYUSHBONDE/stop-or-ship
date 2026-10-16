@@ -1,4 +1,5 @@
 import { test, expect } from '../support/staff-session';
+import { openPlantControls } from '../support/navigation';
 
 test('connected plant follows pressure loss, line shutdown, repair and recovery without operational writes', async ({
   page,
@@ -19,6 +20,7 @@ test('connected plant follows pressure loss, line shutdown, repair and recovery 
     0,
   );
   await expect(page.getByLabel('Simulated production rate')).toContainText(String(nominal));
+  await openPlantControls(page);
   await page.getByLabel('Simulation speed', { exact: true }).selectOption('10');
   await page.getByRole('button', { name: 'Start pump pressure loss', exact: true }).click();
   const inspector = page.getByLabel('Machine inspector');
@@ -26,13 +28,17 @@ test('connected plant follows pressure loss, line shutdown, repair and recovery 
     timeout: 12000,
   });
   const lines = page.getByLabel('Production lines').getByRole('button');
+  await page.getByRole('button', { name: 'Plant details', exact: true }).click();
   await expect(lines.first()).toContainText('stopped');
   await expect(lines.nth(1)).toContainText('running');
+  await page.getByRole('button', { name: 'Close plant details', exact: true }).click();
   await page.screenshot({ path: '../.runtime/plant-process-repair.png' });
+  await openPlantControls(page);
   await page.getByRole('button', { name: 'Pause simulation', exact: true }).click();
   const clock = await page.getByLabel('Simulation clock').textContent();
   const follower = await context.newPage();
   await follower.goto('/plant');
+  await openPlantControls(follower);
   await expect(
     follower.getByRole('button', { name: 'Resume simulation', exact: true }),
   ).toBeVisible();
@@ -60,6 +66,7 @@ test('reset retains cases, pauses survive refresh and subsequent faults get new 
 }) => {
   await page.goto('/workspace');
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  await openPlantControls(page);
   await page.getByLabel('Simulation speed', { exact: true }).selectOption('10');
   await page.getByRole('button', { name: 'Start pump pressure loss', exact: true }).click();
   const plant = await page.evaluate(() => localStorage.getItem('plantsense-workspace'));
@@ -74,6 +81,7 @@ test('reset retains cases, pauses survive refresh and subsequent faults get new 
   await page.getByRole('button', { name: 'Pause simulation', exact: true }).click();
   const clock = await page.getByLabel('Simulation clock').textContent();
   await page.reload();
+  await openPlantControls(page);
   await expect(page.getByLabel('Simulation clock')).toHaveText(clock!);
   await page.getByRole('button', { name: 'Reset scenario', exact: true }).click();
   await expect(page.getByRole('alertdialog', { name: 'Reset simulation' })).toBeVisible();

@@ -891,6 +891,195 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plants/{plant_id}/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cases */
+        get: operations["list_cases_api_v1_plants__plant_id__cases_get"];
+        put?: never;
+        /** Create Case */
+        post: operations["create_case_api_v1_plants__plant_id__cases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/cases/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Case Detail */
+        get: operations["case_detail_api_v1_plants__plant_id__cases__case_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/cases/{case_id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request Task */
+        post: operations["request_task_api_v1_plants__plant_id__cases__case_id__tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tasks */
+        get: operations["tasks_api_v1_plants__plant_id__tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/tasks/{task_id}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim Task */
+        post: operations["claim_task_api_v1_plants__plant_id__tasks__task_id__claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/tasks/{task_id}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Respond Task */
+        post: operations["respond_task_api_v1_plants__plant_id__tasks__task_id__respond_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/cases/{case_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve Case */
+        post: operations["resolve_case_api_v1_plants__plant_id__cases__case_id__resolve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/cases/{case_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Case */
+        post: operations["cancel_case_api_v1_plants__plant_id__cases__case_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/cases/{case_id}/link-incident": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link Case */
+        post: operations["link_case_api_v1_plants__plant_id__cases__case_id__link_incident_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/cases/{case_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Case */
+        post: operations["retry_case_api_v1_plants__plant_id__cases__case_id__analysis_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/automation-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Policy */
+        get: operations["get_policy_api_v1_plants__plant_id__automation_policy_get"];
+        put?: never;
+        /** Set Policy */
+        post: operations["set_policy_api_v1_plants__plant_id__automation_policy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -940,6 +1129,45 @@ export interface components {
              * @default local_staff
              */
             identity_provider: string;
+        };
+        /** AgentRunView */
+        AgentRunView: {
+            /** Id */
+            id: string;
+            /** Analysis Version */
+            analysis_version: number;
+            /** Provider */
+            provider: string;
+            /** State */
+            state: string;
+            /** Created At */
+            created_at: string;
+            /** Steps */
+            steps: components["schemas"]["AgentStepView"][];
+            /** Error */
+            error?: string | null;
+        };
+        /** AgentStepView */
+        AgentStepView: {
+            /** Stage */
+            stage: string;
+            /** State */
+            state: string;
+            /** Updated At */
+            updated_at: string;
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Citations */
+            citations?: string[];
+            /** Error */
+            error?: string | null;
+            /** Hypotheses */
+            hypotheses?: components["schemas"]["Hypothesis"][];
+            /** Unsupported Claims */
+            unsupported_claims?: string[];
         };
         /** Approval */
         Approval: {
@@ -1087,6 +1315,19 @@ export interface components {
             /** Next Cursor */
             next_cursor: number | null;
         };
+        /** AutomationPolicy */
+        AutomationPolicy: {
+            /** Version */
+            version: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Request Information */
+            request_information: boolean;
+            /** Record Findings */
+            record_findings: boolean;
+            /** Escalate Overdue */
+            escalate_overdue: boolean;
+        };
         /** Calculation */
         Calculation: {
             /** Options */
@@ -1112,6 +1353,124 @@ export interface components {
              * @default 1
              */
             risk_multiplier: number;
+        };
+        /** CaseCancel */
+        CaseCancel: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Reason */
+            reason: string;
+        };
+        /** CaseCreate */
+        CaseCreate: {
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "equipment" | "production" | "maintenance" | "quality" | "staffing" | "materials" | "general";
+            /** Asset Id */
+            asset_id?: string | null;
+        };
+        /** CaseDetail */
+        CaseDetail: {
+            case: components["schemas"]["CaseView"];
+            /** Tasks */
+            tasks: components["schemas"]["HumanTask"][];
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceSubmission"][];
+            /** Runs */
+            runs: components["schemas"]["AgentRunView"][];
+            /** Events */
+            events: components["schemas"]["CaseEvent"][];
+        };
+        /** CaseEvent */
+        CaseEvent: {
+            /** Sequence */
+            sequence: number;
+            /** At */
+            at: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /** Action */
+            action: string;
+            /** Message */
+            message: string;
+        };
+        /** CaseLink */
+        CaseLink: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Incident Id */
+            incident_id: string;
+        };
+        /** CaseMutation */
+        CaseMutation: {
+            /** Expected Revision */
+            expected_revision: number;
+        };
+        /** CaseOutcome */
+        CaseOutcome: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Outcome */
+            outcome: string;
+            /** Evidence Ids */
+            evidence_ids: string[];
+        };
+        /** CasePage */
+        CasePage: {
+            /** Items */
+            items: components["schemas"]["CaseView"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** CaseView */
+        CaseView: {
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "equipment" | "production" | "maintenance" | "quality" | "staffing" | "materials" | "general";
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id: string;
+            /** Plant Id */
+            plant_id: string;
+            /** Incident Id */
+            incident_id: string | null;
+            /**
+             * Phase
+             * @enum {string}
+             */
+            phase: "triage" | "investigating" | "waiting_for_input" | "awaiting_decision" | "in_progress" | "verifying" | "resolved" | "blocked" | "cancelled";
+            /** Revision */
+            revision: number;
+            /** Analysis Version */
+            analysis_version: number;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "staff_report" | "plant_observation";
+            /** Outcome */
+            outcome?: string | null;
         };
         /** ConfigurationUpdate */
         ConfigurationUpdate: {
@@ -1275,6 +1634,35 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** EvidenceSubmission */
+        EvidenceSubmission: {
+            /** Id */
+            id: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /** Created At */
+            created_at: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "staff_report" | "technician_statement" | "manager_outcome";
+            /** Text */
+            text: string;
+            /** Values */
+            values?: components["schemas"]["EvidenceValue"][];
+            /** Evidence Ids */
+            evidence_ids?: string[];
+        };
+        /** EvidenceValue */
+        EvidenceValue: {
+            /** Signal Id */
+            signal_id: string;
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+        };
         /** Exchange */
         Exchange: {
             /** Question */
@@ -1286,6 +1674,46 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HumanTask */
+        HumanTask: {
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id: string;
+            /** Plant Id */
+            plant_id: string;
+            /** Case Id */
+            case_id: string;
+            /**
+             * Target Role
+             * @enum {string}
+             */
+            target_role: "reliability" | "manager" | "technician";
+            /** Owner Id */
+            owner_id: string | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "open" | "claimed" | "completed" | "cancelled";
+            /** Revision */
+            revision: number;
+            /** Due At */
+            due_at: string | null;
+            /** Created At */
+            created_at: string;
+            /** Question */
+            question: string;
+            /** Reason */
+            reason: string;
+            /** Completion Requirements */
+            completion_requirements: string;
+            /**
+             * Escalated
+             * @default false
+             */
+            escalated: boolean;
         };
         /** Hypothesis */
         Hypothesis: {
@@ -1671,6 +2099,28 @@ export interface components {
             /** Simulated Minutes */
             simulated_minutes: number;
         };
+        /** PolicyUpdate */
+        PolicyUpdate: {
+            /** Expected Version */
+            expected_version: number;
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Request Information
+             * @default true
+             */
+            request_information: boolean;
+            /**
+             * Record Findings
+             * @default true
+             */
+            record_findings: boolean;
+            /**
+             * Escalate Overdue
+             * @default true
+             */
+            escalate_overdue: boolean;
+        };
         /** ProgressRecord */
         ProgressRecord: {
             /** At */
@@ -2028,6 +2478,25 @@ export interface components {
             /** Upper */
             upper?: number | null;
         };
+        /** SimulationAssignment */
+        SimulationAssignment: {
+            /** Id */
+            id: string;
+            /** Asset Id */
+            asset_id: string;
+            /** Operator Id */
+            operator_id: string;
+            /** Status */
+            status: string;
+            /** Note */
+            note: string;
+            /** Operator Name */
+            operator_name?: string | null;
+            /** Craft */
+            craft?: string | null;
+            /** Experience Years */
+            experience_years?: number | null;
+        };
         /** SimulationCase */
         SimulationCase: {
             /** Id */
@@ -2086,13 +2555,16 @@ export interface components {
             captured_at: string;
             /** Selected Case Id */
             selected_case_id?: string | null;
+            /** Selected Assignment Id */
+            selected_assignment_id?: string | null;
             /** Equipment */
             equipment: components["schemas"]["SimulationEquipment"][];
             /** Assignments */
-            assignments: components["schemas"]["SimulationCase"][];
+            assignments: components["schemas"]["SimulationAssignment"][];
             /** Cases */
             cases: components["schemas"]["SimulationCase"][];
             case_evidence?: components["schemas"]["SimulationCaseEvidence"] | null;
+            process?: components["schemas"]["SimulationProcessContext"] | null;
         };
         /** SimulationEquipment */
         SimulationEquipment: {
@@ -2100,6 +2572,8 @@ export interface components {
             asset_id: string;
             /** Readings */
             readings: components["schemas"]["SimulationReading"][];
+            /** Mode */
+            mode?: ("idle" | "running" | "degraded" | "stopped" | "under_repair" | "recovering") | null;
         };
         /** SimulationImpactLine */
         SimulationImpactLine: {
@@ -2109,6 +2583,43 @@ export interface components {
             name: string;
             /** Capacity Per Hour */
             capacity_per_hour: number;
+        };
+        /** SimulationProcessContext */
+        SimulationProcessContext: {
+            /**
+             * Simulated At
+             * Format: date-time
+             */
+            simulated_at: string;
+            /** Paused */
+            paused: boolean;
+            /**
+             * Speed
+             * @enum {integer}
+             */
+            speed: 1 | 10;
+            /** Phase */
+            phase: string;
+            /** Fault Asset Id */
+            fault_asset_id?: string | null;
+            /** Affected Asset Ids */
+            affected_asset_ids: string[];
+            /** Lines */
+            lines: components["schemas"]["SimulationProductionLine"][];
+        };
+        /** SimulationProductionLine */
+        SimulationProductionLine: {
+            /** Id */
+            id: string;
+            /** Capacity Per Hour */
+            capacity_per_hour: number;
+            /** Output Per Hour */
+            output_per_hour: number;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "idle" | "running" | "degraded" | "stopped" | "under_repair" | "recovering";
         };
         /** SimulationReading */
         SimulationReading: {
@@ -2279,6 +2790,40 @@ export interface components {
          * @enum {string}
          */
         Status: "unknown" | "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
+        /** TaskCreate */
+        TaskCreate: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Question */
+            question: string;
+            /** Reason */
+            reason: string;
+            /** Completion Requirements */
+            completion_requirements: string;
+            /**
+             * Target Role
+             * @enum {string}
+             */
+            target_role: "reliability" | "manager" | "technician";
+            /** Due At */
+            due_at?: string | null;
+        };
+        /** TaskPage */
+        TaskPage: {
+            /** Items */
+            items: components["schemas"]["HumanTask"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** TaskResponse */
+        TaskResponse: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Text */
+            text: string;
+            /** Values */
+            values?: components["schemas"]["EvidenceValue"][];
+        };
         /** TelemetryWindow */
         TelemetryWindow: {
             /** Source Id */
@@ -4422,6 +4967,503 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpeechResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cases_api_v1_plants__plant_id__cases_get: {
+        parameters: {
+            query?: {
+                cursor?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CasePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_case_api_v1_plants__plant_id__cases_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    case_detail_api_v1_plants__plant_id__cases__case_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+                case_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_task_api_v1_plants__plant_id__cases__case_id__tasks_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                case_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HumanTask"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tasks_api_v1_plants__plant_id__tasks_get: {
+        parameters: {
+            query?: {
+                cursor?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    claim_task_api_v1_plants__plant_id__tasks__task_id__claim_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                task_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HumanTask"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    respond_task_api_v1_plants__plant_id__tasks__task_id__respond_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                task_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskResponse"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HumanTask"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_case_api_v1_plants__plant_id__cases__case_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                case_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseOutcome"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_case_api_v1_plants__plant_id__cases__case_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                case_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseCancel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_case_api_v1_plants__plant_id__cases__case_id__link_incident_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                case_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseLink"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_case_api_v1_plants__plant_id__cases__case_id__analysis_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+                case_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_policy_api_v1_plants__plant_id__automation_policy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationPolicy"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_policy_api_v1_plants__plant_id__automation_policy_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationPolicy"];
                 };
             };
             /** @description Validation Error */

@@ -54,12 +54,38 @@ def test_question_auth_context_receipts_and_quota(shared):
     assert ask(admin, plant, question="Different input").status_code == 409
     for i in range(9):
         assert ask(admin, plant, key=f"question-{i}").status_code == 200
-    assert ask(admin, plant, key="eleventh-key").status_code == 429
+    assert ask(admin, plant, key="eleventh-key").status_code == 200
     with store.connection() as db:
         records = [json.loads(r[0]) for r in db.execute("SELECT data FROM ai_usage")]
-    assert len(records) == 10
+    assert len(records) == 11
     assert all("staff_token" not in r for r in records)
     assert all("incident_id" not in r for r in records)
+
+
+def test_question_preserves_global_call_allowance(shared, monkeypatch):
+    store, _, admin, plant, _ = shared
+    monkeypatch.setattr(config, "DAILY_LIMIT", 3)
+    first = ask(admin, plant, key="first-request")
+    assert first.status_code == 200
+    assert ask(admin, plant, key="second-request").status_code == 200
+    assert ask(admin, plant, key="third-request").status_code == 200
+    blocked = ask(admin, plant, key="fourth-request")
+    assert blocked.status_code == 429
+    assert blocked.json()["detail"] == "Daily AI allowance reached"
+    assert ask(admin, plant, key="first-request").json() == first.json()
+    with store.connection() as db:
+        assert db.execute("SELECT count(*) FROM ai_usage").fetchone()[0] == 3
+
+
+def test_question_preserves_global_spending_allowance(shared, monkeypatch):
+    store, _, admin, plant, _ = shared
+    store.reserve_ai({"reserved_micro_usd": 1})
+    monkeypatch.setattr(config, "DAILY_AI_SPEND_MICRO_USD", 0)
+    blocked = ask(admin, plant, key="spend-blocked")
+    assert blocked.status_code == 429
+    assert blocked.json()["detail"] == "Daily AI spending allowance reached"
+    with store.connection() as db:
+        assert db.execute("SELECT count(*) FROM ai_usage").fetchone()[0] == 1
 
 
 def test_bounded_history_and_exact_audio_route(shared):
@@ -100,9 +126,11 @@ def test_voice_receipts_ownership_expiry_and_accounting(shared, monkeypatch):
     answer = ask(admin, plant).json()
     monkeypatch.setattr(speech, "require_assistant_evaluation", lambda **_: None)
     calls = []
+    payloads = []
 
     async def provider(url, payload):
         calls.append(url)
+        payloads.append(payload)
         if "recognize" in url:
             return {"results": [{"alternatives": [{"transcript": "P-107 pressure 125 bar"}]}]}
         return {"audioContent": base64.b64encode(b"ID3fixture-only").decode()}
@@ -125,6 +153,10 @@ def test_voice_receipts_ownership_expiry_and_accounting(shared, monkeypatch):
     )
     playback = admin.post(prefix + "speech", json=body, headers={"Idempotency-Key": "speech-key"})
     assert playback.status_code == 200, playback.text
+    assert payloads[-1]["input"]["ssml"].startswith("<speak><p>")
+    assert "text" not in payloads[-1]["input"]
+    assert payloads[-1]["audioConfig"]["speakingRate"] == 0.96
+    assert playback.json()["usage"]["synthesis_characters"] == len(payloads[-1]["input"]["ssml"])
     assert (
         admin.post(prefix + "speech", json=body, headers={"Idempotency-Key": "different-key"}).json()
         == playback.json()
@@ -222,7 +254,7 @@ def test_invalid_model_output_is_not_published(shared, monkeypatch, answer, cita
             pass
 
     monkeypatch.setattr(assistant, "client", lambda **_: Model())
-    assert ask(admin, plant).status_code == 503
+    assert ask(admin, plant).status_code == 502
     assert ask(admin, plant).status_code == 409
     with store.connection() as db:
         assert db.execute("SELECT count(*) FROM ai_usage").fetchone()[0] == 1

@@ -90,6 +90,37 @@ def reserve(store, reservation=None):
     else:
         with store.connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            if record.get("case_job_id"):
+                from app.cases.jobs import validate
+
+                _, run, case, _ = validate(db, record["case_job_id"], record.pop("case_lease_token", None))
+                record.update(organization_id=case["organization_id"], case_id=case["id"])
+                if not record.get("claim_token"):
+                    record["owner"] = run["initiated_by"] or "organization:" + case["organization_id"]
+                tenant_rows = [
+                    json.loads(r[0])
+                    for r in db.execute(
+                        "SELECT data FROM ai_usage WHERE day=? AND json_extract(data,'$.organization_id')=?",
+                        (record["day"], case["organization_id"]),
+                    )
+                ]
+                case_rows = [
+                    json.loads(r[0])
+                    for r in db.execute(
+                        "SELECT data FROM ai_usage WHERE json_extract(data,'$.case_id')=?", (case["id"],)
+                    )
+                ]
+                if (
+                    len(tenant_rows) >= config.DAILY_LIMIT
+                    or sum(r["charged_micro_usd"] for r in tenant_rows) + record["charged_micro_usd"]
+                    > config.DAILY_AI_SPEND_MICRO_USD
+                ):
+                    raise HTTPException(429, "Organization AI allowance reached")
+                if (
+                    sum(r["charged_micro_usd"] for r in case_rows) + record["charged_micro_usd"]
+                    > config.INVESTIGATION_AI_SPEND_MICRO_USD
+                ):
+                    raise HTTPException(429, "Case AI allowance reached")
             if record.get("assistant_plant_id"):
                 from app.identity.staff_access import authorize
 
@@ -98,13 +129,6 @@ def reserve(store, reservation=None):
                     raise HTTPException(404, "Assistant owner not found")
                 if db.execute("SELECT 1 FROM ai_usage WHERE id=?", (record["request_id"],)).fetchone():
                     raise HTTPException(409, "Assistant request already dispatched")
-                if record["stage"] == "assistant_question":
-                    questions = db.execute(
-                        "SELECT count(*) FROM ai_usage WHERE day=? AND json_extract(data,'$.owner')=? AND json_extract(data,'$.stage')='assistant_question'",
-                        (record["day"], record["owner"]),
-                    ).fetchone()[0]
-                    if questions >= 10:
-                        raise HTTPException(429, "Ten assistant questions per user per UTC day")
             if record.get("claim_token"):
                 row = db.execute(
                     "SELECT data FROM plant_workflows WHERE id=?", (record["session_id"],)

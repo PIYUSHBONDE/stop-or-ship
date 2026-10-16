@@ -5,6 +5,7 @@
 - [Observed status](status.md)
 - [Repository structure](engineering/repository-structure.md)
 - [Architecture](architecture/overview.md) and [production direction](architecture/production.md)
+- [Shared case foundation and production blueprint](architecture/case-foundation.md) and [worker startup/recovery](operations/cases.md)
 - [Engineering conventions](engineering/conventions.md) and [evaluation boundaries](engineering/evaluation.md)
 - [Plant configuration](product/plant-configuration.md)
 - [Hackathon product scope and industry-informed boundaries](product/hackathon-delivery.md)

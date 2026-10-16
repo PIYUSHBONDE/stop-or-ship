@@ -4,6 +4,11 @@
 !uv.lock
 !app/
 !app/**
+!release/
+!release/.gitkeep
+!release/assistant.json
+!release/investigation.json
+!release/cases.json
 !data/
 !data/knowledge.json
 !data/artifacts/

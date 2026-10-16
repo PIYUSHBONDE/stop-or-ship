@@ -7,7 +7,7 @@ Plant reliability with configurable equipment, named staff access, observation-b
 - **Plant:** connected hydraulic-forming simulator with 3D/2D floor, line output, machine inspector and activity timeline. Configured layouts are preserved; reviewed operational observations have a separate view.
 - **Operators:** live assignment IDs, experience-based dispatch and walk-to-cell preview.
 - **Monitor:** machine cards, per-machine records/graphs, plus reviewed operational/historical sources.
-- **Incidents:** paginated case table for preview OOC records and operational incidents.
+- **Incidents:** persistent factory cases, role-based human requests and retained incident links, alongside the paginated browser/operational incident table.
 - **Memory:** plant guide cards (address, what can break, what can be fixed) and confirmed repair memory.
 - **Setup:** administrator-reviewed plant configuration and immutable revision history.
 
@@ -25,7 +25,7 @@ Open **http://127.0.0.1:3000/**, choose Continue with email, then use the work-e
 
 There is no default password for a new plant. Staff sessions use expiring HttpOnly cookies; only password hashes are stored. These local accounts do not grant cloud access.
 
-**This branch defaults to scripted AI locally.** Gemini investigation, contextual assistant and Google voice are available behind matching evaluation reports; earlier main reports do not validate this changed implementation. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
+**Normal application use defaults to live Vertex AI with Gemini 3.8 Flash.** Investigation, contextual assistant, case automation and Google voice require matching evaluation reports. Missing credentials or failed gates block AI rather than substituting scripted answers. Scripted providers are restricted to explicitly isolated test execution; normal API and worker startup reject them. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
 
 ## Run with Docker
 
@@ -33,8 +33,9 @@ From the repository root, with Docker Desktop using Linux containers:
 
 ```powershell
 docker compose up --build --wait
-python scripts/check_containers.py
 ```
+
+Live AI also requires the existing Vertex credentials and matching release reports through `compose.gemini.yaml` and `compose.assistant.yaml`; follow the [container configuration guide](docs/operations/docker.md). The base stack leaves AI blocked until configured. After applying those overrides, run `python scripts/check_containers.py` to verify the complete container configuration. Native AI acceptance does not validate a new container image.
 
 Open **http://127.0.0.1:3000/workspace**. Initial setup creates a named administrator and plant; later visits use that account's email and original passphrase. There is no default password. Staff sessions use expiring HttpOnly cookies; passwords are hashed. Existing accounts and plant history persist in the named volume. Do not delete that volume to update the app.
 
@@ -79,6 +80,8 @@ npm --prefix web run build
 ```
 
 Start the API with `.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000`, and the frontend in a separate terminal with `npm --prefix web run start`. Development frontend: `npm --prefix web run dev` (Windows: `npm.cmd`). Inspect occupied ports before launching additional servers. Containers expose only the web service on laptop loopback; the API remains private.
+
+Factory case coordination also needs a separate local worker using the same database/provider environment: set `PYTHONPATH=backend`, then run `.venv/Scripts/python.exe -m app.cases.worker` (Unix: `.venv/bin/python`). Automation starts disabled for every plant. Manual reports, claims and responses remain available without live AI. See [case startup, backup and rollback](docs/operations/cases.md) and the [production architecture blueprint](docs/architecture/case-foundation.md). The earlier provisional shared Firestore target is superseded by Cloud SQL PostgreSQL; no cloud migration is performed here.
 
 ## Historical datasets
 

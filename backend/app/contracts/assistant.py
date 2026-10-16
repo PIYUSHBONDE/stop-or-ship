@@ -9,6 +9,7 @@ from app.contracts.models import RequestModel
 
 Text = Annotated[str, Field(min_length=1, max_length=160)]
 Finite = Annotated[float, Field(allow_inf_nan=False)]
+MachineMode = Literal["idle", "running", "degraded", "stopped", "under_repair", "recovering"]
 
 
 class SimulationReading(RequestModel):
@@ -23,6 +24,7 @@ class SimulationReading(RequestModel):
 class SimulationEquipment(RequestModel):
     asset_id: Text
     readings: list[SimulationReading] = Field(max_length=8)
+    mode: MachineMode | None = None
 
 
 class SimulationCase(RequestModel):
@@ -31,6 +33,29 @@ class SimulationCase(RequestModel):
     operator_id: Text
     status: Text
     note: str = Field(max_length=600)
+
+
+class SimulationAssignment(SimulationCase):
+    operator_name: Text | None = None
+    craft: Text | None = None
+    experience_years: Annotated[int, Field(ge=0, le=80)] | None = None
+
+
+class SimulationProductionLine(RequestModel):
+    id: Text
+    capacity_per_hour: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    output_per_hour: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    mode: MachineMode
+
+
+class SimulationProcessContext(RequestModel):
+    simulated_at: datetime
+    paused: bool
+    speed: Literal[1, 10]
+    phase: Text
+    fault_asset_id: Text | None = None
+    affected_asset_ids: list[Text] = Field(max_length=36)
+    lines: list[SimulationProductionLine] = Field(max_length=8)
 
 
 class SimulationImpactLine(RequestModel):
@@ -57,10 +82,12 @@ class SimulationCaseEvidence(RequestModel):
 class SimulationContext(RequestModel):
     captured_at: datetime
     selected_case_id: Text | None = None
+    selected_assignment_id: Text | None = None
     equipment: list[SimulationEquipment] = Field(max_length=36)
-    assignments: list[SimulationCase] = Field(max_length=5)
+    assignments: list[SimulationAssignment] = Field(max_length=5)
     cases: list[SimulationCase] = Field(max_length=10)
     case_evidence: SimulationCaseEvidence | None = None
+    process: SimulationProcessContext | None = None
 
 
 class Exchange(RequestModel):

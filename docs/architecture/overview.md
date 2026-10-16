@@ -1,5 +1,9 @@
 # Architecture and implementation boundaries
 
+## Shared issue coordination
+
+Migration 7 adds scoped factory cases, immutable human evidence, role tasks, versioned policies, persisted agent stages and durable job/outbox records. An explicit local worker replaces request-bound dispatch for enabled case automation; legacy incident calculations, approval and repair verification remain authoritative. Read-only stdio MCP supplies scoped evidence to the ADK stages. Default policies are disabled. Manual case/task workflows remain usable when live gates fail. See the [case architecture and Cloud SQL PostgreSQL target](case-foundation.md) and [local worker runbook](../operations/cases.md). The earlier isolated-demo Firestore shape below is historical and does not define the shared customer deployment target.
+
 ## Operational product and source foundation
 
 The operational workspace requires staff identity and receives observations through versioned plant-scoped sources. It does not run replay clocks or generate asset readings. Equipment without usable current observations remains unknown. Historical files and legacy records cannot authorize current work or enter operational repair memory. See [telemetry source contract](../data/telemetry-sources.md).

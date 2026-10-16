@@ -7,18 +7,30 @@ import * as THREE from 'three';
 import type { Asset, State } from '@/lib/types';
 import { FactoryEnvironment } from '@/features/plant/components/factory-environment';
 import { ConfiguredEnvironment } from '@/features/plant/components/configured-environment';
-import { plantBounds, planPoint, planPosition } from '@/lib/plant-layout';
-import { PreviewCard } from '@/features/plant/components/preview-card';
+import { plantBounds } from '@/lib/plant-layout';
+import { PlantPlan } from './plant-plan';
 import { PreviewMarker } from '@/features/plant/components/preview-marker';
 import { OocHalo } from '@/features/plant/components/ooc-halo';
 import { OperatorFigure } from '@/features/plant/components/operator-figure';
 import type { PreviewReading } from '@/features/plant/lib/preview-telemetry';
 import type { FloorActor } from '@/features/operators/lib/preview-dispatch';
-import planStyles from '@/features/plant/components/plant-plan.module.css';
-import previewStyles from '@/features/plant/components/plant-preview.module.css';
 
 const [BoxInstances, BoxInstance] = createInstances();
 const [CylinderInstances, CylinderInstance] = createInstances();
+
+function ContextLossFallback({ onLoss }: { onLoss: () => void }) {
+  const { gl } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const lost = (event: Event) => {
+      event.preventDefault();
+      onLoss();
+    };
+    canvas.addEventListener('webglcontextlost', lost);
+    return () => canvas.removeEventListener('webglcontextlost', lost);
+  }, [gl, onLoss]);
+  return null;
+}
 
 export type PlantPreview = {
   focusId: string | null;
@@ -592,65 +604,13 @@ export default function PlantScene({
     return () => media.removeEventListener('change', change);
   }, []);
   const fallback = (
-    <div className="plan-view" role="region" aria-label="Accessible plant plan">
-      <div className={planStyles.viewport}>
-        <div className={planStyles.board}>
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            {state.dependencies.map((d) => {
-              const a = state.assets.find((a) => a.id === d.source)!;
-              const b = state.assets.find((a) => a.id === d.target)!;
-              return (
-                <line
-                  key={d.source + d.target}
-                  x1={planPosition(a, bounds).x}
-                  y1={planPosition(a, bounds).y}
-                  x2={planPosition(b, bounds).x}
-                  y2={planPosition(b, bounds).y}
-                  stroke={state.affected.includes(d.target) ? '#dba062' : '#355362'}
-                  strokeWidth={d.source === selected || d.target === selected ? 2 : 1}
-                  vectorEffect="non-scaling-stroke"
-                />
-              );
-            })}
-          </svg>
-          {state.assets.map((a) => (
-            <button
-              key={a.id}
-              aria-label={`${a.id} ${a.name}`}
-              style={{
-                left: `${planPosition(a, bounds).x}%`,
-                top: `${planPosition(a, bounds).y}%`,
-              }}
-              className={`plan-asset ${selected === a.id ? 'selected' : ''} ${preview?.oocIds.includes(a.id) ? previewStyles.planOoc : ''}`}
-              onClick={() => onSelect(a.id)}
-              onMouseEnter={() => preview?.onHover(a.id)}
-              onMouseLeave={() => preview?.onHover(null)}
-            >
-              {preview?.focusId === a.id && (
-                <div className={previewStyles.planTip}>
-                  <PreviewCard id={a.id} name={a.name} readings={preview.readings[a.id] || []} />
-                </div>
-              )}
-              <span className={`dot ${a.status}`} />
-              <strong>{a.id}</strong>
-              <small>{a.name}</small>
-            </button>
-          ))}
-          {preview?.actors?.map((actor) => {
-            const point = planPoint(actor.position, bounds);
-            return (
-              <span
-                key={actor.id}
-                className={previewStyles.actor}
-                style={{ left: `${point.x}%`, top: `${point.y}%` }}
-              >
-                {actor.label}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    <PlantPlan
+      state={state}
+      selected={selected}
+      onSelect={onSelect}
+      preview={preview}
+      focusRequest={focusRequest}
+    />
   );
   if (planView || !supported) return fallback;
   return (
@@ -666,17 +626,8 @@ export default function PlantScene({
         }}
         dpr={quality === 'detail' ? [1, 1.5] : 0.7}
         gl={{ antialias: false }}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener(
-            'webglcontextlost',
-            (event: Event) => {
-              event.preventDefault();
-              setSupported(false);
-            },
-            { once: true },
-          );
-        }}
       >
+        <ContextLossFallback onLoss={() => setSupported(false)} />
         <SceneContent
           state={state}
           selected={selected}

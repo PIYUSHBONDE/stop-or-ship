@@ -1,0 +1,89 @@
+name: Release PlantSense Mumbai
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/statistics-main-integration]
+permissions:
+  contents: read
+concurrency:
+  group: mumbai-release
+  cancel-in-progress: false
+jobs:
+  validation:
+    uses: ./.github/workflows/ci.yml
+  images:
+    needs: validation
+    # Publish only after initial migration and service acceptance. Either variable can disable rollout.
+    if: github.ref == 'refs/heads/codex/statistics-main-integration' && vars.PLANTSENSE_RELEASE_BUILDS_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      CLOUDSDK_CORE_PROJECT: project-970d28ee-835b-4ca2-866
+      CLOUDSDK_CORE_DISABLE_PROMPTS: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/408867906527/locations/global/workloadIdentityPools/plantsense-github/providers/github-release
+          service_account: plantsense-build-submit@project-970d28ee-835b-4ca2-866.iam.gserviceaccount.com
+          project_id: project-970d28ee-835b-4ca2-866
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.12.23'
+          enable-cache: false
+      - name: Require matching complete live reports
+        id: evidence
+        env:
+          PYTHONPATH: backend
+          PLANTSENSE_AI_PROVIDER: vertex
+          GOOGLE_CLOUD_LOCATION: global
+          GEMINI_MODEL: gemini-3.8-flash
+          PLANTSENSE_AI_EVALUATION_FILE: backend/release/investigation.json
+          PLANTSENSE_ASSISTANT_EVALUATION_FILE: backend/release/assistant.json
+          PLANTSENSE_CASES_EVALUATION_FILE: backend/release/cases.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv sync --frozen --project backend
+          fingerprint=$(uv run --project backend python -c 'from app.ai.evaluation_gate import fingerprint; print(fingerprint())')
+          [[ "$fingerprint" =~ ^[a-f0-9]{64}$ ]]
+          gcloud storage cp "gs://project-970d28ee-835b-4ca2-866-plantsense-releases/releases/$fingerprint/*.json" backend/release/
+          uv run --project backend python -c 'from app.ai.assistant_gate import require_assistant_evaluation; from app.cases.worker import require_case_evaluation; require_assistant_evaluation(voice=True); require_case_evaluation()'
+          echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
+      - name: Build immutable release images in Mumbai
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          BUILD_ACCOUNT: projects/project-970d28ee-835b-4ca2-866/serviceAccounts/plantsense-build-exec@project-970d28ee-835b-4ca2-866.iam.gserviceaccount.com
+          SOURCE_BUCKET: project-970d28ee-835b-4ca2-866-plantsense-build-source
+          RELEASE_FINGERPRINT: ${{ steps.evidence.outputs.fingerprint }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$BUILD_ACCOUNT" =~ ^projects/project-970d28ee-835b-4ca2-866/serviceAccounts/[a-z0-9-]+@project-970d28ee-835b-4ca2-866\.iam\.gserviceaccount\.com$ ]]
+          [[ "$SOURCE_BUCKET" == 'project-970d28ee-835b-4ca2-866-plantsense-build-source' ]]
+          gcloud builds submit . \
+            --suppress-logs \
+            --project=project-970d28ee-835b-4ca2-866 \
+            --region=asia-south1 \
+            --service-account="$BUILD_ACCOUNT" \
+            --gcs-source-staging-dir="gs://$SOURCE_BUCKET/source" \
+            --config=infra/gcp/cloudbuild-release.yaml \
+            --substitutions="_REGION=asia-south1,_COMMIT_SHA=$RELEASE_SHA,_FINGERPRINT=$RELEASE_FINGERPRINT"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        if: vars.PLANTSENSE_AUTO_DEPLOY_ENABLED != 'false'
+        with:
+          workload_identity_provider: projects/408867906527/locations/global/workloadIdentityPools/plantsense-github/providers/github-release
+          service_account: plantsense-release@project-970d28ee-835b-4ca2-866.iam.gserviceaccount.com
+          project_id: project-970d28ee-835b-4ca2-866
+      - name: Promote evaluated images with rollback
+        if: vars.PLANTSENSE_AUTO_DEPLOY_ENABLED != 'false'
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: python infra/gcp/promote.py --tag "$RELEASE_SHA"
+      - name: Record release boundary
+        run: echo 'Promotion requires matching live reports and explicit auto-deploy enablement. Database migrations remain separate.' >> "$GITHUB_STEP_SUMMARY"

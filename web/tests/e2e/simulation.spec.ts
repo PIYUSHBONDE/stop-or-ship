@@ -1,7 +1,9 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../support/staff-session';
+import { openPlantControls } from '../support/navigation';
 
 async function beginFault(page: Page) {
+  await openPlantControls(page);
   await page.getByLabel('Simulation speed', { exact: true }).selectOption('10');
   await page.getByRole('button', { name: 'Start pump pressure loss', exact: true }).click();
 }

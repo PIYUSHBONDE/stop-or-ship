@@ -1,29 +1,141 @@
+.plan.plan {
+  background: #cbd7d3;
+}
 .viewport {
   position: absolute;
-  inset: 0;
+  inset: 210px 26px 150px;
   overflow: auto;
+  border: 1px solid #a4b9b2;
+  border-radius: 14px;
+  background: #dfe8e3;
+  scrollbar-width: thin;
+  scrollbar-color: #79988b #dfe8e3;
+}
+.viewport:focus-visible {
+  outline: 2px solid #255e4e;
+  outline-offset: 3px;
 }
 .board {
   position: relative;
   width: 100%;
   height: 100%;
-  min-width: 800px;
-  min-height: 580px;
+  min-width: 1200px;
+  min-height: 600px;
+  background-image: radial-gradient(#68877b30 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
 }
 .board > svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 .board :global(.plan-asset) {
-  width: 60px;
-  min-width: 60px;
+  z-index: 2;
+  width: 92px;
+  min-width: 92px;
+  min-height: 68px;
+  padding: 10px 8px;
+  border: 1px solid #38564f;
+  border-radius: 9px;
+  background: #1b3439;
+  color: #edf6f1;
+  font-size: 11px;
+}
+.board :global(.plan-asset.selected) {
+  background: #285a4b;
+  border-color: #285a4b;
+  outline: 2px solid #285a4b;
+  outline-offset: 3px;
+}
+.board :global(.plan-asset:hover) {
+  z-index: 4;
+  background: #244740;
+}
+.board :global(.plan-asset:focus-visible) {
+  z-index: 4;
+  outline: 3px solid #2b7961;
+  outline-offset: 4px;
+}
+.board :global(.plan-asset[data-showing-readings]) {
+  z-index: 6;
+}
+.board :global(.plan-asset .dot) {
+  width: 6px;
+  height: 6px;
 }
 .board :global(.plan-asset small) {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  color: #c5d8d4;
+  font-size: 10px;
+  line-height: 1.4;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.connection {
+  fill: none;
+  stroke: #849d93;
+  stroke-width: 1.5;
+}
+.activeConnection {
+  stroke: #2f7660;
+  stroke-width: 2.5;
+}
+.utilityConnection {
+  stroke-dasharray: 5 5;
+}
+.area {
+  position: absolute;
+  border: 1px solid #a9bfb54d;
+  border-radius: 12px;
+  background: #b4cbb818;
+  pointer-events: none;
+}
+.area > span {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  color: #49695e;
+  font-size: 11px;
+  font-weight: 650;
+}
+.operator {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, 42px);
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #e5b38d;
+  color: #382c22;
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.operator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  height: 9px;
+  border-left: 1px solid #8c725b;
+}
+.mapNote {
+  position: absolute;
+  bottom: 130px;
+  left: 26px;
+  margin: 0;
+  color: #49695e;
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  .viewport {
+    inset: 267px 14px 272px;
+    border-radius: 10px;
+  }
+  .mapNote {
+    bottom: 256px;
+    left: 14px;
+  }
 }
 :global(.factory-view) .viewport {
   inset: 175px 330px 225px 235px;

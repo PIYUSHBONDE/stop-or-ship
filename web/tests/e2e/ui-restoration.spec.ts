@@ -1,4 +1,5 @@
 import { test, expect } from '../support/staff-session';
+import { openPlantControls } from '../support/navigation';
 
 test('restored guides, configuration and navigation retain the previous interface', async ({
   page,
@@ -55,9 +56,7 @@ test('restored assistant UI sends compatible evidence context on both plant view
     const body = (await request).postDataJSON();
     expect(!!body.simulation_context).toBe(synthetic);
     if (synthetic) expect(body.incident_id).toBeNull();
-    await expect(
-      page.getByText('Scripted summary · Gemini not connected', { exact: false }),
-    ).toBeVisible();
+    await expect(page.getByText('Read-only · Scripted provider', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Close assistant', exact: true }).click();
   }
 });
@@ -65,6 +64,7 @@ test('restored assistant UI sends compatible evidence context on both plant view
 test('restored case pagination, expansion, collapse and machine links work', async ({ page }) => {
   await page.goto('/workspace');
   await page.getByRole('button', { name: 'Open plant', exact: true }).click();
+  await openPlantControls(page);
   await page.getByLabel('Simulation speed', { exact: true }).selectOption('10');
   await page.getByRole('button', { name: 'Start pump pressure loss', exact: true }).click();
   const plant = await page.evaluate(() => localStorage.getItem('plantsense-workspace'));

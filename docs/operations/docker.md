@@ -27,7 +27,7 @@ PLANTSENSE_WEB_PORT=3010 docker compose up --build --wait
 
 Inspect startup problems with `docker compose ps` and `docker compose logs --tail=100`. Stop with `docker compose down`. The named `plant-data` volume retains sessions and repair records across restarts. `docker compose down --volumes` permanently deletes that container stack's saved sessions; use it only when intentionally clearing that data.
 
-The stack uses local persistence and the scripted investigator by default. It requires no cloud credentials. Named staff identity and roles are enforced locally; this identity adapter is intended for localhost development. Public or real-plant deployment requires managed identity, TLS and a separate deployment review. Compose derives allowed staff web origins from `PLANTSENSE_WEB_PORT`.
+The stack uses local persistence and defaults to live Vertex AI with Gemini 3.8 Flash. Configure the existing Google identity and matching evaluation report mounts through `compose.gemini.yaml` and `compose.assistant.yaml` before using AI. Missing credentials or reports block AI; the application does not substitute scripted results. Scripted providers are test-only and normal API startup rejects them. Named staff identity and roles are enforced locally; public or real-plant deployment requires managed identity, TLS and a separate deployment review. Compose derives allowed staff web origins from `PLANTSENSE_WEB_PORT`. Container execution was not repeated for the native local AI release; do not treat its native acceptance as container acceptance.
 
 ## Data and repeatable builds
 

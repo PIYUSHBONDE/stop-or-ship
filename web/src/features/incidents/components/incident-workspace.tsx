@@ -14,6 +14,7 @@ import { EvidenceDetailsDialog } from '@/features/incidents/components/evidence/
 import { DependencyImpact } from '@/features/incidents/components/dependency-impact';
 import { IncidentDecision } from '@/features/incidents/components/incident-decision';
 import styles from '@/features/incidents/components/incidents.module.css';
+import { CaseWorkspace } from '@/features/cases/case-workspace';
 
 export function IncidentDetail({
   state,
@@ -318,6 +319,7 @@ export default function IncidentWorkspace() {
           </span>
         </div>
       </header>
+      {state.workspace && <CaseWorkspace key={state.workspace.id} />}
       <IncidentsTable state={state} IncidentDetail={IncidentDetail} />
     </div>
   );

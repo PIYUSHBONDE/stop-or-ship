@@ -1,5 +1,9 @@
 """Synthetic context remains separate from operational evidence."""
 
+import json
+
+import pytest
+
 from tests.integration.test_assistant import ask
 from tests.support.workspace import create_incident
 
@@ -42,7 +46,7 @@ def test_simulation_scope_citations_and_retry(shared):
     result = ask(admin, plant, screen="operators", simulation_context=payload)
     assert result.status_code == 200, result.text
     answer = result.json()
-    assert "synthetic simulation" in answer["answer"]
+    assert "Browser readings and operator cases" not in answer["answer"]
     assert answer["costs"] == []
     sources = {s["id"]: s for s in answer["citations"]}
     assert "170" in sources["browser-simulation"]["text"]
@@ -119,4 +123,74 @@ def test_saved_detection_rejects_cross_scope_nonfinite_and_mixed_incident(shared
     assert ask(admin, plant, simulation_context=payload).status_code == 422
     payload = context()
     payload["equipment"][0]["readings"][0]["value"] = "NaN"
+    assert ask(admin, plant, simulation_context=payload).status_code == 422
+
+
+def process_context(line="line-a"):
+    return {
+        "simulated_at": "2026-10-14T12:00:00Z",
+        "paused": False,
+        "speed": 1,
+        "phase": "recovering",
+        "fault_asset_id": "P-107",
+        "affected_asset_ids": ["P-107"],
+        "lines": [{"id": line, "capacity_per_hour": 100, "output_per_hour": 65, "mode": "recovering"}],
+    }
+
+
+def test_process_context_has_separate_citation_and_no_operational_authority(shared):
+    store, _, admin, plant, _ = shared
+    payload = {**context(), "process": process_context()}
+    payload["assignments"] = [
+        {
+            **payload["cases"][0],
+            "operator_name": "Priya Sen",
+            "craft": "mechanical",
+            "experience_years": 3,
+        }
+    ]
+    payload["selected_assignment_id"] = "ASN-1"
+    response = ask(admin, plant, simulation_context=payload)
+    assert response.status_code == 200, response.text
+    answer = response.json()
+    sources = {s["id"]: json.loads(s["text"]) for s in answer["citations"]}
+    assert sources["browser-simulation-process"]["lines"][0]["output_per_hour"] == 65
+    assert sources["browser-simulation"]["assignments"][0]["operator_name"] == "Priya Sen"
+    assert "process" not in sources["browser-simulation"]
+    assert "output_per_hour" not in sources["plant-state"]
+    assert answer["costs"] == [] and answer["calculation_version"] is None
+    assert ask(admin, plant, simulation_context=payload).json() == answer
+    payload["process"]["lines"][0]["output_per_hour"] = 66
+    assert ask(admin, plant, simulation_context=payload).status_code == 409
+    with store.connection() as db:
+        assert db.execute("SELECT COUNT(*) FROM plant_orders").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize(
+    "field,value,status",
+    [
+        ("fault_asset_id", "other-plant", 404),
+        ("affected_asset_ids", ["other-plant"], 404),
+        (
+            "lines",
+            [{"id": "other-line", "capacity_per_hour": 100, "output_per_hour": 65, "mode": "running"}],
+            404,
+        ),
+        (
+            "lines",
+            [{"id": "line-a", "capacity_per_hour": 100, "output_per_hour": "NaN", "mode": "running"}],
+            422,
+        ),
+        ("speed", 100, 422),
+    ],
+)
+def test_process_context_rejects_invalid_values_and_cross_plant_ids(shared, field, value, status):
+    _, _, admin, plant, _ = shared
+    payload = {**context(), "process": {**process_context(), field: value}}
+    assert ask(admin, plant, simulation_context=payload).status_code == status
+
+
+def test_selected_simulation_assignment_must_be_present_and_match_equipment(shared):
+    _, _, admin, plant, _ = shared
+    payload = {**context(), "selected_assignment_id": "missing"}
     assert ask(admin, plant, simulation_context=payload).status_code == 422

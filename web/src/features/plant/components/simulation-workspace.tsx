@@ -2,9 +2,21 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
-import { Pause, Play, RotateCcw, Focus, Search, ArrowRight, Activity } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Pause,
+  Play,
+  RotateCcw,
+  Focus,
+  Search,
+  ArrowRight,
+  Activity,
+  X,
+  ChevronRight,
+  Maximize2,
+} from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
+import { usePlantControls } from '@/components/layout/plant-controls-context';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 import { scenarioPumps, sceneAssets } from '@/features/plant/lib/process-simulation';
 import { OPERATORS, PHASE_COPY } from '@/features/operators/lib/preview-dispatch';
@@ -31,8 +43,45 @@ export function SimulationWorkspace() {
   const [query, setQuery] = useState('');
   const [pump, setPump] = useState('');
   const [focus, setFocus] = useState(0);
+  const [preset, setPreset] = useState('overview');
   const [quality, setQuality] = useState<'detail' | 'balanced'>('detail');
   const [reset, setReset] = useState(false);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState<boolean>();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const { open: controlsOpen, setOpen: setControlsOpen, returnFocus } = usePlantControls();
+  const controlsPanel = useRef<HTMLElement>(null);
+  const resetDialog = useRef<HTMLDialogElement>(null);
+  const equipmentTrigger = useRef<HTMLButtonElement>(null);
+  const inspectorTrigger = useRef<HTMLButtonElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (reset) resetDialog.current?.showModal();
+    else resetDialog.current?.close();
+  }, [reset]);
+  useEffect(() => {
+    if (equipmentOpen) searchInput.current?.focus();
+  }, [equipmentOpen]);
+  useEffect(() => {
+    if (controlsOpen) {
+      setEquipmentOpen(false);
+      setDetailsOpen(false);
+      controlsPanel.current?.focus();
+    }
+  }, [controlsOpen]);
+  useEffect(() => {
+    const keyboard = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('input, textarea, select, [contenteditable="true"], dialog')) return;
+      if (event.key === '/') {
+        event.preventDefault();
+        setEquipmentOpen(true);
+        searchInput.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', keyboard);
+    return () => window.removeEventListener('keydown', keyboard);
+  }, []);
   const slow = useCallback(() => setQuality('balanced'), []);
   const { view, process } = simulation;
   if (!state || !view || !process) return <p role="status">Restoring your simulated plant…</p>;
@@ -54,23 +103,22 @@ export function SimulationWorkspace() {
   };
   const inspect = (id: string) => {
     selectAsset(id);
+    setPreset('asset');
     setFocus((n) => n + 1);
+    setInspectorOpen(true);
+    setEquipmentOpen(false);
+    setDetailsOpen(false);
   };
   const activeCases = simulation.ledger.cases.filter((c) => !c.clearedAt && !c.interrupted).length;
   return (
     <section className={styles.workspace} aria-label="Plant simulation workspace">
       <header className={styles.heading}>
         <div>
-          <span className={styles.eyebrow}>HYDRAULIC FORMING · SIMULATION</span>
           <h1>{state.plant.name}</h1>
-          <p>Formed components. {view.lines.length} production lines. One connected factory.</p>
-        </div>
-        <div className={styles.clock}>
-          <span className={process.paused ? styles.paused : styles.running}>
-            {process.paused ? 'Paused' : 'Running'}
-          </span>
-          <strong aria-label="Simulation clock">{time(process.elapsed)}</strong>
-          <small>simulated time · {process.speed}×</small>
+          <p>
+            Hydraulic forming · {view.lines.length} production lines · Simulated plant
+            {process.paused ? ' · Paused' : ''}
+          </p>
         </div>
       </header>
       <div className={styles.notice}>
@@ -78,52 +126,106 @@ export function SimulationWorkspace() {
         <Link href="/plant?view=observations">
           Reviewed operational observations <ArrowRight size={13} />
         </Link>
-      </div>
-      <div className={styles.summary}>
-        <div>
-          <small>Simulated output</small>
-          <strong aria-label="Simulated production rate">
-            {view.output}
-            <span> parts/h</span>
-          </strong>
-          <small>{view.nominal} parts/h configured capacity</small>
-        </div>
-        <div>
-          <small>Lines producing</small>
-          <strong>
-            {view.lines.filter((l) => l.rate > 0).length}
-            <span> / {view.lines.length}</span>
-          </strong>
-          <small>{view.lines.filter((l) => l.impacted).length} affected by this scenario</small>
-        </div>
-        <div>
-          <small>Machines needing attention</small>
-          <strong>
-            {
-              Object.values(view.modes).filter((m) =>
-                ['degraded', 'under_repair', 'recovering', 'stopped'].includes(m),
-              ).length
-            }
-          </strong>
-          <small>
-            {activeCases} active simulated case{activeCases === 1 ? '' : 's'}
-          </small>
-        </div>
-        <div>
-          <small>Operator jobs</small>
-          <strong>{simulation.assignments.length}</strong>
-          <small>Inspection, repair and recovery</small>
+        <div className={styles.scenarioStatus}>
+          {!process.fault && (
+            <small>
+              Normal operation is stable. The next scheduled fault starts in{' '}
+              {Math.max(0, Math.ceil((process.nextFaultAt - process.elapsed) / 1000))} simulated
+              seconds.
+            </small>
+          )}
+          {simulation.controlError && <p role="alert">{simulation.controlError}</p>}
         </div>
       </div>
-      <section className={styles.controls} aria-label="Simulation controls">
-        <button className="secondary" onClick={() => simulation.command({ type: 'pause' })}>
-          {process.paused ? <Play size={15} /> : <Pause size={15} />}
-          {process.paused ? 'Resume simulation' : 'Pause simulation'}
+      <div className={styles.compactSummary} aria-label="Simulation summary">
+        <span>
+          <strong aria-label="Simulated production rate">{view.output}</strong> / {view.nominal}{' '}
+          parts/h
+        </span>
+        <span>
+          {view.lines.filter((l) => l.rate > 0).length} / {view.lines.length} lines producing
+        </span>
+        <span>{simulation.assignments.length} operator jobs</span>
+      </div>
+      <div className={styles.panelActions}>
+        <button
+          ref={equipmentTrigger}
+          className="secondary"
+          aria-expanded={equipmentOpen}
+          aria-controls="plant-equipment"
+          onClick={() => {
+            setControlsOpen(false);
+            setEquipmentOpen(!equipmentOpen);
+          }}
+        >
+          <Search size={15} /> Find equipment
         </button>
+        <button
+          className="secondary"
+          aria-expanded={detailsOpen}
+          aria-controls="plant-details"
+          onClick={() => {
+            setControlsOpen(false);
+            setDetailsOpen(!detailsOpen);
+            setEquipmentOpen(false);
+          }}
+        >
+          <Activity size={15} /> Plant details
+        </button>
+      </div>
+      <section
+        ref={controlsPanel}
+        className={styles.controlPanel}
+        hidden={!controlsOpen}
+        aria-label="Simulation controls"
+        id="plant-controls"
+        tabIndex={-1}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            setControlsOpen(false);
+            returnFocus();
+          }
+        }}
+      >
+        <div className={styles.panelHeader}>
+          <h2>Simulation controls</h2>
+          <button
+            className={styles.closeControls}
+            aria-label="Close simulation controls"
+            onClick={() => {
+              setControlsOpen(false);
+              returnFocus();
+            }}
+          >
+            <X size={17} />
+          </button>
+        </div>
+        <p className={styles.controlNote}>
+          Browser-generated readings and dispatch. These controls do not operate factory equipment.
+        </p>
+        <div className={styles.playback}>
+          <div className={styles.clock}>
+            <span className={process.paused ? styles.paused : styles.running}>
+              {process.paused ? 'Paused' : 'Running'}
+            </span>
+            <strong aria-label="Simulation clock">{time(process.elapsed)}</strong>
+            <small>Simulated time</small>
+          </div>
+          <button
+            className="secondary"
+            aria-label={process.paused ? 'Resume simulation' : 'Pause simulation'}
+            onClick={() => simulation.command({ type: 'pause' })}
+          >
+            {process.paused ? <Play size={15} /> : <Pause size={15} />}
+            {process.paused ? 'Resume' : 'Pause'}
+          </button>
+        </div>
         <label>
           Speed
           <select
             aria-label="Simulation speed"
+            title="1× real time; 10× demonstration. Durations are simulated."
             value={process.speed}
             onChange={(e) =>
               simulation.command({ type: 'speed', speed: Number(e.target.value) as 1 | 10 })
@@ -134,22 +236,24 @@ export function SimulationWorkspace() {
           </select>
         </label>
         <label>
-          Pump scenario
+          Pump pressure loss
           <select
             aria-label="Scenario pump"
+            title={chosenPump?.name}
             value={chosenPump?.id ?? ''}
             disabled={!pumps.length || !!process.fault}
             onChange={(e) => setPump(e.target.value)}
           >
             {pumps.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} · {a.id}
+                {a.id} · {a.name}
               </option>
             ))}
           </select>
         </label>
         <button
           className="primary"
+          aria-label="Start pump pressure loss"
           disabled={!chosenPump || !!process.fault || process.paused}
           onClick={() => {
             if (chosenPump) {
@@ -158,89 +262,76 @@ export function SimulationWorkspace() {
             }
           }}
         >
-          Start pump pressure loss
+          Start scenario <ArrowRight size={15} />
         </button>
-        <button className="secondary" onClick={() => setReset(true)}>
+        <button
+          className="secondary"
+          aria-label="Reset scenario"
+          title="Reset scenario"
+          onClick={() => setReset(true)}
+        >
           <RotateCcw size={14} />
-          Reset scenario
+          Reset
         </button>
-        {!process.fault && (
-          <small>
-            Normal operation is stable. The next scheduled fault starts in{' '}
-            {Math.max(0, Math.ceil((process.nextFaultAt - process.elapsed) / 1000))} simulated
-            seconds.
-          </small>
-        )}
-        {simulation.controlError && <p role="alert">{simulation.controlError}</p>}
       </section>
-      {reset && (
-        <section className={styles.confirm} role="alertdialog" aria-label="Reset simulation">
-          <strong>Reset this scenario?</strong>
-          <p>
-            Active work becomes interrupted history. Existing samples and completed cases stay
-            available.
-          </p>
-          <button
-            className="primary"
-            onClick={() => {
-              simulation.command({ type: 'reset' });
-              setReset(false);
-            }}
-          >
-            Confirm reset
-          </button>
-          <button className="secondary" onClick={() => setReset(false)}>
-            Keep running
-          </button>
-        </section>
-      )}
-      <div className={styles.flow} aria-label="Production flow">
-        <span>Material stock</span>
-        <ArrowRight size={16} />
-        <span>Hydraulic forming press</span>
-        <ArrowRight size={16} />
-        <span>Transfer conveyor</span>
-        <ArrowRight size={16} />
-        <span>Finished components</span>
-        <small>Motors, pumps, cooling, air and power support the forming lines.</small>
-      </div>
-      <div className={styles.lineList} aria-label="Production lines">
-        {view.lines.map((l) => (
-          <button
-            key={l.id}
-            data-mode={l.mode}
-            onClick={() => {
-              const press = state.assets.find((a) => a.area_id === l.id && a.type === 'press');
-              if (press) inspect(press.id);
-            }}
-          >
-            <span>
-              {l.name}
-              <small>{label(l.mode)}</small>
-            </span>
-            <strong>
-              {l.rate} <small>/ {l.nominal_units_per_hour} parts/h</small>
-            </strong>
-            <meter
-              min={0}
-              max={l.nominal_units_per_hour}
-              value={l.rate}
-              aria-label={`${l.name} simulated output`}
-            />
-          </button>
-        ))}
-      </div>
+      <dialog
+        ref={resetDialog}
+        className={styles.confirm}
+        role="alertdialog"
+        aria-label="Reset simulation"
+        onCancel={() => setReset(false)}
+        onClose={() => setReset(false)}
+      >
+        <strong>Reset this scenario?</strong>
+        <p>
+          Active work becomes interrupted history. Existing samples and completed cases stay
+          available.
+        </p>
+        <button
+          className="primary"
+          onClick={() => {
+            simulation.command({ type: 'reset' });
+            setReset(false);
+          }}
+        >
+          Confirm reset
+        </button>
+        <button className="secondary" onClick={() => setReset(false)}>
+          Keep running
+        </button>
+      </dialog>
       <div className={styles.workarea}>
-        <aside className={styles.catalog} aria-label="Equipment browser">
+        <aside
+          className={styles.catalog}
+          aria-label="Equipment browser"
+          id="plant-equipment"
+          hidden={!equipmentOpen}
+        >
+          <div className={styles.panelHeader}>
+            <h2>Equipment</h2>
+            <button
+              aria-label="Close equipment browser"
+              onClick={() => {
+                setEquipmentOpen(false);
+                equipmentTrigger.current?.focus();
+              }}
+            >
+              <X size={17} />
+            </button>
+          </div>
           <label>
             <Search size={15} />
             <input
+              ref={searchInput}
               aria-label="Search equipment"
               placeholder="Find equipment…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
+          {!state.assets.some((a) =>
+            `${a.name} ${a.id}`.toLowerCase().includes(query.toLowerCase()),
+          ) && <p className={styles.empty}>No matching equipment. Try another name or asset ID.</p>}
           {state.areas.map((area) => {
             const assets = state.assets.filter(
               (a) =>
@@ -269,12 +360,25 @@ export function SimulationWorkspace() {
           <div className={styles.toolbar}>
             <strong>Factory floor</strong>
             <button
+              className="secondary"
+              aria-label="Whole factory"
+              title="Whole factory"
+              onClick={() => {
+                setPreset('overview');
+                setFocus((n) => n + 1);
+              }}
+            >
+              <Maximize2 size={15} />
+            </button>
+            <button
+              aria-pressed={!planView}
               className={planView ? 'secondary' : 'primary'}
               onClick={() => setPlanView(false)}
             >
               3D view
             </button>
             <button
+              aria-pressed={planView}
               className={planView ? 'primary' : 'secondary'}
               onClick={() => setPlanView(true)}
             >
@@ -283,7 +387,10 @@ export function SimulationWorkspace() {
             <button
               className="secondary"
               aria-label="Focus selected equipment"
-              onClick={() => setFocus((n) => n + 1)}
+              onClick={() => {
+                setPreset('asset');
+                setFocus((n) => n + 1);
+              }}
             >
               <Focus size={15} />
             </button>
@@ -295,6 +402,24 @@ export function SimulationWorkspace() {
               <option value="detail">Detailed</option>
               <option value="balanced">Performance</option>
             </select>
+            <div className={styles.legend}>
+              <span>
+                <i data-mode="running" />
+                Running
+              </span>
+              <span>
+                <i data-mode="degraded" />
+                Degraded
+              </span>
+              <span>
+                <i data-mode="under_repair" />
+                Under repair
+              </span>
+              <span>
+                <i data-mode="recovering" />
+                Recovering
+              </span>
+            </div>
           </div>
           <div className={styles.stage}>
             <PlantScene
@@ -303,7 +428,7 @@ export function SimulationWorkspace() {
               onSelect={inspect}
               planView={planView}
               focusRequest={focus}
-              preset={focus ? 'asset' : 'overview'}
+              preset={preset}
               overlay="impact"
               quality={quality}
               onSlowDevice={slow}
@@ -319,26 +444,41 @@ export function SimulationWorkspace() {
               }}
             />
           </div>
-          <div className={styles.legend}>
-            <span>
-              <i data-mode="running" />
-              Running
-            </span>
-            <span>
-              <i data-mode="degraded" />
-              Degraded
-            </span>
-            <span>
-              <i data-mode="under_repair" />
-              Under repair
-            </span>
-            <span>
-              <i data-mode="recovering" />
-              Recovering
-            </span>
-          </div>
         </section>
-        <aside className={styles.inspector} aria-label="Machine inspector">
+        <button
+          ref={inspectorTrigger}
+          className={styles.inspectorTrigger}
+          data-open={inspectorOpen}
+          aria-controls="plant-inspector"
+          aria-expanded={inspectorOpen}
+          onClick={() => setInspectorOpen(true)}
+        >
+          <span>
+            {asset.id} · {asset.name}
+            <small>{label(mode)} · Simulated readings</small>
+          </span>
+          <ChevronRight size={17} />
+        </button>
+        <aside
+          className={styles.inspector}
+          data-open={inspectorOpen}
+          aria-label="Machine inspector"
+          id="plant-inspector"
+        >
+          <div className={styles.panelHeader}>
+            <span>
+              {asset.area_id} / {asset.id}
+            </span>
+            <button
+              aria-label="Close machine inspector"
+              onClick={() => {
+                setInspectorOpen(false);
+                inspectorTrigger.current?.focus();
+              }}
+            >
+              <X size={17} />
+            </button>
+          </div>
           <span className={styles.eyebrow}>
             {asset.id} · {asset.type}
           </span>
@@ -359,7 +499,7 @@ export function SimulationWorkspace() {
               <Sparkline
                 values={seriesFor(simulation.ledger.samples[asset.id] ?? [], r.signal_id)}
                 label={`${asset.id} ${r.signal_id} simulated trend`}
-                color={r.ooc ? '#b55b37' : '#267a66'}
+                color={r.ooc ? '#f1b675' : '#85ddba'}
               />
               <small>
                 {mode === 'under_repair' || mode === 'stopped' || mode === 'idle'
@@ -428,26 +568,111 @@ export function SimulationWorkspace() {
           </Link>
         </aside>
       </div>
-      <section className={styles.activity} aria-label="Plant activity">
-        <header>
-          <Activity size={18} />
-          <h2>Plant activity</h2>
-          <small>Simulated events · most recent first</small>
-        </header>
-        <ol>
-          {process.events.slice(0, 8).map((e) => (
-            <li key={e.id}>
-              <time>{time(e.at - process.epoch)}</time>
-              {e.assetId ? (
-                <button onClick={() => inspect(e.assetId!)}>{e.assetId}</button>
-              ) : (
-                <span>Plant</span>
-              )}
-              <p>{e.message}</p>
-            </li>
+      <aside
+        className={styles.details}
+        aria-label="Plant details"
+        id="plant-details"
+        hidden={!detailsOpen}
+      >
+        <div className={styles.panelHeader}>
+          <h2>Plant details</h2>
+          <button aria-label="Close plant details" onClick={() => setDetailsOpen(false)}>
+            <X size={17} />
+          </button>
+        </div>
+        <div className={styles.summary}>
+          <div>
+            <small>Simulated output</small>
+            <strong>
+              {view.output}
+              <span> parts/h</span>
+            </strong>
+            <small>{view.nominal} parts/h configured capacity</small>
+          </div>
+          <div>
+            <small>Lines producing</small>
+            <strong>
+              {view.lines.filter((l) => l.rate > 0).length}
+              <span> / {view.lines.length}</span>
+            </strong>
+            <small>{view.lines.filter((l) => l.impacted).length} affected by this scenario</small>
+          </div>
+          <div>
+            <small>Machines needing attention</small>
+            <strong>
+              {
+                Object.values(view.modes).filter((m) =>
+                  ['degraded', 'under_repair', 'recovering', 'stopped'].includes(m),
+                ).length
+              }
+            </strong>
+            <small>
+              {activeCases} active simulated case{activeCases === 1 ? '' : 's'}
+            </small>
+          </div>
+          <div>
+            <small>Operator jobs</small>
+            <strong>{simulation.assignments.length}</strong>
+            <small>Inspection, repair and recovery</small>
+          </div>
+        </div>
+        <div className={styles.flow} aria-label="Production flow">
+          <span>Material stock</span>
+          <ArrowRight size={16} />
+          <span>Hydraulic forming press</span>
+          <ArrowRight size={16} />
+          <span>Transfer conveyor</span>
+          <ArrowRight size={16} />
+          <span>Finished components</span>
+          <small>Motors, pumps, cooling, air and power support the forming lines.</small>
+        </div>
+        <div className={styles.lineList} aria-label="Production lines">
+          {view.lines.map((l) => (
+            <button
+              key={l.id}
+              data-mode={l.mode}
+              onClick={() => {
+                const press = state.assets.find((a) => a.area_id === l.id && a.type === 'press');
+                if (press) inspect(press.id);
+              }}
+            >
+              <span>
+                {l.name}
+                <small>{label(l.mode)}</small>
+              </span>
+              <strong>
+                {l.rate} <small>/ {l.nominal_units_per_hour} parts/h</small>
+              </strong>
+              <meter
+                min={0}
+                max={l.nominal_units_per_hour}
+                value={l.rate}
+                aria-label={`${l.name} simulated output`}
+              />
+            </button>
           ))}
-        </ol>
-      </section>
+        </div>
+        <section className={styles.activity} aria-label="Plant activity">
+          <header>
+            <Activity size={18} />
+            <h2>Plant activity</h2>
+            <small>Simulated events · most recent first</small>
+          </header>
+          <ol>
+            {process.events.slice(0, 8).map((e) => (
+              <li key={e.id}>
+                <time>{time(e.at - process.epoch)}</time>
+                {e.assetId ? (
+                  <button onClick={() => inspect(e.assetId!)}>{e.assetId}</button>
+                ) : (
+                  <span>Plant</span>
+                )}
+                <p>{e.message}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </aside>
     </section>
   );
 }

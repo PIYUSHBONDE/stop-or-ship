@@ -3,6 +3,28 @@ import { NextRequest } from 'next/server';
 export const runtime = 'nodejs';
 
 const MAX_BODY_BYTES = 64 * 1024;
+const identityTokens = new Map<string, { token: string; expires: number }>();
+async function serviceIdentity(audience: string): Promise<string> {
+  const saved = identityTokens.get(audience);
+  if (saved && saved.expires > Date.now()) return saved.token;
+  const endpoint = new URL(
+    'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity',
+  );
+  endpoint.searchParams.set('audience', audience);
+  endpoint.searchParams.set('format', 'full');
+  const response = await fetch(endpoint, {
+    headers: { 'Metadata-Flavor': 'Google' },
+    redirect: 'error',
+    cache: 'no-store',
+    signal: AbortSignal.timeout(3000),
+  });
+  if (!response.ok) throw new Error('Service identity unavailable');
+  const token = await response.text();
+  if (!/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token))
+    throw new Error('Invalid service identity');
+  identityTokens.set(audience, { token, expires: Date.now() + 300000 });
+  return token;
+}
 class BodyTimeout extends Error {}
 
 async function readBody(request: NextRequest, limit = MAX_BODY_BYTES): Promise<string | null> {
@@ -67,9 +89,23 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       headers.cookie = `plantsense_staff=${staffCookie.value}`;
   }
   try {
-    const base = new URL(process.env.API_BASE_URL || 'http://127.0.0.1:8000');
+    const assistantRoute =
+      path.length === 5 &&
+      path[1] === 'plants' &&
+      path[3] === 'assistant' &&
+      ['questions', 'transcriptions', 'speech'].includes(path[4]);
+    // A separately validated local assistant release can coexist with new manual case workflows.
+    const base = new URL(
+      (assistantRoute && process.env.ASSISTANT_API_BASE_URL) ||
+        process.env.API_BASE_URL ||
+        'http://127.0.0.1:8000',
+    );
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password)
       throw new Error('Invalid API configuration');
+    if (process.env.PLANTSENSE_CLOUD_AUTH === 'true') {
+      if (base.protocol !== 'https:') throw new Error('Cloud API requires HTTPS');
+      headers['X-Serverless-Authorization'] = `Bearer ${await serviceIdentity(base.origin)}`;
+    }
     const transcription =
       path.length === 5 &&
       path[1] === 'plants' &&

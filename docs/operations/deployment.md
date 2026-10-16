@@ -1,5 +1,7 @@
 # Google Cloud deployment
 
+> **Superseded instructions below:** the Firebase anonymous/Firestore deployment in this document is historical. It does not support current shared staff and case workflows. Do not execute `infra/gcp/deploy.ps1` for the Mumbai pilot. Use the [Mumbai pilot release guide](mumbai-release.md).
+
 Cloud deployment has not been executed: the workstation has a configured project but no active `gcloud` account. Existing application-default credentials were also checked and failed to refresh (`RefreshError`). Docker Engine is also not running; Cloud Build can build images without a local Docker daemon.
 
 ## Prerequisites

@@ -8,7 +8,12 @@ from app.core import config
 
 
 def require_assistant_evaluation(*, voice=False):
-    require_evaluation()
+    from fastapi import HTTPException
+
+    try:
+        require_evaluation()
+    except RuntimeError as exc:
+        raise HTTPException(503, "AI activation requires matching live investigation evaluation") from exc
     try:
         report = json.loads(Path(config.ASSISTANT_EVALUATION_FILE).read_text(encoding="utf-8"))
         valid = (
@@ -33,6 +38,4 @@ def require_assistant_evaluation(*, voice=False):
     except (OSError, ValueError, KeyError, TypeError):
         valid = False
     if not valid:
-        from fastapi import HTTPException
-
         raise HTTPException(503, "Assistant activation requires matching local text/voice evaluation")

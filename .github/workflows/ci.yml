@@ -1,11 +1,38 @@
 name: Validate PlantSense
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore: [codex/statistics-main-integration]
+  pull_request:
+  workflow_call:
 permissions:
   contents: read
 concurrency:
-  group: validate-${{ github.ref }}
+  group: validate-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  postgres-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: plantsense_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      PLANTSENSE_TEST_POSTGRES_DSN: postgresql://postgres@127.0.0.1:5432/plantsense_test
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: '0.12.23'
+          enable-cache: false
+      - run: uv sync --frozen --extra runtime-test --project infra/postgres
+      - run: uv run --extra runtime-test --project infra/postgres pytest infra/postgres -q
+      - run: uv run --extra runtime-test --project infra/postgres pytest backend/tests/integration/test_postgres_runtime.py -q
+
   application:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -24,10 +51,11 @@ jobs:
           enable-cache: false
       - run: uv sync --frozen --extra dev --project backend
       - run: uv run --project backend pytest backend/tests -q
+      - run: uv run --project backend pytest infra/gcp/tests -q
       - run: uv run --project backend ruff check backend/app backend/scripts backend/tests
       - run: uv run --project backend ruff format --check backend/app backend/scripts backend/tests
-      - run: uv run --project backend ruff check scripts
-      - run: uv run --project backend ruff format --check scripts
+      - run: uv run --project backend ruff check scripts infra/postgres infra/gcp
+      - run: uv run --project backend ruff format --check scripts infra/postgres infra/gcp
       - run: |
           uv export --project backend --frozen --no-dev --no-emit-project --output-file /tmp/runtime-requirements.txt
           uvx --from pip-audit==2.9.0 python -m pip_audit --disable-pip --require-hashes -r /tmp/runtime-requirements.txt
@@ -44,10 +72,15 @@ jobs:
         working-directory: web
       - run: |
           uv run --project backend uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 > backend.log 2>&1 &
+          PYTHONPATH=backend uv run --project backend python -m app.cases.worker > worker.log 2>&1 &
           cd web
           npm run start > web.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && curl -fsS http://127.0.0.1:3000 && break; sleep 1; done
           npm run test:unit && npm run test:e2e
+        env:
+          PLANTSENSE_INTERNAL_TEST_MODE: 'true'
+          PLANTSENSE_AI_PROVIDER: scripted
+          PLANTSENSE_DB: /tmp/plantsense-browser-fixture.db
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

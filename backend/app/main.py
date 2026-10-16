@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.ai.agent import investigate
 from app.api.assistant import router as assistant_router
+from app.api.cases import router as cases_router
 from app.api.dependencies import Storage
 from app.api.middleware import RequestBoundary
 from app.api.monitoring import router as monitoring_router
@@ -18,7 +19,7 @@ from app.api.sources import router as source_router
 from app.api.workspace import router as workspace_router
 from app.contracts.models import InvestigationJob
 from app.core import config
-from app.persistence.store import Store
+from app.persistence.store import Store, create_store
 from app.telemetry.datasets import sample
 
 log = logging.getLogger("plantsense.api")
@@ -31,13 +32,26 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        application.state.store = store if store is not None else Store()
+        if store is None and config.AI_PROVIDER == "scripted" and not config.INTERNAL_TEST_MODE:
+            raise RuntimeError("Scripted AI is test-only. Configure a live provider for application use.")
+        application.state.store = store if store is not None else create_store()
         application.state.assistant_cache = cache
+        if config.REQUIRE_RELEASE_GATES:
+            from app.ai.assistant_gate import require_assistant_evaluation
+            from app.cases.worker import require_case_evaluation
+
+            require_assistant_evaluation(voice=True)
+            require_case_evaluation()
         # Validate and warm trusted replay/model artifacts before accepting judge traffic.
         if config.INTERNAL_TEST_MODE:
             await asyncio.to_thread(sample, 0, None)
         task = None
-        if shared_runtime and config.SERVICE_ROLE == "api" and not application.state.store.cloud:
+        if (
+            shared_runtime
+            and config.MODE == "local"
+            and config.SERVICE_ROLE == "api"
+            and not application.state.store.cloud
+        ):
             from app.runtime.local_runtime import run
 
             task = asyncio.create_task(run(application.state.store))
@@ -48,6 +62,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
                 task.cancel()
                 with suppress(asyncio.CancelledError):
                     await task
+            await cache.close()
 
     application = FastAPI(title="PlantSense API", version="1.0.0", lifespan=lifespan)
     application.add_middleware(RequestBoundary)
@@ -56,6 +71,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
     application.include_router(monitoring_router)
     application.include_router(source_router)
     application.include_router(assistant_router)
+    application.include_router(cases_router)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_input(request: Request, exc: RequestValidationError):
@@ -68,6 +84,9 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
         return {"status": "ok", "mode": config.MODE, "role": config.SERVICE_ROLE}
 
     if config.SERVICE_ROLE == "worker" and config.MODE == "cloud":
+        from app.api.worker import router as worker_router
+
+        application.include_router(worker_router)
 
         @application.post("/internal/investigate", include_in_schema=False)
         async def worker(job: InvestigationJob, store: Storage):

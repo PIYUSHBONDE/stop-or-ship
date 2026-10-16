@@ -20,6 +20,10 @@ async def run(store):
 
     async def execute(job):
         try:
+            from app.cases.jobs import managed_incident
+
+            if managed_incident(store, job["incident_id"]):
+                return
             await investigate(store, job)
         except Exception as error:
             log.warning("shared_investigation_failed error_type=%s", type(error).__name__)

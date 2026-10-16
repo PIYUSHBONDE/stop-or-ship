@@ -4,16 +4,57 @@ import * as Dialog from '@radix-ui/react-dialog';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
-import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, Mic, Square, Volume2, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  MessageCircle,
+  Mic,
+  Square,
+  Volume2,
+  X,
+  History,
+  Workflow,
+  ArrowUp,
+  Maximize2,
+  Minimize2,
+} from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
+import { ApiError } from '@/lib/api/client';
 import type { components } from '@/lib/generated/api-schema';
 import { startRecording } from './recording';
 import styles from './assistant.module.css';
-import { simulationCaseStatus } from '@/features/incidents/lib/simulation-case';
+import { assistantSelection, captureSimulationContext } from './context';
+import { ChatAnswer } from './chat-answer';
+import { CaseIntake } from '@/features/cases/case-intake';
+
+function subscribeMobile(change: () => void) {
+  const media = window.matchMedia('(max-width: 760px)');
+  media.addEventListener('change', change);
+  return () => media.removeEventListener('change', change);
+}
+const mobileSnapshot = () => window.matchMedia('(max-width: 760px)').matches;
+const serverSnapshot = () => false;
 
 type Schema = components['schemas'];
-type Turn = { question: string; response: Schema['AssistantAnswer'] };
+type Turn = {
+  question: string;
+  response: Schema['AssistantAnswer'];
+  scope: string;
+  capturedAt?: string;
+  assignmentId?: string;
+};
+
+function sourceLabel(id: string, title: string) {
+  return (
+    (
+      {
+        'plant-state': 'Plant records',
+        'browser-simulation': 'Simulated readings',
+        'browser-simulation-process': 'Simulated production and response',
+        'browser-simulation-case': 'Saved simulated case',
+      } as Record<string, string>
+    )[id] || title
+  );
+}
 
 function invalidateVoice(epoch: { current: number }) {
   epoch.current++;
@@ -33,6 +74,18 @@ function Panel() {
   const query = useSearchParams();
   const simulation = usePreviewDispatch();
   const [open, setOpen] = useState(false);
+  const [intake, setIntake] = useState(false);
+  const [createdCase, setCreatedCase] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const openState = useRef(false);
+  const layoutScroll = useRef<number | null>(null);
+  const expandControl = useRef<HTMLButtonElement>(null);
+  const mobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, serverSnapshot);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const composer = useRef<HTMLTextAreaElement>(null);
+  const conversation = useRef<HTMLDivElement>(null);
+  const plantScreen = pathname === '/plant' && query.get('view') !== 'observations';
   const [input, setInput] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [pending, setPending] = useState('');
@@ -43,30 +96,44 @@ function Panel() {
   const stopRecording = useRef<((discard?: boolean) => void) | null>(null);
   const player = useRef<HTMLAudioElement | null>(null);
   const urls = useRef(new Map<string, string>());
-  const retry = useRef<{ intent: string; key: string; body: Schema['AssistantQuestion'] } | null>(
-    null,
-  );
+  const retry = useRef<{
+    intent: string;
+    key: string;
+    body: Schema['AssistantQuestion'];
+    newAttempt?: boolean;
+  } | null>(null);
   const voiceEpoch = useRef(0);
   const screen = useRef(pathname);
   screen.current = pathname;
-  const incidentScreen = pathname === '/incidents' || pathname === '/maintenance';
-  const selectedCase = simulation.ledger.cases.find(
-    (c) => c.id === (query.get('case') || query.get('assignment')),
+  const selection = assistantSelection(
+    pathname,
+    query,
+    selected,
+    { assets: state?.assets ?? [], incident: state?.incident ?? null },
+    simulation,
   );
-  const synthetic =
-    !!selectedCase ||
-    pathname === '/operators' ||
-    pathname.startsWith('/monitoring') ||
-    (pathname === '/plant' && query.get('view') !== 'observations');
-  const assetId =
-    selectedCase?.assetId ||
-    (incidentScreen && state?.incident ? state.incident.asset_id : selected);
-  const context = {
-    incident_id: !synthetic && state?.incident?.asset_id === assetId ? state.incident.id : null,
-    asset_id: state?.assets.some((a) => a.id === assetId) ? assetId : null,
-  };
-  const currentContext = useRef(JSON.stringify({ ...context, synthetic, case: selectedCase?.id }));
-  currentContext.current = JSON.stringify({ ...context, synthetic, case: selectedCase?.id });
+  const { context, synthetic } = selection;
+  const currentContext = useRef(selection.key);
+  currentContext.current = selection.key;
+
+  function changeLayout(next: boolean) {
+    layoutScroll.current = conversation.current?.scrollTop ?? 0;
+    setExpanded(next);
+  }
+  useLayoutEffect(() => {
+    if (layoutScroll.current === null) return;
+    const top = layoutScroll.current;
+    const frame = requestAnimationFrame(() => {
+      conversation.current?.scrollTo({ top });
+      expandControl.current?.focus({ preventScroll: true });
+      layoutScroll.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [expanded]);
+
+  useEffect(() => {
+    conversation.current?.scrollTo({ top: conversation.current.scrollHeight });
+  }, [turns.length, pending]);
 
   function stopPlayback() {
     player.current?.pause();
@@ -94,11 +161,13 @@ function Panel() {
     player.current = null;
     setRecording(false);
     setPlaying('');
-  }, [pathname, selected]);
+  }, [selection.key]);
 
   function close(next: boolean) {
+    openState.current = next;
     setOpen(next);
     if (!next) {
+      setExpanded(false);
       voiceEpoch.current++;
       stopRecording.current?.(true);
       stopRecording.current = null;
@@ -109,51 +178,40 @@ function Panel() {
 
   async function send() {
     if (!input.trim() || pending || recording || busy) return;
+    if (selection.error) {
+      setError(selection.error);
+      return;
+    }
     const question = input.trim();
     const base = {
       ...context,
       question,
       screen: pathname.split('/')[1] as Schema['AssistantQuestion']['screen'],
-      history: turns.slice(-6).map((t) => ({ question: t.question, answer: t.response.answer })),
+      history: turns
+        .filter((t) => t.scope === selection.key)
+        .slice(-6)
+        .map((t) => ({ question: t.question, answer: t.response.answer.slice(0, 3000) })),
     };
-    const simulationContext: Schema['SimulationContext'] = {
-      captured_at: new Date().toISOString(),
-      selected_case_id: selectedCase?.id ?? null,
-      equipment: (state?.assets ?? [])
-        .slice(0, 36)
-        .map((a) => ({ asset_id: a.id, readings: (simulation.readings[a.id] ?? []).slice(0, 8) })),
-      assignments: simulation.assignments.slice(0, 5).map((a) => ({
-        id: a.id,
-        asset_id: a.assetId,
-        operator_id: a.operatorId,
-        status: a.phase,
-        note: 'Simulated operator assignment',
-      })),
-      cases: [
-        ...(selectedCase ? [selectedCase] : []),
-        ...simulation.ledger.cases.filter((c) => c.id !== selectedCase?.id),
-      ]
-        .slice(0, 10)
-        .map((c) => ({
-          id: c.id,
-          asset_id: c.assetId,
-          operator_id: c.operatorId,
-          status: simulationCaseStatus(c),
-          note: c.message.slice(0, 600),
-        })),
-    };
+    const simulationContext = captureSimulationContext(
+      { assets: state?.assets ?? [], areas: state?.areas ?? [] },
+      simulation,
+      selection,
+    );
     const intent = JSON.stringify({
       ...base,
       synthetic,
-      selected_case_id: selectedCase?.id ?? null,
+      selection: selection.key,
     });
     const body: Schema['AssistantQuestion'] =
       retry.current?.intent === intent
         ? retry.current.body
         : { ...base, ...(synthetic ? { simulation_context: simulationContext } : {}) };
-    const key = retry.current?.intent === intent ? retry.current.key : crypto.randomUUID();
+    const key =
+      retry.current?.intent === intent && !retry.current.newAttempt
+        ? retry.current.key
+        : crypto.randomUUID();
     retry.current = { intent, key, body };
-    setPending('Answering from plant evidence…');
+    setPending('Thinking…');
     setError('');
     const expected = currentContext.current;
     const expectedScreen = pathname;
@@ -165,12 +223,33 @@ function Panel() {
         screen.current !== expectedScreen
       )
         return;
-      setTurns((previous) => [...previous, { question, response }].slice(-6));
+      setTurns((previous) =>
+        [
+          ...previous,
+          {
+            question,
+            response,
+            scope: expected,
+            capturedAt: body.simulation_context?.captured_at,
+            assignmentId:
+              body.simulation_context?.selected_assignment_id ||
+              body.simulation_context?.selected_case_id ||
+              undefined,
+          },
+        ].slice(-6),
+      );
       setInput('');
       retry.current = null;
     } catch (cause) {
-      if (cause instanceof Error && cause.message.includes('receipt expired or failed'))
-        retry.current = null;
+      if (
+        retry.current &&
+        cause instanceof Error &&
+        (cause.message.includes('receipt expired or failed') ||
+          (cause instanceof ApiError &&
+            [502, 503, 504].includes(cause.status) &&
+            cause.message.startsWith('AI ')))
+      )
+        retry.current.newAttempt = true;
       if (alive.current)
         setError(cause instanceof Error ? cause.message : 'Assistant unavailable.');
     } finally {
@@ -297,55 +376,193 @@ function Panel() {
             'What blocks approval?',
             'Explain the saved intervention costs.',
           ]
-        : [
-            'Which current readings are missing?',
-            'Explain the selected equipment.',
-            'How do measured output and rated capacity differ?',
-          ];
+        : synthetic
+          ? ["What's happening here?", 'Who is responding?', 'How is production affected?']
+          : [
+              'Which current readings are missing?',
+              'Explain the selected equipment.',
+              'How do measured output and rated capacity differ?',
+            ];
   return (
-    <Dialog.Root open={open} onOpenChange={close}>
-      <Dialog.Trigger className={styles.trigger}>
-        <MessageCircle size={16} /> Ask PlantSense
+    <Dialog.Root open={open} onOpenChange={close} modal={mobile || expanded}>
+      <Dialog.Trigger
+        ref={trigger}
+        className={styles.trigger}
+        data-plant={plantScreen}
+        aria-label="Ask PlantSense"
+        title="Ask PlantSense"
+      >
+        <MessageCircle size={19} />
+        <span>Ask PlantSense</span>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
-        <Dialog.Content className={styles.panel}>
+        <Dialog.Content
+          className={styles.panel}
+          data-plant={plantScreen}
+          data-expanded={expanded && !mobile}
+          onEscapeKeyDown={(event) => {
+            if (expanded && !mobile) {
+              event.preventDefault();
+              changeLayout(false);
+            }
+          }}
+          onInteractOutside={(event) => {
+            if (!mobile && !expanded) event.preventDefault();
+          }}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            if (layoutScroll.current === null) composer.current?.focus();
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (!openState.current) trigger.current?.focus();
+          }}
+        >
           <div className={styles.heading}>
-            <Dialog.Title>Ask PlantSense</Dialog.Title>
+            <span className={styles.mark}>
+              <Workflow size={18} />
+            </span>
+            <div className={styles.title}>
+              <Dialog.Title>Ask PlantSense</Dialog.Title>
+              <small>
+                {turns.at(-1)?.response.provider.toLowerCase().startsWith('scripted')
+                  ? 'Read-only · Scripted provider'
+                  : 'Read-only assistant'}
+              </small>
+            </div>
+            {!mobile && (
+              <button
+                ref={expandControl}
+                className={styles.historyTrigger}
+                aria-label={expanded ? 'Collapse chat' : 'Expand chat'}
+                aria-expanded={expanded}
+                onClick={() => changeLayout(!expanded)}
+              >
+                {expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+              </button>
+            )}
+            <button
+              className={styles.historyTrigger}
+              aria-label="Conversation history"
+              aria-expanded={historyOpen}
+              aria-controls="assistant-history"
+              onClick={() => setHistoryOpen(!historyOpen)}
+            >
+              <History size={17} />
+            </button>
             <Dialog.Close className="icon-button" aria-label="Close assistant">
               <X size={20} />
             </Dialog.Close>
           </div>
           <Dialog.Description className={styles.context}>
-            {state?.plant.name} · {context.asset_id || 'All equipment'} ·{' '}
-            {context.incident_id ? `Incident ${context.incident_id.slice(0, 8)}` : 'No incident'}
+            {state?.assets.find((a) => a.id === context.asset_id)?.name || state?.plant.name} ·{' '}
+            {context.asset_id || 'All equipment'}{' '}
+            {context.incident_id ? `· Incident ${context.incident_id.slice(0, 8)}` : ''}
           </Dialog.Description>
-          <p className={styles.note}>
-            Screen readings and operator cases are synthetic simulation. Read-only help. Costs come
-            from saved calculations. Approvals remain in existing controls.
-          </p>
-          <div className={styles.conversation} aria-live="polite">
-            {!turns.length && (
-              <div className={styles.suggestions}>
-                {suggestions.map((q) => (
-                  <button key={q} onClick={() => setInput(q)}>
-                    {q}
+          <details className={styles.provenance}>
+            <summary>{synthetic ? 'Screen data' : 'Plant records'}</summary>
+            <p>
+              {synthetic
+                ? 'Readings and operator responses are generated in this browser, not verified sensor data. They cannot verify a physical repair or authorize work.'
+                : 'Answers use saved plant records. Historical evidence does not establish current equipment condition.'}
+            </p>
+            <p>
+              {turns.at(-1)?.scope === selection.key && turns.at(-1)?.capturedAt ? (
+                <>
+                  Last question captured:{' '}
+                  <time dateTime={turns.at(-1)!.capturedAt}>
+                    {new Date(turns.at(-1)!.capturedAt!).toLocaleString()}
+                  </time>
+                </>
+              ) : (
+                'Current context is captured when you send a question.'
+              )}
+            </p>
+          </details>
+          {historyOpen && (
+            <div id="assistant-history" className={styles.history}>
+              <strong>Questions in this tab</strong>
+              {turns.length ? (
+                turns.map((turn) => (
+                  <button
+                    key={turn.response.answer_reference}
+                    onClick={() => {
+                      setHistoryOpen(false);
+                      requestAnimationFrame(() =>
+                        document
+                          .getElementById(`assistant-turn-${turn.response.answer_reference}`)
+                          ?.scrollIntoView({ block: 'nearest' }),
+                      );
+                    }}
+                  >
+                    {turn.question}
+                    <small>{turn.response.asset_id || 'All equipment'}</small>
                   </button>
-                ))}
+                ))
+              ) : (
+                <p>No questions in this tab yet.</p>
+              )}
+            </div>
+          )}
+          <div ref={conversation} className={styles.conversation} aria-live="polite">
+            {!turns.length && (
+              <div className={styles.welcome}>
+                <MessageCircle size={24} />
+                <h3>What needs your attention?</h3>
+                <p>Ask about equipment, production or the response in progress.</p>
+                <div className={styles.suggestions}>
+                  {suggestions.map((q) => (
+                    <button key={q} onClick={() => setInput(q)}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {turns.map((turn) => (
-              <article key={turn.response.answer_reference} className={styles.turn}>
+              <article
+                key={turn.response.answer_reference}
+                id={`assistant-turn-${turn.response.answer_reference}`}
+                className={styles.turn}
+              >
                 <p className={styles.question}>{turn.question}</p>
-                <p>{turn.response.answer}</p>
-                <small>
-                  {turn.response.provider} · Configuration {turn.response.configuration_version}
-                  {turn.response.calculation_version &&
-                    ` · Calculation ${turn.response.calculation_version}`}
-                </small>
+                <div className={styles.answer}>
+                  <ChatAnswer
+                    text={turn.response.answer}
+                    id={`answer-${turn.response.answer_reference}`}
+                  />
+                </div>
+                <div className={styles.links}>
+                  {turn.response.asset_id &&
+                    state?.assets.some((a) => a.id === turn.response.asset_id) && (
+                      <Link
+                        href={`/monitoring/${encodeURIComponent(turn.response.asset_id)}`}
+                        onClick={() => close(false)}
+                      >
+                        View machine
+                      </Link>
+                    )}
+                  {turn.assignmentId ? (
+                    <Link
+                      href={`/operators?assignment=${encodeURIComponent(turn.assignmentId)}`}
+                      onClick={() => close(false)}
+                    >
+                      View response
+                    </Link>
+                  ) : turn.response.incident_id ? (
+                    <Link
+                      href={`/incidents?incident=${encodeURIComponent(turn.response.incident_id)}`}
+                      onClick={() => close(false)}
+                    >
+                      View incident
+                    </Link>
+                  ) : null}
+                </div>
                 {turn.response.costs.length > 0 && (
-                  <div className={styles.costs}>
-                    <strong>Saved comparison · INR · eight-hour horizon</strong>
+                  <details className={styles.costs}>
+                    <summary>Saved cost comparison</summary>
+                    <strong>INR · eight-hour horizon</strong>
                     <span>
                       Synthetic planning assumptions; not measured losses or calibrated failure
                       risk.
@@ -360,54 +577,108 @@ function Panel() {
                         {cost.feasible ? '' : '· Not feasible'}
                       </div>
                     ))}
-                  </div>
-                )}
-                {turn.response.citations.map((source) => (
-                  <details key={source.id}>
-                    <summary>
-                      {source.title} · {source.id}
-                    </summary>
-                    <pre>{source.text}</pre>
                   </details>
-                ))}
-                <div className={styles.links}>
-                  {turn.response.navigation.map((href) => (
-                    <Link key={href} href={href} onClick={() => close(false)}>
-                      {href.split('?')[0].slice(1).replace('-', ' ')}
-                    </Link>
-                  ))}
-                </div>
-                <button
-                  className="secondary"
-                  disabled={
-                    playing !== turn.response.answer_reference && (!!pending || recording || busy)
-                  }
-                  onClick={() => void play(turn.response)}
-                >
-                  {playing === turn.response.answer_reference ? (
-                    <Square size={14} />
-                  ) : (
-                    <Volume2 size={14} />
-                  )}
-                  {playing === turn.response.answer_reference ? 'Stop' : 'Play answer'}
-                </button>
-                {turn.response.usage && (
-                  <p className={styles.note}>
-                    Estimated AI cost:{' '}
-                    {(turn.response.usage.charged_micro_usd / 1000000).toFixed(6)} USD ·{' '}
-                    {turn.response.usage.status}
-                  </p>
                 )}
+                <div className={styles.messageActions}>
+                  <details className={styles.sources}>
+                    <summary>Sources ({turn.response.citations.length})</summary>
+                    <div className={styles.sourceList}>
+                      {turn.response.citations.map((source) => (
+                        <details key={source.id}>
+                          <summary>{sourceLabel(source.id, source.title)}</summary>
+                          <small>{source.id}</small>
+                          <pre>{source.text}</pre>
+                        </details>
+                      ))}
+                      {turn.capturedAt && (
+                        <p className={styles.note}>
+                          Screen data captured:{' '}
+                          <time dateTime={turn.capturedAt}>
+                            {new Date(turn.capturedAt).toLocaleString()}
+                          </time>
+                          . Browser-generated values are not sensor-verified.
+                        </p>
+                      )}
+                      <details>
+                        <summary>Response details</summary>
+                        <small>
+                          {turn.response.provider} · Configuration{' '}
+                          {turn.response.configuration_version}
+                          {turn.response.calculation_version &&
+                            ` · Calculation ${turn.response.calculation_version}`}
+                        </small>
+                        {turn.response.usage && (
+                          <p className={styles.note}>
+                            Estimated AI cost:{' '}
+                            {(turn.response.usage.charged_micro_usd / 1000000).toFixed(6)} USD ·{' '}
+                            {turn.response.usage.status}
+                          </p>
+                        )}
+                        <p className={styles.note}>
+                          Read-only help. Simulation is not operational evidence; approvals stay in
+                          existing controls.
+                        </p>
+                      </details>
+                    </div>
+                  </details>
+                  <button
+                    className="secondary"
+                    aria-label={playing === turn.response.answer_reference ? 'Stop' : 'Play answer'}
+                    disabled={
+                      playing !== turn.response.answer_reference && (!!pending || recording || busy)
+                    }
+                    onClick={() => void play(turn.response)}
+                  >
+                    {playing === turn.response.answer_reference ? (
+                      <Square size={14} />
+                    ) : (
+                      <Volume2 size={14} />
+                    )}
+                    {playing === turn.response.answer_reference ? 'Stop' : 'Listen'}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
           {error && (
             <p role="alert" className={styles.error}>
               {error}
+              {retry.current && input.trim() === retry.current.body.question && (
+                <button disabled={!!pending || recording || busy} onClick={() => void send()}>
+                  {retry.current.newAttempt ? 'Try as new request' : 'Retry question'}
+                </button>
+              )}
             </p>
           )}
           {pending && <p role="status">{pending}</p>}
           {recording && <p role="status">Recording · stops after 15 seconds</p>}
+          {intake && (
+            <div className={styles.caseIntake}>
+              <CaseIntake
+                assetId={context.asset_id}
+                description={input || turns.at(-1)?.question || ''}
+                onCreated={(item) => {
+                  setCreatedCase(item.id);
+                  setIntake(false);
+                }}
+              />
+            </div>
+          )}
+          {state?.workspace?.role !== 'viewer' && (
+            <div className={styles.caseActions}>
+              <button onClick={() => setIntake(!intake)}>
+                {intake ? 'Close case form' : 'Start case'}
+              </button>
+              {createdCase && (
+                <Link
+                  href={`/incidents?workcase=${encodeURIComponent(createdCase)}`}
+                  onClick={() => close(false)}
+                >
+                  Open recorded case
+                </Link>
+              )}
+            </div>
+          )}
           <form
             className={styles.composer}
             onSubmit={(event) => {
@@ -415,37 +686,46 @@ function Panel() {
               void send();
             }}
           >
-            <label htmlFor="assistant-question">Question or editable transcript</label>
+            <label htmlFor="assistant-question" className={styles.composerLabel}>
+              Message PlantSense
+            </label>
             <textarea
+              ref={composer}
               id="assistant-question"
+              aria-label="Question or editable transcript"
               value={input}
               maxLength={1000}
-              rows={3}
+              rows={2}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask about this plant…"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              placeholder="Ask PlantSense…"
             />
             <div className={styles.actions}>
               <button
                 type="button"
+                aria-label={recording ? 'Stop recording' : 'Record question'}
                 className="secondary"
                 onClick={() => void record()}
                 disabled={!!pending || busy}
               >
                 {recording ? <Square size={16} /> : <Mic size={16} />}
-                {recording ? 'Stop recording' : 'Record question'}
+                {recording ? 'Stop recording' : 'Voice'}
               </button>
               <button
                 className="primary"
+                aria-label="Send question"
                 disabled={!input.trim() || !!pending || recording || busy}
               >
-                Send question
+                <ArrowUp size={16} />
+                <span>Send</span>
               </button>
             </div>
-            <small>
-              Check equipment IDs, numbers, and units before sending. Recordings go to Google for
-              transcription. Edit before sending. Chat stays in this tab; no permanent audio
-              archive.
-            </small>
+            <small>Voice goes to Google. Review the transcript before sending.</small>
           </form>
         </Dialog.Content>
       </Dialog.Portal>
