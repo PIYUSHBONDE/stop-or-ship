@@ -1,5 +1,7 @@
 # Mumbai pilot release
 
+Origin recovery: `python infra/gcp/pilot.py origins` updates only the API's trusted web origins from the exact HTTPS aliases recorded in Cloud Run service metadata. Both the numeric and hashed web URLs must permit sign-in. Keep external origins blocked; do not use wildcard origins or remove CSRF checks.
+
 ## Current rollout and architecture
 
 The rollout resumed on 16 October 2026 with explicit approval for the seven service accounts, scoped permissions, private migration/report buckets and a one-concurrent-delivery queue. Consult `docs/status.md` for observed completion, image fingerprints and limitations; the preparation record below is historical.

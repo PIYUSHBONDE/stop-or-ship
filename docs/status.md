@@ -4,6 +4,8 @@ Latest work: [Mumbai pilot deployed](#mumbai-pilot-deployed--16-october-2026). T
 
 ## Mumbai pilot deployed — 16 October 2026
 
+Sign-in origin correction: a user request through `https://plantsense-web-408867906527.asia-south1.run.app` returned 403 because the API allowed only the other canonical web URL. The deployment helper now reads the service's actual HTTPS `.run.app` aliases and configures their exact origins; wildcard, non-HTTPS and malformed origins fail closed. The live API configuration was updated without changing the image, model, limits or UI. Real sign-in returned **200 on both URLs**, while an unrelated Origin returned **403**. All **10 infrastructure regressions** passed. Credentials remain unchanged. This configuration-only fix requires no paid model reevaluation.
+
 Live web: https://plantsense-web-nponfirhaa-el.a.run.app. Cloud Run API and worker are private; web/API/worker each have min 0/max 1 instance. API and worker use 1 GiB; web uses 512 MiB. Mumbai Cloud SQL remains the single-zone PostgreSQL 16 `db-f1-micro` instance with bounded 10 GB storage. Existing UI/navigation were preserved.
 
 Private backup restoration into a temporary PostgreSQL schema passed **38-table/200-row count and SHA-256 proof**, then rolled back the rehearsal schema. Actual import separately passed the same **38 tables and 200 rows**. Migration and restore were one-shot jobs using the dedicated migration identity; original SQLite data remains intact. Known published seed passwords were rotated only in the cloud copy; private credentials are saved in ignored `.runtime/cloud-pilot/login-credentials.txt`, never in this document or Git. Native Cloud SQL backup restoration remains an unperformed operational drill.

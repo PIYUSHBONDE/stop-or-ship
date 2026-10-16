@@ -8,6 +8,7 @@ import shutil
 import sqlite3
 import subprocess
 from pathlib import Path
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 PROJECT = "project-970d28ee-835b-4ca2-866"
@@ -511,6 +512,67 @@ def invoke_binding(service, member):
     )
 
 
+def web_origins(description):
+    aliases = json.loads(
+        description.get("metadata", {})
+        .get("annotations", {})
+        .get("run.googleapis.com/urls", "[]")
+    )
+    origins = {description["status"]["url"], *aliases}
+    for origin in origins:
+        parsed = urlsplit(origin)
+        if (
+            parsed.scheme != "https"
+            or not parsed.hostname
+            or not parsed.hostname.endswith(".run.app")
+            or "*" in parsed.hostname
+            or parsed.username
+            or parsed.password
+            or parsed.port
+            or parsed.path not in ("", "/")
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError("Unexpected Cloud Run web origin")
+    return ",".join(sorted(origin.rstrip("/") for origin in origins))
+
+
+def configure_web_origins():
+    description = json.loads(
+        cloud(
+            "run",
+            "services",
+            "describe",
+            "plantsense-web",
+            f"--project={PROJECT}",
+            f"--region={REGION}",
+            "--format=json",
+        )
+    )
+    flags = PRIVATE / "web-origin-flags.json"
+    flags.write_text(
+        json.dumps(
+            {
+                "--update-env-vars": {
+                    "PLANTSENSE_STAFF_WEB_ORIGINS": web_origins(description)
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    cloud(
+        "run",
+        "services",
+        "update",
+        "plantsense-api",
+        f"--project={PROJECT}",
+        f"--region={REGION}",
+        "--flags-file=" + str(flags),
+        "--quiet",
+    )
+    print("Verified Cloud Run web aliases configured", flush=True)
+
+
 def immutable_image(component, tag):
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}", tag):
         raise ValueError("Invalid release tag")
@@ -594,16 +656,7 @@ def deploy_services(tag):
         "--quiet",
     )
     web_url = service_url("web")
-    cloud(
-        "run",
-        "services",
-        "update",
-        "plantsense-api",
-        f"--project={PROJECT}",
-        f"--region={REGION}",
-        "--update-env-vars=PLANTSENSE_STAFF_WEB_ORIGINS=" + web_url,
-        "--quiet",
-    )
+    configure_web_origins()
     schedule = "plantsense-reconcile"
     exists = cloud(
         "scheduler",
@@ -716,6 +769,7 @@ if __name__ == "__main__":
             "reports",
             "release-identity",
             "restore",
+            "origins",
         ],
     )
     parser.add_argument("--image")
@@ -744,6 +798,8 @@ if __name__ == "__main__":
             upload_reports()
         elif args.stage == "release-identity":
             release_identity()
+        elif args.stage == "origins":
+            configure_web_origins()
     except Exception as error:  # noqa: BLE001 -- Never print driver/HTTP credential payloads.
         print("Pilot operation failed:", type(error).__name__, flush=True)
         raise SystemExit(1) from None
