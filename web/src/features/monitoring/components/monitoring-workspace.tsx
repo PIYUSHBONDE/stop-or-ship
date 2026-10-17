@@ -42,9 +42,8 @@ export function MonitoringWorkspace() {
           </span>
           <h1>Line records</h1>
           <p>
-            Records are grouped by production line, then by machine. Open a machine for each
-            signal on its own chart. Reviewed sources remain the only path to operational
-            observations.
+            Records are grouped by production line, then by machine. Open a machine for each signal
+            on its own chart. Reviewed sources remain the only path to operational observations.
           </p>
         </div>
         {can('plant.configure') && (

@@ -267,11 +267,13 @@ export function diagnosePreview(
   attempts: PriorAttempt[],
 ): PreviewDiagnosis {
   const latest = samples.at(-1)?.readings ?? [];
-  const sides = Object.fromEntries(latest.map((reading) => [reading.signal_id, signalSide(reading)]));
+  const sides = Object.fromEntries(
+    latest.map((reading) => [reading.signal_id, signalSide(reading)]),
+  );
   const notable = latest.filter((reading) => signalSide(reading) !== 'inside');
   const defs = TREES[assetType] ?? genericTree(latest);
   const matchedId = defs.find((branch) => branch.test(sides))?.id ?? null;
-  const branches = defs.map((branch) => {
+  const branches = defs.map<DiagnosisBranch>((branch) => {
     const matched = branch.id === matchedId;
     const index = matched ? completedThrough(branch.tasks, attempts) : 0;
     return {
@@ -304,7 +306,9 @@ export function diagnosePreview(
     repeated,
     summary: summaryFor(notable, active, exhausted),
     branches,
-    suggested: exhausted ? null : (active?.tasks.find((task) => task.state === 'suggested') ?? null),
+    suggested: exhausted
+      ? null
+      : (active?.tasks.find((task) => task.state === 'suggested') ?? null),
   };
 }
 
@@ -368,11 +372,7 @@ export function limitWords(reading: PreviewReading) {
   return 'inside the limit';
 }
 
-function summaryFor(
-  notable: PreviewReading[],
-  active: DiagnosisBranch | null,
-  exhausted: boolean,
-) {
+function summaryFor(notable: PreviewReading[], active: DiagnosisBranch | null, exhausted: boolean) {
   if (!notable.length) return 'Every signal is inside the limit.';
   if (!active) return 'Signals are outside the limit, and no typed path matches this machine.';
   const pointed = active.points
@@ -382,9 +382,7 @@ function summaryFor(
   const suggested = exhausted
     ? 'Inspect the whole machine.'
     : (active.tasks.find((task) => task.state === 'suggested')?.title ?? '');
-  const used = active.tasks
-    .filter((task) => task.state === 'done')
-    .map((task) => task.title);
+  const used = active.tasks.filter((task) => task.state === 'done').map((task) => task.title);
   return [active.title, pointed, suggested, used.join('; ')].filter(Boolean).join(' ');
 }
 

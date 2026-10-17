@@ -1,5 +1,31 @@
 # Implementation status
 
+## Akarsh feature integration verified locally - 17 October 2026
+
+Cherry-picked Akarsh's feature commit `1718a2b` onto `f_statistics-main-integration` at `e01e8e4` as `9d6ddf3`, retaining authorship. The only cherry-pick conflict was this status document; both branches' notes were retained. The initial application tree exactly matches the existing Akarsh merge tree `724a633`. Line records, per-signal machine charts and collapsed reading stretches, preview diagnosis, operator notes/sentiment and the plant shadow update remain intact. Integration fixes add the missing `DiagnosisBranch` map annotation, apply Prettier to three imported files, retain Next.js-generated production type imports and update the existing navigation test's exact Monitor heading to `Line records`. No application layout or behavior was redesigned.
+
+Observed validation: **202 backend/infrastructure tests passed, one PostgreSQL module skipped, in 369.56 seconds**; **42 frontend unit tests passed**, including the final confirmation. **20 browser checks passed** against a fresh isolated local SQLite/scripted-provider API and production frontend: 12 simulation/operator/navigation/restoration checks, six operational telemetry checks and two assistant-context checks. Operational acceptance retained all three real one-minute post-repair observation windows. Ruff lint/format across backend, scripts and infrastructure, complete frontend Prettier/ESLint, explicit TypeScript, production build, Python OpenAPI drift, generated TypeScript drift and `git diff --check` passed.
+
+Initial backend fixture errors came from a missing parent for the worktree-local pytest temporary directory; creating that directory resolved them before the complete passing run. Initial frontend validation exposed the task-state inference and stale heading assertion described above; their focused fixes preserve the feature and test coverage. Browser fixtures use scripted AI and authored observations, so these results do not establish live Gemini performance or physical plant accuracy. PostgreSQL execution, packaged containers and the complete browser suite were not rerun. Isolated test services were stopped and their temporary database/logs/screenshots removed after verification. The user's main checkout, cloud services, credentials and remote branches were not changed; no push or deployment occurred.
+
+## Line records, machine signals, and operator notes - 17 October 2026
+
+Local Monitor and Operators changes. These readings stay in the browser preview ledger. They do not become operational observations, authorize work, or establish plant health. Ask PlantSense sentiment uses the existing assistant path; a local assistant that is not configured will say so, and the word-overlap count remains. No cloud deploy or push was done in this note.
+
+**Plant floor.** Directional shadows update when the plant bounds change, instead of on every simulation tick. That was freezing `/plant` after the scene loaded.
+
+**Preview signals.** A forced excursion moves every channel on an equipment type, with a mix of rises and falls, instead of pushing only the first signal above its limit. Pump, motor, press, and the other catalog types keep their own channels. The preview ledger still keeps a short sample window. A multi-year analysis needs imported observations with their original timestamps.
+
+**Monitor, by line.** `/monitoring` is Line records. Machines are grouped under their production line, then supporting areas. Each line shows its machine count, live rate and mode when the simulation has them, and whether a signal is outside the limit. Each machine card shows the latest readings and a small chart, then opens `/monitoring/{asset}`. The earlier chart that drew every machine on the line together was removed.
+
+**Machine page.** Current readings are the latest number for each signal: below the limit, at zero, above the limit, or inside the limit. The combined overview chart is gone. Each signal has its own chart on the same page, with no signal pager. Consecutive samples with the same pattern collapse into a stretch (inside the limit, below the limit, at zero). A Details control opens the hidden samples for one stretch or for the whole machine. Case history stays paged.
+
+**What the readings point to.** A local decision tree matches the latest preview pattern. Pump branches cover no delivery, blocked discharge, overheat, flow-only, and pressure-only. Motor covers a jammed load and high vibration. Press covers low force and a slow cycle. Other equipment gets a generic check of the signals that left their limits. The cause is a short stack: what is wrong, which signals it points at, the one task to do now, and the tasks already used. Other branches stay behind Other checks. The tree advances only when a stored fix names that specific earlier task, in order. A repaired case on the same pump, with no task name, does not skip ahead to “inspect the whole machine.”
+
+**Operators assignment.** Opening `?assignment=` shows the stored operator comment, the recorded fix when a fix time exists, and the current tool task. The stored case message is split on “Operator note:”. PlantSense sentiment and the word-overlap count share one note. Sentiment asks the same assistant as Ask PlantSense and is told not to invent a percentage. If another assistant request is in progress, that call retries. If the assistant is unavailable, the note says so and the overlap remains the comparison. Overlap is the unadjusted content-word F1 after stopwords: identical text is 100, no shared content words is 0. Nothing is added to the score.
+
+Validation: frontend unit tests passed (39), including preview diagnosis, telemetry, dispatch, records, and the process simulation. Browser acceptance was not rerun. The monitor and operator screens were not given a fresh browser pass in this check.
+
 ## Prototype release path without AI report artifacts — 17 October 2026
 
 Routine releases no longer fetch evaluation reports from Cloud Storage. Cloud Build produces backend/web images directly; promotion explicitly sets `PLANTSENSE_REQUIRE_RELEASE_GATES=false` on API and worker. Cloud mode still defaults to requiring reports unless that setting is explicitly supplied. Live AI remains enabled on the prototype path but has no release evaluation proof. The optional report bucket no longer grants object-reader access through the bootstrap script; any existing cloud bindings were not inspected or changed. The GitHub repository is private. Its branch-protection endpoint returned `403 Resource not accessible by integration`, so actual protection rules remain unverified. Cloud Build's GitHub App connection was not configured.
@@ -586,6 +612,7 @@ Operational observations use reviewed envelopes, immutable original records, bou
 
 AI remains explicitly scripted. Live hardware acquisition, live Gemini evaluation, cloud staff identity/storage, distributed dispatch and physical plant model validation remain separate release gates. See [source boundaries](data/telemetry-sources.md).
 
+
 ## Repository organization — current iteration
 
 Backend modules are organized into capability packages, with stable `app.main:app` composition. Next.js routes/features live in `web/src`; shared UI, providers, clients, generated types and test fixtures have explicit homes. Maintenance and Memory no longer render through the Operations view switch. Three unused dashboard panels were removed.
@@ -605,7 +632,6 @@ Shared Python fixtures now live in `tests/support`; unit and integration suites 
 Local storage/schema, public routes, provider defaults and Compose volume identity remain unchanged by this iteration. AI remains explicitly scripted; live Gemini is the next approved implementation priority. No cloud deployment claim is made.
 
 Earlier implementation and replay acceptance records are retained in [history](history/implementation-status.md).
-
 ## Scalable issue-management foundation — 15 October 2026
 
 The local foundation now supports persistent factory cases, role-based human requests, immutable authored evidence, versioned automation policies, recorded agent stages and durable jobs. Incidents includes case intake/detail alongside the existing browser and operational incident table. The header's Requests panel supports transactional claims and findings; chat requires an explicit Start case action. Existing Plant, navigation, sign-in and deterministic intervention/repair controls are preserved. Generated Operators assignments remain separate from authenticated staff tasks.
