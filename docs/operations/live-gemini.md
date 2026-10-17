@@ -22,7 +22,7 @@ The model-usage panel shows token counts and estimated USD model costs separatel
 
 ## Evaluation and local activation
 
-Use existing local Application Default Credentials. Renew them locally when needed; never paste credentials into chat or commit them. Set the intended quota project through the Google Cloud CLI. Local mode runs live Vertex without evaluation report files by default. Set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` to require reports for local release validation; cloud mode always requires them.
+Use existing local Application Default Credentials. Renew them locally when needed; never paste credentials into chat or commit them. Set the intended quota project through the Google Cloud CLI. Local mode runs live Vertex without evaluation report files by default. Set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` to require reports for release validation. Cloud Run prototype releases explicitly set it to `false`; those live AI results have not passed the release evaluation gates.
 
 ```powershell
 $env:PYTHONPATH = 'backend'

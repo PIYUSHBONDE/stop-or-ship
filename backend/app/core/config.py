@@ -37,7 +37,7 @@ TASK_QUEUE = os.getenv("TASK_QUEUE", "plantsense-investigations")
 TASK_ACCOUNT = os.getenv("TASK_SERVICE_ACCOUNT", "")
 SERVICE_ROLE = os.getenv("SERVICE_ROLE", "api")
 REQUIRE_RELEASE_GATES = (
-    MODE == "cloud" or os.getenv("PLANTSENSE_REQUIRE_RELEASE_GATES", "false").lower() == "true"
+    os.getenv("PLANTSENSE_REQUIRE_RELEASE_GATES", "true" if MODE == "cloud" else "false").lower() == "true"
 )
 STAFF_WEB_ORIGINS = tuple(
     os.getenv("PLANTSENSE_STAFF_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")

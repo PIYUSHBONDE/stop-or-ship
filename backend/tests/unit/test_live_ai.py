@@ -227,9 +227,13 @@ def test_cloud_live_ai_keeps_evaluation_reports_required(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize(
     ("mode", "gate_override", "expected"),
-    [("local", None, "postgres|False"), ("cloud", "false", "postgres|True")],
+    [
+        ("local", None, "postgres|False"),
+        ("cloud", None, "postgres|True"),
+        ("cloud", "false", "postgres|False"),
+    ],
 )
-def test_database_url_selects_postgres_and_cloud_keeps_gates(mode, gate_override, expected):
+def test_database_url_selects_postgres_and_gate_setting(mode, gate_override, expected):
     env = os.environ.copy()
     env.update(
         PLANTSENSE_MODE=mode,

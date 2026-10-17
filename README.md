@@ -27,7 +27,7 @@ Open **http://127.0.0.1:3000/**, choose Continue with email, then use the work-e
 
 There is no default password for a new plant. Staff sessions use expiring HttpOnly cookies; only password hashes are stored. These local accounts do not grant cloud access.
 
-**Normal application use defaults to live Vertex AI with Gemini 3.8 Flash.** Local mode can use live AI without evaluation report files; set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` to check reports during local release testing. Cloud mode always requires matching investigation, assistant and case reports. Missing credentials or failed cloud gates block AI rather than substituting scripted answers. Scripted providers are restricted to explicitly isolated test execution; normal API and worker startup reject them. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
+**Normal application use defaults to live Vertex AI with Gemini 3.8 Flash.** Evaluation reports are optional for prototype releases; set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` to require matching reports. Cloud Run prototype releases explicitly disable that check. Live AI then runs without those evaluation results, so its performance is unvalidated. Missing credentials still block AI rather than substituting scripted answers. Scripted providers are restricted to explicitly isolated test execution; normal API and worker startup reject them. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
 
 ## Run with Docker
 
@@ -72,7 +72,7 @@ Run separate terminals:
 npm.cmd --prefix web run start
 ```
 
-Local mode uses SQLite when `DATABASE_URL` is empty. Set `DATABASE_URL` to automatically use PostgreSQL; `PLANTSENSE_POSTGRES_DSN` overrides it. Local Vertex AI uses Application Default Credentials from `gcloud auth application-default login` and does not need evaluation reports by default. Cloud mode still enforces release reports. A Cloud SQL socket URL requires a local Cloud SQL connection method; see [local live AI](docs/operations/live-gemini.md).
+Local mode uses SQLite when `DATABASE_URL` is empty. Set `DATABASE_URL` to automatically use PostgreSQL; `PLANTSENSE_POSTGRES_DSN` overrides it. Local Vertex AI uses Application Default Credentials from `gcloud auth application-default login` and does not need evaluation reports by default. Cloud mode requires reports by default; the prototype release workflow explicitly disables that gate for API and worker. A Cloud SQL socket URL requires a local Cloud SQL connection method; see [local live AI](docs/operations/live-gemini.md).
 
 Unix setup:
 
