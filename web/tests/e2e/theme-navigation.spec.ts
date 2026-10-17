@@ -20,7 +20,7 @@ test('factory pages share the login palette and remain usable on desktop and mob
       await page.goto(`/${route}`);
       const headings: Record<string, string> = {
         operators: 'Operators',
-        monitoring: 'Machine records',
+        monitoring: 'Line records',
         incidents: 'Incidents',
         memory: 'Plant guide',
         'plant-setup': 'Design your plant.',

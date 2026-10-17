@@ -6,7 +6,11 @@ import { ArrowLeft, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Sparkline from '@/components/ui/sparkline';
 import { usePlant } from '@/providers/plant-session-provider';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
-import { diagnosePreview, limitWords, readingEpisodes } from '@/features/monitoring/lib/preview-diagnosis';
+import {
+  diagnosePreview,
+  limitWords,
+  readingEpisodes,
+} from '@/features/monitoring/lib/preview-diagnosis';
 import { seriesFor } from '@/features/monitoring/lib/preview-records';
 import styles from '@/features/monitoring/components/machine-records.module.css';
 import pageStyles from '@/components/layout/workspace.module.css';
@@ -72,7 +76,9 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
     setDetailId(id);
   };
   const detailEpisode = episodes.find((episode) => episode.id === detailId);
-  const detailSamples = [...(detailId === 'all' ? samples : (detailEpisode?.samples ?? []))].reverse();
+  const detailSamples = [
+    ...(detailId === 'all' ? samples : (detailEpisode?.samples ?? [])),
+  ].reverse();
   return (
     <div className={pageStyles.page}>
       <header className={pageStyles.heading}>
@@ -166,7 +172,10 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
                   <small>{suggested.why}</small>
                 </p>
               ) : (
-                <p>Those checks are already recorded, and the readings are still outside the limit. Inspect the whole machine.</p>
+                <p>
+                  Those checks are already recorded, and the readings are still outside the limit.
+                  Inspect the whole machine.
+                </p>
               )}
             </div>
             {used.length > 0 && (
@@ -233,7 +242,11 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
                 sample{episode.count === 1 ? '' : 's'}
               </small>
               <p>{episode.summary}</p>
-              <button type="button" className={styles.detailLink} onClick={() => openDetails(episode.id)}>
+              <button
+                type="button"
+                className={styles.detailLink}
+                onClick={() => openDetails(episode.id)}
+              >
                 Details · {episode.count} sample{episode.count === 1 ? '' : 's'}
               </button>
             </article>
@@ -282,7 +295,12 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
       >
         <header>
           <h2>{detailId === 'all' ? 'All stored samples' : detailEpisode?.title || 'Samples'}</h2>
-          <button type="button" className="icon-button" aria-label="Close details" onClick={() => setDetailId(null)}>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Close details"
+            onClick={() => setDetailId(null)}
+          >
             <X size={16} />
           </button>
         </header>
@@ -316,8 +334,12 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
                   <td>
                     <ul className={styles.sampleMetrics}>
                       {sample.readings.map((reading) => (
-                        <li key={reading.signal_id} className={reading.ooc ? styles.oocChip : undefined}>
-                          {reading.signal_id.replaceAll('_', ' ')} {reading.value} · {limitWords(reading)}
+                        <li
+                          key={reading.signal_id}
+                          className={reading.ooc ? styles.oocChip : undefined}
+                        >
+                          {reading.signal_id.replaceAll('_', ' ')} {reading.value} ·{' '}
+                          {limitWords(reading)}
                         </li>
                       ))}
                     </ul>
@@ -373,11 +395,7 @@ function Pager({
         <span>
           Page {current + 1} of {pages}
         </span>
-        <button
-          type="button"
-          disabled={current >= pages - 1}
-          onClick={() => onPage(current + 1)}
-        >
+        <button type="button" disabled={current >= pages - 1} onClick={() => onPage(current + 1)}>
           Next <ChevronRight size={16} />
         </button>
       </div>
