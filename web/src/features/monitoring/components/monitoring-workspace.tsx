@@ -5,7 +5,7 @@ import { Radio, Plus, ArrowRight, ShieldCheck, Search } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 import { sampleCount } from '@/features/monitoring/lib/preview-records';
-import { MachineRecords } from '@/features/monitoring/components/machine-records';
+import { LineRecords } from '@/features/monitoring/components/machine-records';
 import type { components } from '@/lib/generated/api-schema';
 import styles from '@/components/layout/workspace.module.css';
 import { SourceEditor } from '@/features/monitoring/components/source-editor';
@@ -24,9 +24,6 @@ export function MonitoringWorkspace() {
   const operational = sources.filter((source) => source.configuration.kind === 'operational');
   const current = operational.filter((source) => source.quality === 'fresh');
   const importSource = sources.find((source) => source.id === importId);
-  const machines = state.assets.filter((asset) =>
-    `${asset.name} ${asset.id}`.toLowerCase().includes(query.toLowerCase()),
-  );
   const filtered = sources.filter((source) =>
     `${source.configuration.name} ${source.configuration.asset_id}`
       .toLowerCase()
@@ -43,10 +40,11 @@ export function MonitoringWorkspace() {
           <span className="eyebrow">
             PLANT DATA <span className="live-tag">SYNTHETIC PREVIEW</span>
           </span>
-          <h1>Machine records</h1>
+          <h1>Line records</h1>
           <p>
-            Real-time preview samples, trend graphs, and who cleared each OOC stay on this plant.
-            Reviewed sources remain the only path to operational observations.
+            Records are grouped by production line, then by machine. Open a machine for each
+            signal on its own chart. Reviewed sources remain the only path to operational
+            observations.
           </p>
         </div>
         {can('plant.configure') && (
@@ -72,21 +70,21 @@ export function MonitoringWorkspace() {
       <section className={styles.notice}>
         <Radio size={19} />
         <p>
-          Preview records are labeled synthetic and do not establish plant health. Current
-          observations: {current.length}. Equipment without a reviewed source stays unknown. No PLC
-          or historian connector is active.
+          These records do not establish plant health. Current observations: {current.length}.
+          Equipment without a reviewed source stays unknown. No PLC or historian connector is
+          active.
         </p>
       </section>
       <label className={styles.search}>
         <Search size={17} />
         <input
-          aria-label="Search machines or sources"
-          placeholder="Find a machine or source…"
+          aria-label="Search lines, machines, or sources"
+          placeholder="Find a line, machine, or source…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
       </label>
-      <MachineRecords assets={machines} />
+      <LineRecords assets={state.assets} areas={state.areas} query={query} />
       {editor && (
         <SourceEditor
           key={editor === 'new' ? 'new' : `${editor.id}-${editor.version}`}

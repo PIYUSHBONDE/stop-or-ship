@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ArrowRight, ChevronDown, MapPin } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
@@ -11,6 +12,14 @@ import {
   selectAssignment,
   type AssignmentPhase,
 } from '@/features/operators/lib/preview-dispatch';
+import { assistantSelection, captureSimulationContext } from '@/features/assistant/context';
+import {
+  diagnosePreview,
+  textMatchScore,
+  type DiagnosisSample,
+  type PriorAttempt,
+} from '@/features/monitoring/lib/preview-diagnosis';
+import type { components } from '@/lib/generated/api-schema';
 import { FloorPositionMap } from './floor-position-map';
 import styles from './operators.module.css';
 
@@ -33,6 +42,173 @@ function number(value: number) {
 function signalLabel(id: string) {
   const label = id.replaceAll('_', ' ');
   return (label[0]?.toUpperCase() ?? '') + label.slice(1);
+}
+
+function AssignmentNotes({
+  assetType,
+  assignment,
+  record,
+  samples,
+  attempts,
+}: {
+  assetType: string;
+  assignment: {
+    signalId: string;
+    value: number;
+    unit: string;
+    low: number;
+    high: number;
+    phase: AssignmentPhase;
+  };
+  record: { message: string; fixedAt: number | null } | null;
+  samples: DiagnosisSample[];
+  attempts: PriorAttempt[];
+}) {
+  const live = diagnosePreview(assetType, samples, attempts);
+  const detected: DiagnosisSample = {
+    id: 'detection',
+    at: 0,
+    readings: [
+      {
+        signal_id: assignment.signalId,
+        value: assignment.value,
+        unit: assignment.unit,
+        low: assignment.low,
+        high: assignment.high,
+        ooc: assignment.value < assignment.low || assignment.value > assignment.high,
+      },
+    ],
+  };
+  const diagnosis = live.branches.some((item) => item.matched)
+    ? live
+    : diagnosePreview(assetType, [detected], attempts);
+  const branch = diagnosis.branches.find((item) => item.matched);
+  const tasks = branch?.tasks ?? [];
+  const done = tasks.filter((task) => task.state === 'done');
+  const step = tasks[Math.min(done.length, Math.max(tasks.length - 1, 0))];
+  const stored = splitStoredNote(record?.message || '');
+  const comment = stored.finding || 'No operator comment is stored for this assignment.';
+  const fix = record?.fixedAt
+    ? stored.action || stored.finding || 'A fix time is stored, but no fix text was recorded.'
+    : 'No fix is stored yet.';
+  const tool = step
+    ? `${step.title}. ${step.why}`
+    : `${signalLabel(assignment.signalId)} is outside ${number(assignment.low)}–${number(assignment.high)} ${assignment.unit}. Confirm the gauge and the local isolation valves.`;
+  const match = textMatchScore(comment, tool);
+  return (
+    <div className={styles.notes}>
+      <div className={styles.note}>
+        <span>Operator comment · what was wrong</span>
+        <p>{comment}</p>
+      </div>
+      <div className={styles.note}>
+        <span>Fix recorded</span>
+        <p>{fix}</p>
+      </div>
+      <div className={styles.note}>
+        <span>Tool feedback · what should be done</span>
+        <p>{tool}</p>
+      </div>
+      <div className={styles.note}>
+        <span>PlantSense sentiment</span>
+        <SentimentNote comment={comment} fix={fix} tool={tool} />
+        <p>
+          Word overlap {match.percent}%. Shared content words:{' '}
+          {match.shared.length ? match.shared.join(', ') : 'none'}. This count is not adjusted.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SentimentNote({ comment, fix, tool }: { comment: string; fix: string; tool: string }) {
+  const { state, selected, assistantRequest } = usePlant();
+  const preview = usePreviewDispatch();
+  const pathname = usePathname();
+  const query = useSearchParams();
+  const [text, setText] = useState('');
+  const [error, setError] = useState('');
+  const [pending, setPending] = useState(false);
+  useEffect(() => {
+    if (!state?.workspace || comment.startsWith('No operator comment')) return;
+    let cancel = false;
+    setPending(true);
+    setError('');
+    setText('');
+    const selection = assistantSelection(pathname, query, selected, state, preview);
+    const question = [
+      'Describe the sentiment of the stored operator comment, then compare it with the tool recommendation.',
+      'Name what they agree on and what the operator comment leaves out.',
+      'Do not invent a percentage.',
+      `Operator comment: ${comment}`,
+      `Recorded fix: ${fix}`,
+      `Tool recommendation: ${tool}`,
+    ].join('\n');
+    const body: components['schemas']['AssistantQuestion'] = {
+      ...selection.context,
+      question,
+      screen: 'operators',
+      simulation_context: captureSimulationContext(
+        { assets: state.assets, areas: state.areas },
+        preview,
+        selection,
+      ),
+    };
+    const key = crypto.randomUUID();
+    const ask = async () => {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          const response = await assistantRequest<components['schemas']['AssistantAnswer']>(
+            'questions',
+            body,
+            key,
+          );
+          if (!cancel) setText(response.answer);
+          return;
+        } catch (cause) {
+          const message = cause instanceof Error ? cause.message : 'PlantSense could not answer.';
+          if (!cancel && message.includes('in progress') && attempt < 4) {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+            continue;
+          }
+          if (!cancel) setError(message);
+          return;
+        }
+      }
+    };
+    void ask().finally(() => {
+      if (!cancel) setPending(false);
+    });
+    return () => {
+      cancel = true;
+    };
+    // The preview snapshot changes on a timer. Re-ask only when the compared texts change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comment, fix, tool]);
+  const unavailable = !state?.workspace || comment.startsWith('No operator comment');
+  return (
+    <p>
+      {pending
+        ? 'Asking PlantSense…'
+        : text
+          ? text
+          : unavailable
+            ? 'PlantSense is not available for this comment, so the word overlap below is the comparison.'
+            : error
+              ? `PlantSense did not answer (${error}). The word overlap below is the comparison.`
+              : 'Asking PlantSense…'}
+    </p>
+  );
+}
+
+function splitStoredNote(message: string) {
+  const marker = 'Operator note:';
+  const index = message.indexOf(marker);
+  if (index === -1) return { finding: message.trim(), action: '' };
+  return {
+    finding: message.slice(0, index).trim(),
+    action: message.slice(index + marker.length).trim(),
+  };
 }
 
 function initials(name: string) {
@@ -134,6 +310,26 @@ export function OperatorsWorkspace() {
                     </strong>
                   </div>
                 </div>
+                <AssignmentNotes
+                  assetType={asset?.type || selected.assetType}
+                  assignment={selected}
+                  record={preview.ledger.cases.find((item) => item.id === selected.id) ?? null}
+                  samples={preview.ledger.samples[selected.assetId] || []}
+                  attempts={preview.ledger.cases
+                    .filter(
+                      (item) =>
+                        item.id !== selected.id &&
+                        item.openedAt < selected.openedAt &&
+                        !item.interrupted &&
+                        !!item.fixedAt,
+                    )
+                    .map((item) => ({
+                      id: item.id,
+                      signalId: item.signalId,
+                      fixed: true,
+                      taskTitle: item.message,
+                    }))}
+                />
                 <div className={styles.assignee}>
                   <span className={styles.avatar} aria-hidden="true">
                     {initials(person?.name || selected.operatorId)}

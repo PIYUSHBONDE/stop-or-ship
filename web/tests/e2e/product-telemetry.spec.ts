@@ -245,12 +245,12 @@ test('simulation runs automatically and remains separate from operational snapsh
 }) => {
   const plant = await owner(page);
   await page.goto('/monitoring');
-  await expect(page.getByRole('heading', { name: 'Machine records', exact: true })).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Line records', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Production line records' })).toBeVisible();
   await page.getByRole('link', { name: 'Operators', exact: true }).click();
   await expect(page).toHaveURL(/operators/);
   await page.getByRole('link', { name: 'Monitor', exact: true }).click();
-  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Production line records' })).toBeVisible();
   const snapshot = await (await page.request.get(`/api/v1/plants/${plant}/snapshot`)).json();
   expect(
     snapshot.incidents.every(
