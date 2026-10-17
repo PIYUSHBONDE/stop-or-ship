@@ -1,63 +1,147 @@
 'use client';
 
 import Link from 'next/link';
-import Sparkline from '@/components/ui/sparkline';
+import Sparkline, { FACTOR_COLORS } from '@/components/ui/sparkline';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
+import { limitWords } from '@/features/monitoring/lib/preview-diagnosis';
 import { seriesFor } from '@/features/monitoring/lib/preview-records';
-import type { Asset } from '@/lib/types';
+import type { Asset, State } from '@/lib/types';
 import styles from '@/features/monitoring/components/machine-records.module.css';
 
-export function MachineRecords({ assets }: { assets: Asset[] }) {
+type Area = State['areas'][number];
+
+export function LineRecords({
+  assets,
+  areas,
+  query,
+}: {
+  assets: Asset[];
+  areas: Area[];
+  query: string;
+}) {
   const preview = usePreviewDispatch();
-  if (!assets.length) return null;
+  const needle = query.trim().toLowerCase();
+  const known = new Set(areas.map((area) => area.id));
+  const extras: Area[] = [...new Set(assets.map((asset) => asset.area_id))]
+    .filter((id) => !known.has(id))
+    .map((id) => ({
+      id,
+      name: id,
+      purpose: 'Equipment without a configured line',
+      nominal_units_per_hour: 0,
+    }));
+  const groups = [...areas, ...extras]
+    .map((area) => {
+      const onLine = assets.filter((asset) => asset.area_id === area.id);
+      const lineText = `${area.name} ${area.id} ${area.purpose}`.toLowerCase();
+      const lineMatches = !needle || lineText.includes(needle);
+      const machines = onLine.filter(
+        (asset) =>
+          lineMatches || `${asset.name} ${asset.id} ${asset.type}`.toLowerCase().includes(needle),
+      );
+      return { area, machines };
+    })
+    .filter((group) => group.machines.length)
+    .sort(
+      (left, right) =>
+        Number(right.area.nominal_units_per_hour > 0) -
+          Number(left.area.nominal_units_per_hour > 0) ||
+        left.area.name.localeCompare(right.area.name),
+    );
+  if (!groups.length) return null;
   return (
-    <div className={styles.grid} role="list" aria-label="Machine preview records">
-      {assets.map((item) => {
-        const series = preview.ledger.samples[item.id] || [];
-        const current = series.at(-1)?.readings || preview.readings[item.id] || [];
-        const primary = current[0];
-        const ooc = preview.oocIds.includes(item.id);
-        const lastCase = preview.ledger.cases.find((entry) => entry.assetId === item.id);
+    <div className={styles.lines} role="list" aria-label="Production line records">
+      {groups.map(({ area, machines }) => {
+        const live = preview.view?.lines.find((line) => line.id === area.id);
+        const ooc = machines.some((machine) => preview.oocIds.includes(machine.id));
         return (
-          <Link
-            key={item.id}
-            href={`/monitoring/${encodeURIComponent(item.id)}`}
+          <section
+            key={area.id}
             role="listitem"
-            className={`${styles.card} ${ooc ? styles.ooc : ''}`}
-            aria-label={`${item.id} preview records`}
+            className={`${styles.line} ${ooc ? styles.ooc : ''}`}
+            aria-label={`${area.name} records`}
           >
-            <strong>
-              {item.id} · {item.name}
-            </strong>
-            <small>
-              {series.length ? `${series.length} stored records` : 'Recording preview samples'} ·{' '}
-              {ooc ? 'preview OOC' : 'in preview limits'}
-            </small>
-            {primary && (
-              <div className={styles.metrics}>
-                {current.map((reading) => (
-                  <span key={reading.signal_id}>
-                    <small>{reading.signal_id.replaceAll('_', ' ')}</small>
-                    <b className={reading.ooc ? styles.oocMark : undefined}>
-                      {reading.value} {reading.unit}
-                      {reading.ooc ? ' · OOC' : ''}
-                    </b>
-                  </span>
-                ))}
+            <header className={styles.lineHeader}>
+              <div>
+                <span className="eyebrow">
+                  {area.nominal_units_per_hour > 0 ? 'PRODUCTION LINE' : 'SUPPORTING AREA'} ·{' '}
+                  {area.id}
+                </span>
+                <h2>{area.name}</h2>
+                <p>
+                  {machines.length} machine{machines.length === 1 ? '' : 's'}
+                  {live
+                    ? ` · ${live.rate} / ${live.nominal_units_per_hour} parts/h · ${live.mode.replaceAll('_', ' ')}`
+                    : ''}
+                  {ooc ? ' · a signal is outside the limit' : ''}
+                </p>
               </div>
-            )}
-            <Sparkline
-              label={`${item.id} ${primary?.signal_id || 'preview'} trend`}
-              color={ooc ? '#ff8a5b' : '#73d8b7'}
-              values={primary ? seriesFor(series, primary.signal_id) : []}
-            />
-            <small>
-              {lastCase
-                ? `${lastCase.operatorId} ${lastCase.operatorName} · ${lastCase.id}${lastCase.interrupted ? ' interrupted' : lastCase.clearedAt ? ' cleared' : ' assigned'}`
-                : 'No preview case yet'}
-            </small>
-            <span className={styles.open}>Open machine →</span>
-          </Link>
+            </header>
+            <div className={styles.grid} aria-label={`${area.name} machines`}>
+              {machines.map((item) => {
+                const series = preview.ledger.samples[item.id] || [];
+                const current = series.at(-1)?.readings || preview.readings[item.id] || [];
+                const machineOoc = preview.oocIds.includes(item.id);
+                const lastCase = preview.ledger.cases.find((entry) => entry.assetId === item.id);
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/monitoring/${encodeURIComponent(item.id)}`}
+                    className={`${styles.card} ${machineOoc ? styles.ooc : ''}`}
+                    aria-label={`${item.id} preview records`}
+                  >
+                    <strong>
+                      {item.id} · {item.name}
+                    </strong>
+                    <small>
+                      {series.length
+                        ? `${series.length} stored records`
+                        : 'Recording preview samples'}{' '}
+                      · {machineOoc ? 'outside the limit' : 'inside the limit'}
+                    </small>
+                    {current.length > 0 && (
+                      <div className={styles.metrics}>
+                        {current.map((reading) => (
+                          <span key={reading.signal_id}>
+                            <small>{reading.signal_id.replaceAll('_', ' ')}</small>
+                            <b className={reading.ooc ? styles.oocMark : undefined}>
+                              {reading.value} {reading.unit} · {limitWords(reading)}
+                            </b>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <Sparkline
+                      label={`${item.id} factor trends`}
+                      series={current.map((reading, index) => ({
+                        name: reading.signal_id,
+                        color: FACTOR_COLORS[index % FACTOR_COLORS.length],
+                        low: reading.low,
+                        high: reading.high,
+                        values: seriesFor(series, reading.signal_id),
+                      }))}
+                    />
+                    {current.length > 0 && (
+                      <ul className={styles.legend}>
+                        {current.map((reading, index) => (
+                          <li key={reading.signal_id}>
+                            <i data-tone={index % FACTOR_COLORS.length} />
+                            {reading.signal_id.replaceAll('_', ' ')}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <small>
+                      {lastCase
+                        ? `${lastCase.operatorId} ${lastCase.operatorName} · ${lastCase.id}${lastCase.interrupted ? ' interrupted' : lastCase.clearedAt ? ' cleared' : ' assigned'}`
+                        : 'No preview case yet'}
+                    </small>
+                    <span className={styles.open}>Open machine →</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
         );
       })}
     </div>

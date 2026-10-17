@@ -127,7 +127,7 @@ test('simulation navigation, refresh and cross-tab ownership retain records', as
   const assetId = assignment.assetId;
   await expect(page.getByText('No operational dispatch connector is configured.')).toHaveCount(0);
   await page.getByRole('link', { name: 'Monitor', exact: true }).click();
-  await page.getByRole('listitem', { name: `${assetId} preview records`, exact: true }).click();
+  await page.getByRole('link', { name: `${assetId} preview records`, exact: true }).click();
   await expect(page).toHaveURL(/monitoring\//);
   await page.getByRole('link', { name: 'Open case', exact: true }).first().click();
   await expect(page.locator('[aria-label$="preview case"]')).toBeVisible();
@@ -144,7 +144,7 @@ test('simulation navigation, refresh and cross-tab ownership retain records', as
   );
   const follower = await context.newPage();
   await follower.goto('/monitoring');
-  await expect(follower.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await expect(follower.getByRole('list', { name: 'Production line records' })).toBeVisible();
   await expect
     .poll(async () => {
       const locks = await follower.evaluate(() => navigator.locks.query());
@@ -183,7 +183,7 @@ test('unavailable simulation storage keeps the app usable', async ({ page }) => 
   await beginFault(page);
   await expect(page.getByText(/Simulation persistence unavailable or invalid/)).toBeVisible();
   await page.getByRole('link', { name: 'Monitor', exact: true }).click();
-  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Production line records' })).toBeVisible();
 });
 
 test('invalid saved case metadata is preserved without breaking rendering', async ({ page }) => {
@@ -214,7 +214,7 @@ test('invalid saved case metadata is preserved without breaking rendering', asyn
   await page.reload();
   await expect(page.getByText(/Simulation persistence unavailable or invalid/)).toBeVisible();
   await page.getByRole('link', { name: 'Monitor', exact: true }).click();
-  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Production line records' })).toBeVisible();
   expect(
     await page.evaluate(
       (k) => JSON.parse(localStorage.getItem(k)!).ledger.cases[0].operatorName,

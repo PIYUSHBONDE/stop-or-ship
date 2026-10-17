@@ -1,5 +1,22 @@
 # Implementation status
 
+## Line records, machine signals, and operator notes - 17 October 2026
+
+Local Monitor and Operators changes. These readings stay in the browser preview ledger. They do not become operational observations, authorize work, or establish plant health. Ask PlantSense sentiment uses the existing assistant path; a local assistant that is not configured will say so, and the word-overlap count remains. No cloud deploy or push was done in this note.
+
+**Plant floor.** Directional shadows update when the plant bounds change, instead of on every simulation tick. That was freezing `/plant` after the scene loaded.
+
+**Preview signals.** A forced excursion moves every channel on an equipment type, with a mix of rises and falls, instead of pushing only the first signal above its limit. Pump, motor, press, and the other catalog types keep their own channels. The preview ledger still keeps a short sample window. A multi-year analysis needs imported observations with their original timestamps.
+
+**Monitor, by line.** `/monitoring` is Line records. Machines are grouped under their production line, then supporting areas. Each line shows its machine count, live rate and mode when the simulation has them, and whether a signal is outside the limit. Each machine card shows the latest readings and a small chart, then opens `/monitoring/{asset}`. The earlier chart that drew every machine on the line together was removed.
+
+**Machine page.** Current readings are the latest number for each signal: below the limit, at zero, above the limit, or inside the limit. The combined overview chart is gone. Each signal has its own chart on the same page, with no signal pager. Consecutive samples with the same pattern collapse into a stretch (inside the limit, below the limit, at zero). A Details control opens the hidden samples for one stretch or for the whole machine. Case history stays paged.
+
+**What the readings point to.** A local decision tree matches the latest preview pattern. Pump branches cover no delivery, blocked discharge, overheat, flow-only, and pressure-only. Motor covers a jammed load and high vibration. Press covers low force and a slow cycle. Other equipment gets a generic check of the signals that left their limits. The cause is a short stack: what is wrong, which signals it points at, the one task to do now, and the tasks already used. Other branches stay behind Other checks. The tree advances only when a stored fix names that specific earlier task, in order. A repaired case on the same pump, with no task name, does not skip ahead to “inspect the whole machine.”
+
+**Operators assignment.** Opening `?assignment=` shows the stored operator comment, the recorded fix when a fix time exists, and the current tool task. The stored case message is split on “Operator note:”. PlantSense sentiment and the word-overlap count share one note. Sentiment asks the same assistant as Ask PlantSense and is told not to invent a percentage. If another assistant request is in progress, that call retries. If the assistant is unavailable, the note says so and the overlap remains the comparison. Overlap is the unadjusted content-word F1 after stopwords: identical text is 100, no shared content words is 0. Nothing is added to the score.
+
+Validation: frontend unit tests passed (39), including preview diagnosis, telemetry, dispatch, records, and the process simulation. Browser acceptance was not rerun. The monitor and operator screens were not given a fresh browser pass in this check.
 ## Prototype release path without AI report artifacts — 17 October 2026
 
 Routine releases no longer fetch evaluation reports from Cloud Storage. Cloud Build produces backend/web images directly; promotion explicitly sets `PLANTSENSE_REQUIRE_RELEASE_GATES=false` on API and worker. Cloud mode still defaults to requiring reports unless that setting is explicitly supplied. Live AI remains enabled on the prototype path but has no release evaluation proof. The optional report bucket no longer grants object-reader access through the bootstrap script; any existing cloud bindings were not inspected or changed. The GitHub repository is private. Its branch-protection endpoint returned `403 Resource not accessible by integration`, so actual protection rules remain unverified. Cloud Build's GitHub App connection was not configured.

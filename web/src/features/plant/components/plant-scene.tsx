@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { createInstances, Line, OrbitControls } from '@react-three/drei';
-import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { Asset, State } from '@/lib/types';
 import { FactoryEnvironment } from '@/features/plant/components/factory-environment';
@@ -404,6 +404,30 @@ function RenderBudget({ onSlowDevice }: { onSlowDevice?: () => void }) {
   return null;
 }
 
+function PlantShadow({ bounds }: { bounds: ReturnType<typeof plantBounds> }) {
+  const light = useRef<THREE.DirectionalLight>(null);
+  const span = Math.max(bounds.width, bounds.depth);
+  useLayoutEffect(() => {
+    if (light.current) light.current.shadow.needsUpdate = true;
+  }, [span, bounds.x, bounds.z]);
+  return (
+    <directionalLight
+      ref={light}
+      position={[bounds.x + 4, Math.max(16, bounds.depth), bounds.z + 8]}
+      intensity={2.8}
+      castShadow
+      shadow-mapSize={[1024, 1024]}
+      shadow-camera-left={-span}
+      shadow-camera-right={span}
+      shadow-camera-top={span}
+      shadow-camera-bottom={-span}
+      shadow-camera-far={1000}
+      shadow-bias={-0.0005}
+      shadow-autoUpdate={false}
+    />
+  );
+}
+
 function SceneContent({
   state,
   selected,
@@ -439,20 +463,7 @@ function SceneContent({
       <color attach="background" args={['#b8c3c3']} />
       <ambientLight intensity={0.9} />
       <hemisphereLight args={['#e7f3fa', '#687976', 1.5]} />
-      <directionalLight
-        position={[bounds.x + 4, Math.max(16, bounds.depth), bounds.z + 8]}
-        intensity={2.8}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-Math.max(bounds.width, bounds.depth)}
-        shadow-camera-right={Math.max(bounds.width, bounds.depth)}
-        shadow-camera-top={Math.max(bounds.width, bounds.depth)}
-        shadow-camera-bottom={-Math.max(bounds.width, bounds.depth)}
-        shadow-camera-far={1000}
-        shadow-bias={-0.0005}
-        shadow-autoUpdate={false}
-        shadow-needsUpdate
-      />
+      <PlantShadow bounds={bounds} />
       <directionalLight position={[-10, 5, -3]} intensity={0.8} color="#8eb9d0" />
       {(state.configuration_version || 1) > 1 ? (
         <ConfiguredEnvironment key={state.configuration_version} state={state} />

@@ -4,6 +4,7 @@ import {
   oocAssetIds,
   previewCatalog,
   previewReadingsFor,
+  rankFactors,
 } from '../../src/features/plant/lib/preview-telemetry';
 
 const types = [
@@ -49,4 +50,18 @@ test('forced excursions mark a cell OOC against preview limits', () => {
   expect(catalog[flagged[0]].some((reading) => reading.ooc && reading.value > reading.high)).toBe(
     true,
   );
+});
+
+test('an excursion moves every factor and includes a fall as well as a rise', () => {
+  for (const type of types) {
+    const readings = previewReadingsFor({ id: `CELL-${type}`, type }, 5, 20, true);
+    const outside = readings.filter((reading) => reading.ooc);
+    expect(outside).toHaveLength(readings.length);
+    expect(outside.some((reading) => reading.value > reading.high)).toBe(true);
+    expect(outside.some((reading) => reading.value < reading.low)).toBe(true);
+    const ranked = rankFactors(readings);
+    expect(ranked[0].distance).toBeGreaterThanOrEqual(ranked.at(-1)?.distance ?? 0);
+    expect(ranked.some((factor) => factor.placement === 'above')).toBe(true);
+    expect(ranked.some((factor) => factor.placement === 'below')).toBe(true);
+  }
 });
