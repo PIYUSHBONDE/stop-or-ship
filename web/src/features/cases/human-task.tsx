@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import { usePlant } from '@/providers/plant-session-provider';
 import type { components } from '@/lib/generated/api-schema';
 import styles from './cases.module.css';
 import { taskTitle } from './presentation';
+import { CaseDialog } from './case-dialog';
 
 type Schema = components['schemas'];
 export function HumanTaskCard({
@@ -30,6 +31,7 @@ export function HumanTaskCard({
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [responding, setResponding] = useState(false);
+  const responseTrigger = useRef<HTMLButtonElement>(null);
   const eligible = state?.workspace && ['admin', task.target_role].includes(state.workspace.role);
   const mine = task.owner_id === state?.workspace?.user.id;
   const active = !readOnly && (task.state === 'open' || task.state === 'claimed');
@@ -97,18 +99,10 @@ export function HumanTaskCard({
           : ' · No deadline set'}
         {task.escalated ? ' · Escalated to manager' : ''}
       </p>
-      {inCase && active && (
-        <div className={styles.taskChecklist}>
-          <strong>Include in your finding</strong>
-          <p>{task.completion_requirements}</p>
-        </div>
-      )}
-      <details className={styles.taskRequirements} open={responding || undefined}>
+      <details className={styles.taskRequirements} open={(!inCase && responding) || undefined}>
         <summary>Request and completion requirements</summary>
-        {((inCase && active) || taskTitle(task.question) !== task.question) && (
-          <p>{task.question}</p>
-        )}
-        {(!inCase || !active) && <p>{task.completion_requirements}</p>}
+        {taskTitle(task.question) !== task.question && <p>{task.question}</p>}
+        <p>{task.completion_requirements}</p>
       </details>
       {!inCase && (
         <Link href={`/incidents?workcase=${encodeURIComponent(task.case_id)}`} onClick={onNavigate}>
@@ -120,62 +114,81 @@ export function HumanTaskCard({
           {saving ? 'Claiming…' : 'Claim task'}
         </button>
       )}
-      {eligible && active && mine && !responding && (
-        <button className="primary" onClick={() => setResponding(true)}>
+      {eligible && active && mine && (!responding || inCase) && (
+        <button
+          ref={responseTrigger}
+          className="primary"
+          aria-haspopup={inCase ? 'dialog' : undefined}
+          onClick={() => setResponding(true)}
+        >
           Record finding
         </button>
       )}
       {eligible && active && mine && responding && (
-        <form
-          className={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            void send(true);
-          }}
+        <TaskResponse
+          inCase={inCase}
+          pending={saving}
+          error={error}
+          returnFocusRef={responseTrigger}
+          onClose={() => setResponding(false)}
         >
-          <label>
-            Your finding
-            <textarea
-              aria-label="Your finding"
-              required
-              maxLength={3000}
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Record your finding or explain what is unavailable."
-            />
-          </label>
-          <details>
-            <summary>Add a reported measurement</summary>
-            <div className={styles.fields}>
-              <label>
-                Signal
-                <input maxLength={80} value={signal} onChange={(e) => setSignal(e.target.value)} />
-              </label>
-              <label>
-                Value
-                <input
-                  type="number"
-                  step="any"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                />
-              </label>
-              <label>
-                Unit
-                <input maxLength={30} value={unit} onChange={(e) => setUnit(e.target.value)} />
-              </label>
-            </div>
-          </details>
-          <button className="primary" disabled={saving}>
-            {saving ? 'Saving finding…' : 'Submit finding'}
-          </button>
-          <p className={styles.note}>
-            Your response is saved with your name. Enabled AI coordination then reassesses the case;
-            it does not verify sensor readings, approve work or verify a repair.
-          </p>
-        </form>
+          <p className={styles.note}>{task.question}</p>
+          <p className={styles.note}>{task.completion_requirements}</p>
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              void send(true);
+            }}
+          >
+            <label>
+              Your finding
+              <textarea
+                aria-label="Your finding"
+                required
+                maxLength={3000}
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="Record your finding or explain what is unavailable."
+              />
+            </label>
+            <details>
+              <summary>Add a reported measurement</summary>
+              <div className={styles.fields}>
+                <label>
+                  Signal
+                  <input
+                    maxLength={80}
+                    value={signal}
+                    onChange={(e) => setSignal(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Value
+                  <input
+                    type="number"
+                    step="any"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Unit
+                  <input maxLength={30} value={unit} onChange={(e) => setUnit(e.target.value)} />
+                </label>
+              </div>
+            </details>
+            <button className="primary" disabled={saving}>
+              {saving ? 'Saving finding…' : 'Submit finding'}
+            </button>
+            <p className={styles.note}>
+              Your response is saved with your name. Enabled AI coordination then reassesses the
+              case; it does not verify sensor readings, approve work or verify a repair.
+            </p>
+          </form>
+        </TaskResponse>
       )}
-      {error && (
+      {error && !(inCase && responding) && (
         <p role="alert" className={styles.error}>
           {error}
         </p>
@@ -186,5 +199,35 @@ export function HumanTaskCard({
         </p>
       )}
     </article>
+  );
+}
+
+function TaskResponse({
+  inCase,
+  pending,
+  error,
+  onClose,
+  children,
+  returnFocusRef,
+}: {
+  inCase: boolean;
+  pending: boolean;
+  error: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  returnFocusRef: RefObject<HTMLElement | null>;
+}) {
+  return inCase ? (
+    <CaseDialog
+      title="Record finding"
+      pending={pending}
+      error={error}
+      onClose={onClose}
+      returnFocusRef={returnFocusRef}
+    >
+      {children}
+    </CaseDialog>
+  ) : (
+    <>{children}</>
   );
 }

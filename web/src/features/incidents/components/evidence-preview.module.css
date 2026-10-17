@@ -18,7 +18,7 @@
   margin: 12px 0;
 }
 .preview p {
-  color: #a6bbc7;
+  color: var(--copy-muted);
   font-size: 13px;
   line-height: 1.8;
 }

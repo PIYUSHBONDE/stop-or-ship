@@ -6,9 +6,9 @@ INTERNAL_TEST_MODE = os.getenv("PLANTSENSE_INTERNAL_TEST_MODE", "false").lower()
 MODE = os.getenv("PLANTSENSE_MODE", "local")
 if MODE not in {"local", "cloud"}:
     raise RuntimeError("PLANTSENSE_MODE must be local or cloud")
-STORAGE = os.getenv("PLANTSENSE_STORAGE", "postgres" if MODE == "cloud" else "sqlite")
-POSTGRES_DSN = os.getenv("PLANTSENSE_POSTGRES_DSN", "")
+POSTGRES_DSN = os.getenv("PLANTSENSE_POSTGRES_DSN", os.getenv("DATABASE_URL", ""))
 POSTGRES_EVIDENCE_DSN = os.getenv("PLANTSENSE_POSTGRES_EVIDENCE_DSN", "")
+STORAGE = os.getenv("PLANTSENSE_STORAGE", "postgres" if MODE == "cloud" or POSTGRES_DSN else "sqlite")
 POSTGRES_SCHEMA = os.getenv("PLANTSENSE_POSTGRES_SCHEMA", "plantsense")
 if STORAGE not in {"sqlite", "postgres"}:
     raise RuntimeError("PLANTSENSE_STORAGE must be sqlite or postgres")

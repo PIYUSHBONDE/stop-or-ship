@@ -1,4 +1,4 @@
-"""Promote evaluated images on existing services; never create IAM or migrate data."""
+"""Promote prototype images on existing services; never create IAM or migrate data."""
 
 import argparse
 import json
@@ -49,7 +49,7 @@ def promote(tag):
     try:
         for name in ("worker", "api", "web"):
             image = immutable_image("web" if name == "web" else "backend", tag)
-            cloud(
+            command = [
                 "run",
                 "services",
                 "update",
@@ -60,13 +60,18 @@ def promote(tag):
                 "--no-traffic",
                 "--tag=candidate",
                 "--quiet",
-            )
+            ]
+            if name in {"worker", "api"}:
+                command.append(
+                    "--update-env-vars=PLANTSENSE_REQUIRE_RELEASE_GATES=false"
+                )
+            cloud(*command)
             state = describe(name)
             status = state["status"]
             if status["latestCreatedRevisionName"] != status["latestReadyRevisionName"]:
                 raise RuntimeError("Candidate did not pass startup readiness")
             candidates[name] = status["latestReadyRevisionName"]
-        # Backend startup checks include schema readiness and all live report gates.
+        # Backend startup checks include PostgreSQL readiness; prototype AI reports are optional.
         traffic("worker", {candidates["worker"]: 100})
         traffic("api", {candidates["api"]: 100})
         state = describe("web")

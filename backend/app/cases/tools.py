@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+from app.cases.history import equipment_history
 from app.cases.jobs import authorize_capability
 from app.cases.service import rows
 from app.core import config
@@ -35,6 +36,8 @@ def read_tool(path, capability, name, query=""):
         raise ValueError("Knowledge query exceeds allowance")
     with evidence_scope(path, capability) as (db, run, case):
         plant, asset = case["plant_id"], case["asset_id"]
+        if name == "equipment_history":
+            return equipment_history(db, case)
         if name == "equipment_context":
             assets = rows(
                 db,
@@ -192,6 +195,7 @@ def read_tool(path, capability, name, query=""):
 
 TOOL_NAMES = (
     "equipment_context",
+    "equipment_history",
     "equipment_trends",
     "production_context",
     "search_knowledge",

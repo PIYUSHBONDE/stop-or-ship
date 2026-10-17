@@ -1,13 +1,12 @@
 .workspace {
-  --surface: #172d35;
-  --subtle: #adc3c6;
-  --edge: #35515a;
-  --accent: #88dabc;
+  --surface: var(--surface-panel);
+  --subtle: var(--copy-muted);
+  --edge: var(--surface-border);
   --elevation: 0 12px 32px #07151d33;
   position: relative;
   height: 100%;
   overflow: hidden;
-  color: #e9f2f0;
+  color: var(--copy-primary);
   background: #b8c4c5;
   font-family: var(--font);
 }
@@ -16,7 +15,7 @@
 }
 .workspace ::selection {
   background: var(--accent);
-  color: #102128;
+  color: var(--accent-ink);
 }
 .workspace input {
   caret-color: var(--accent);
@@ -75,7 +74,7 @@
   align-items: center;
   padding: 9px 0;
   border-radius: 7px;
-  background: #e6eeea;
+  background: var(--copy-primary);
   color: #1d3f38;
   font-size: 12px;
 }
@@ -98,12 +97,12 @@
   border: 0;
   padding: 10px 12px;
   border-radius: 9px;
-  color: #e9f2f0;
+  color: var(--copy-primary);
   box-shadow: var(--elevation);
   font-size: 12px;
 }
 .panelActions button:hover {
-  background: #28454d;
+  background: var(--surface-raised);
 }
 .catalog,
 .inspector,
@@ -146,7 +145,7 @@
   flex-shrink: 0;
 }
 .panelHeader > button:hover {
-  background: #294650;
+  background: var(--surface-hover);
 }
 .catalog {
   left: 26px;
@@ -163,7 +162,7 @@
 .catalog input {
   width: 100%;
   min-width: 0;
-  background: #10252d;
+  background: var(--surface-panel);
   padding: 9px 8px;
   font-size: 12px;
   border-color: var(--edge);
@@ -184,7 +183,7 @@
   align-items: baseline;
   gap: 8px;
   background: transparent;
-  color: #e9f2f0;
+  color: var(--copy-primary);
   border: 0;
   border-radius: 6px;
   text-align: left;
@@ -192,10 +191,10 @@
   font-size: 12px;
 }
 .catalog button[aria-pressed]:hover {
-  background: #24434a;
+  background: var(--surface-raised);
 }
 .catalog button[aria-pressed='true'] {
-  background: #2d5049;
+  background: var(--surface-raised);
 }
 .catalog button small {
   display: block;
@@ -255,7 +254,7 @@
 .state {
   display: inline-block;
   padding: 4px 7px;
-  background: #25483d;
+  background: var(--surface-raised);
   color: #c6f0da;
   font-size: 11px;
   border-radius: 5px;
@@ -277,7 +276,7 @@
 }
 .state[data-mode] {
   color: var(--mode, #c6f0da);
-  background: #243e43;
+  background: var(--surface-raised);
 }
 .dot,
 .legend i {
@@ -285,7 +284,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--mode, #88dabc);
+  background: var(--mode, var(--accent));
   flex-shrink: 0;
 }
 .reading {
@@ -331,7 +330,7 @@
   justify-content: space-between;
   gap: 5px;
   border: 0;
-  background: #28434b;
+  background: var(--surface-raised);
   border-radius: 6px;
   padding: 9px;
   color: #c5ebdd;
@@ -364,7 +363,7 @@
   gap: 10px;
   align-items: center;
   background: var(--surface);
-  color: #e9f2f0;
+  color: var(--copy-primary);
   border: 0;
   padding: 12px;
   border-radius: 10px;
@@ -392,7 +391,7 @@
   gap: 5px;
   padding: 6px;
   border-radius: 10px;
-  background: #142b33;
+  background: var(--surface-panel);
   box-shadow: var(--elevation);
   white-space: nowrap;
 }
@@ -409,19 +408,19 @@
   min-height: 34px;
   border: 0;
   background: transparent;
-  color: #e9f2f0;
+  color: var(--copy-primary);
 }
 .toolbar button[aria-pressed='true'] {
   background: #375951;
   color: #c4f1dc;
 }
 .toolbar button:hover {
-  background: #2a4650;
+  background: var(--surface-raised);
 }
 .toolbar select {
   font-size: 11px;
   padding: 7px;
-  background: #142b33;
+  background: var(--surface-panel);
   border: 1px solid var(--edge);
   max-width: 120px;
 }
@@ -470,7 +469,7 @@
   left: 0;
   right: 375px;
   height: 80px;
-  background: #102128;
+  background: var(--accent-ink);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -499,7 +498,7 @@
 }
 .controls :global(.secondary) {
   border: 1px solid var(--edge);
-  background: #172d35;
+  background: var(--surface-panel);
 }
 .controls .closeControls {
   display: none;
@@ -511,7 +510,7 @@
   z-index: 5;
   height: 80px;
   width: 375px;
-  background: #102128;
+  background: var(--accent-ink);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -563,7 +562,7 @@
   bottom: 87px;
   left: 26px;
   max-width: min(55%, 490px);
-  background: #e6eeea;
+  background: var(--copy-primary);
   color: #23414a;
   padding: 5px 8px;
   border-radius: 5px;
@@ -576,7 +575,7 @@
   color: #803726;
 }
 .confirm {
-  color: #e9f2f0;
+  color: var(--copy-primary);
   background: var(--surface);
   border: 0;
   border-radius: 13px;
@@ -644,10 +643,10 @@
   gap: 8px;
 }
 .lineList button {
-  background: #28434b;
+  background: var(--surface-raised);
   border: 0;
   border-radius: 6px;
-  color: #e9f2f0;
+  color: var(--copy-primary);
   padding: 12px;
   text-align: left;
   display: grid;
@@ -1149,7 +1148,7 @@
 .notice {
   padding: 6px 8px;
   border-radius: 6px;
-  background: #e6eeea;
+  background: var(--copy-primary);
 }
 .notice .scenarioStatus {
   position: static;
@@ -1212,7 +1211,7 @@
   padding: 20px;
   border-radius: 13px;
   background: var(--surface);
-  color: #e9f2f0;
+  color: var(--copy-primary);
   box-shadow: var(--elevation);
   scrollbar-width: thin;
   scrollbar-color: #50717a var(--surface);
@@ -1230,8 +1229,8 @@
 .controlPanel select {
   width: 100%;
   min-width: 0;
-  background: #10252d;
-  color: #e9f2f0;
+  background: var(--surface-panel);
+  color: var(--copy-primary);
   border: 1px solid var(--edge);
   font-size: 12px;
 }

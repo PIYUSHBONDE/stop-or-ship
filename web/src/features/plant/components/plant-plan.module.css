@@ -37,9 +37,9 @@
   min-width: 92px;
   min-height: 68px;
   padding: 10px 8px;
-  border: 1px solid #38564f;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 9px;
-  background: #1b3439;
+  background: var(--surface-panel);
   color: #edf6f1;
   font-size: 11px;
 }
@@ -51,7 +51,7 @@
 }
 .board :global(.plan-asset:hover) {
   z-index: 4;
-  background: #244740;
+  background: var(--surface-raised);
 }
 .board :global(.plan-asset:focus-visible) {
   z-index: 4;
@@ -66,7 +66,7 @@
   height: 6px;
 }
 .board :global(.plan-asset small) {
-  color: #c5d8d4;
+  color: var(--copy-muted);
   font-size: 10px;
   line-height: 1.4;
   margin-top: 6px;
@@ -139,9 +139,9 @@
 }
 :global(.factory-view) .viewport {
   inset: 175px 330px 225px 235px;
-  border: 1px solid #35505c;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 10px;
-  background: #11252d;
+  background: var(--surface-panel);
 }
 :global(.factory-view:not(:has(.factory-inspector))) .viewport {
   right: 24px;
@@ -151,7 +151,7 @@
 }
 :global(.factory-view:has(.plan-view) .factory-heading p),
 :global(.factory-view:has(.plan-view) .factory-heading .eyebrow) {
-  color: #9db9c5;
+  color: var(--copy-muted);
 }
 @media (max-width: 1100px) and (min-width: 801px) {
   :global(.factory-view) .viewport {

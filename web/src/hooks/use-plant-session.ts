@@ -282,7 +282,7 @@ export function usePlantSession(
 
   async function caseRequest<T>(path: string, body?: unknown, key?: string): Promise<T> {
     const mutating = body !== undefined;
-    if (!/^\/(?:cases|tasks|automation-policy)(?:[/?]|$)/.test(path))
+    if (!/^\/(?:cases|tasks|automation-policy|notifications)(?:[/?]|$)/.test(path))
       throw new ApiError('Unsupported case operation.', 400);
     if (
       (mutating && (actionPending.current || assistantPending.current)) ||

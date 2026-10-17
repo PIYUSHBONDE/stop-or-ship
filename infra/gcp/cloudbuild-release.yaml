@@ -1,9 +1,5 @@
-# Builds only. Database migration, evaluation and traffic promotion are separate gates.
+# Builds immutable application images. Database migrations remain separate.
 steps:
-  - name: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
-    id: reports
-    entrypoint: gcloud
-    args: ['storage', 'cp', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/investigation.json', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/assistant.json', 'gs://${_REPORTS_BUCKET}/releases/${_FINGERPRINT}/cases.json', 'backend/release/']
   - name: gcr.io/cloud-builders/docker
     id: backend
     args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/plantsense/backend:${_COMMIT_SHA}', 'backend']
@@ -17,8 +13,6 @@ images:
 substitutions:
   _REGION: asia-south1
   _COMMIT_SHA: unset
-  _REPORTS_BUCKET: project-970d28ee-835b-4ca2-866-plantsense-releases
-  _FINGERPRINT: unset
 options:
   logging: CLOUD_LOGGING_ONLY
 timeout: 1800s

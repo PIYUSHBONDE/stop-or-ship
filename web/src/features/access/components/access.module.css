@@ -1,8 +1,8 @@
 .page {
   min-height: 100vh;
   padding: 28px max(24px, calc((100vw - 1160px) / 2));
-  background: #101719;
-  color: #e9f1ed;
+  background: var(--surface-page);
+  color: var(--copy-primary);
   overflow-wrap: anywhere;
 }
 .header,
@@ -20,7 +20,7 @@
   margin-bottom: 40px;
 }
 .brand {
-  color: #b4ed77;
+  color: var(--accent);
 }
 .brand strong {
   font-size: 22px;
@@ -41,7 +41,7 @@
   padding-top: 24px;
 }
 .eyebrow {
-  color: #b4ed77;
+  color: var(--accent);
   font-size: 11px;
   letter-spacing: 0.14em;
 }
@@ -53,7 +53,7 @@
 }
 .introduction > p,
 .welcome p {
-  color: #adbdb4;
+  color: var(--copy-muted);
   line-height: 1.7;
 }
 .benefits {
@@ -65,16 +65,16 @@
   gap: 12px;
 }
 .benefits svg {
-  color: #b4ed77;
+  color: var(--accent);
 }
 .sourceNote {
   font-size: 13px;
-  border-top: 1px solid #35433b;
+  border-top: 1px solid var(--surface-border);
   padding-top: 20px;
 }
 .panel {
-  background: #182220;
-  border: 1px solid #37483e;
+  background: var(--surface-panel);
+  border: 1px solid var(--surface-border);
   border-radius: 14px;
   padding: 28px;
   margin-bottom: 24px;
@@ -86,11 +86,11 @@
 }
 .sectionHeading {
   margin-bottom: 12px;
-  color: #b4ed77;
+  color: var(--accent);
 }
 .sectionHeading h2 {
   margin: 0;
-  color: #e9f1ed;
+  color: var(--copy-primary);
 }
 .form {
   display: grid;
@@ -108,9 +108,9 @@
 .page select {
   width: 100%;
   min-height: 42px;
-  background: #101917;
+  background: var(--surface-input);
   color: #edf4ef;
-  border: 1px solid #4b5f52;
+  border: 1px solid var(--surface-border-strong);
   padding: 10px 12px;
   border-radius: 7px;
   min-width: 0;
@@ -118,12 +118,12 @@
 .page input:focus-visible,
 .page select:focus-visible,
 .page button:focus-visible {
-  outline: 2px solid #b4ed77;
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 .form small,
 .muted {
-  color: #a5b8ac;
+  color: var(--copy-muted);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -151,10 +151,10 @@
   margin: 0;
 }
 .plants small {
-  color: #acbcb2;
+  color: var(--copy-muted);
 }
 .role {
-  color: #b4ed77;
+  color: var(--accent);
   width: max-content;
   text-transform: capitalize;
 }
@@ -194,7 +194,7 @@
 .member small {
   display: block;
   margin-top: 7px;
-  color: #a5b8ac;
+  color: var(--copy-muted);
   overflow-wrap: anywhere;
 }
 .member label {
@@ -222,7 +222,7 @@
 }
 .audit span,
 .audit small {
-  color: #a5b8ac;
+  color: var(--copy-muted);
   font-size: 12px;
 }
 .footer {

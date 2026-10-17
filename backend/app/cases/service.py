@@ -102,6 +102,8 @@ def revision(record, expected):
 def mutate(store, token, plant_id, key, action, body, operation):
     if not key or not 8 <= len(key) <= 100:
         raise HTTPException(422, "A stable Idempotency-Key of 8–100 characters is required")
+    if key.startswith("notification-read:"):
+        raise HTTPException(422, "Idempotency-Key uses a reserved server namespace")
     digest = hashlib.sha256(json.dumps([action, body], sort_keys=True).encode()).hexdigest()
     with store.connection() as db:
         db.execute("BEGIN IMMEDIATE")
@@ -656,6 +658,7 @@ def detail(db, scope, case_id):
                     source = step[name]
                     title, status = {
                         "equipment_context": ("Equipment configuration", "recorded"),
+                        "equipment_history": ("Recorded equipment issue history", "reference"),
                         "equipment_trends": (
                             "Saved operational readings",
                             "recorded" if source.get("readings") else "missing",

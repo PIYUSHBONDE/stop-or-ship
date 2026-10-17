@@ -12,7 +12,7 @@ Use this guide for routine updates to the existing Mumbai deployment. Initial pr
    ```
 
 3. Open [GitHub Actions](https://github.com/PIYUSHBONDE/stop-or-ship/actions/workflows/mumbai-release.yml) and select **Release PlantSense Mumbai** for that commit.
-4. Watch validation, matching reports, image build and promotion. A green image build alone does not mean deployment occurred. The summary must show **Traffic promotion and health checks: success**.
+4. Watch validation, image build and promotion. A green image build alone does not mean deployment occurred. The summary must show **Traffic promotion and health checks: success**.
 5. Open [PlantSense](https://plantsense-web-nponfirhaa-el.a.run.app), sign in, open Plant and a factory case. Confirm existing records remain accessible. Hard-refresh if the browser retains an old page.
 
 The current workflow deploys automatically after checks pass. There is no configured approval step in the workflow. A GitHub environment with required reviewers would be an additional setup change; this guide does not claim that protection exists.
@@ -24,14 +24,13 @@ To redeploy the current branch without another commit: Actions, **Release PlantS
 | Stage | Location | What it does |
 | --- | --- | --- |
 | Validation | GitHub Actions | Backend/infrastructure tests, database compatibility, frontend unit tests, contracts, formatting, types, security checks and production build |
-| AI report check | GitHub Actions and private report bucket | Matches the backend/model fingerprint to existing passing reports; does not call models |
 | Image build | Mumbai Cloud Build | Builds immutable web and backend images in Artifact Registry |
 | Promotion | Mumbai Cloud Run | Creates worker/API/web candidates, checks readiness and web-to-private-API/database access, then switches traffic |
 | Data | Existing Cloud SQL PostgreSQL | Retains staff, cases, findings and workflows across releases |
 
 This is not an atomic three-service switch: worker and API switch before web. Changes must remain compatible with the preceding release. Failed promotion attempts restore the captured traffic map. Health checks do not replace checking sign-in and case access yourself.
 
-Frontend-only changes reuse reports when the evaluated fingerprint is unchanged. Backend changes also reuse reports if that fingerprint remains unchanged. Changes to fingerprinted AI code, dependencies, model or configuration need fresh complete passing reports published through the existing evaluation process. Missing reports stop deployment; routine release never silently runs paid evaluations or weakens AI gates.
+Routine prototype releases do not download evaluation reports. Promotion explicitly disables report gates on the API and worker, so live AI can run without fresh evaluation proof. The standalone evaluation process remains available when you want to measure model behavior.
 
 For the prototype, routine releases skip the three full packaged-container/browser jobs. Other validation and production startup/health/rollback gates still block release on failure. To run full browser coverage, open Actions, choose **Validate PlantSense**, and run it manually for the branch. Pull requests and other branches also retain the full suite. Skipping browser tests reduces release coverage; it does not establish that all browser flows passed.
 
@@ -40,7 +39,6 @@ For the prototype, routine releases skip the three full packaged-container/brows
 | Failed stage | Next step |
 | --- | --- |
 | Validation | Open the first failed test/check and its artifacts. Fix the cause, then push. Running deployment again does not fix a failing test. |
-| Matching live reports | Have the changed fingerprint evaluated and its complete reports published. Do not copy old reports into a new fingerprint directory. |
 | Authentication or permissions | Inspect the keyless GitHub identity error. Do not add Owner/Editor roles or download service-account keys. |
 | Image build | Open the Cloud Build link/logs from the build step. Fix the build error before retrying. |
 | Promotion | Read the failing startup/health check and verify automatic rollback. Preserve the previous-traffic artifact. |

@@ -22,7 +22,7 @@ The model-usage panel shows token counts and estimated USD model costs separatel
 
 ## Evaluation and local activation
 
-Use existing local Application Default Credentials. Renew them locally when needed; never paste credentials into chat or commit them. Set the intended quota project through the Google Cloud CLI.
+Use existing local Application Default Credentials. Renew them locally when needed; never paste credentials into chat or commit them. Set the intended quota project through the Google Cloud CLI. Local mode runs live Vertex without evaluation report files by default. Set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` to require reports for release validation. Cloud Run prototype releases explicitly set it to `false`; those live AI results have not passed the release evaluation gates.
 
 ```powershell
 $env:PYTHONPATH = 'backend'
@@ -36,7 +36,7 @@ Evaluation creates its own database and never approves work. Five real-response 
 
 The local report must pass all five cases, contain observed provider usage for the investigator, reviewer and both specialists, account for every request, and match the evaluated implementation, provider, model and region. Failed requests retain explicit unknown usage and conservative charges, including requests preceding a successful bounded retry. Changes during a run invalidate its report. A stale, missing or failed report blocks model-client creation. The local report is a developer-controlled release artifact, not a tamper-proof attestation. Re-evaluate changed backend evidence, workflow or AI code. Reports and databases remain ignored runtime artifacts.
 
-For native execution, set `PLANTSENSE_AI_EVALUATION_FILE` to the passing report's absolute path before starting the API. To use the local Docker override:
+For native release validation, set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` and `PLANTSENSE_AI_EVALUATION_FILE` to the passing report's absolute path before starting the API. To use the local Docker override:
 
 ```powershell
 $env:PLANTSENSE_ADC_FILE = Join-Path $env:APPDATA 'gcloud/application_default_credentials.json'

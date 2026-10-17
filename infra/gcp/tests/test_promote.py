@@ -35,6 +35,8 @@ def rollout(monkeypatch, tmp_path):
     def command(*args):
         name = args[3].removeprefix("plantsense-")
         assert "--no-traffic" in args
+        if name in {"worker", "api"}:
+            assert "--update-env-vars=PLANTSENSE_REQUIRE_RELEASE_GATES=false" in args
         revisions[name] = "new-" + name
 
     monkeypatch.setattr(promote, "PRIVATE", tmp_path)

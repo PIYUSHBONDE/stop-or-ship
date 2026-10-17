@@ -15,6 +15,7 @@ export const phaseNames: Record<Schema['CaseView']['phase'], string> = {
 };
 export const sourceNames: Record<string, string> = {
   'equipment-context': 'Equipment configuration',
+  'equipment-history': 'Recorded equipment issue history',
   'equipment-trends': 'Saved operational readings',
   'production-context': 'Production areas and dependencies',
   'scoped-knowledge': 'Procedures and confirmed repairs',
@@ -70,6 +71,10 @@ export function sourceSummary(source: CaseSource): string {
       return `${count('assets')} configured equipment ${count('assets') === 1 ? 'record' : 'records'}. Configuration does not establish current condition.`;
     if (source.id === 'equipment-trends' && count('readings') !== null)
       return `${count('readings')} saved observations. Check observation time and quality before use.`;
+    if (source.id === 'equipment-history' && !data?.asset_id)
+      return 'No equipment selected. Recurrence cannot be assessed from this source.';
+    if (source.id === 'equipment-history' && Number.isSafeInteger(data?.recorded_issues))
+      return `${data.recorded_issues} recorded equipment cases in the saved 30-day window. Reports are not confirmed failures; linked duplicate incidents are counted once.`;
     if (
       source.id === 'production-context' &&
       count('areas') !== null &&

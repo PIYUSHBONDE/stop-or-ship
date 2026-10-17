@@ -891,6 +891,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plants/{plant_id}/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notification Feed */
+        get: operations["notification_feed_api_v1_plants__plant_id__notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plants/{plant_id}/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Read Notification */
+        post: operations["read_notification_api_v1_plants__plant_id__notifications_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plants/{plant_id}/cases": {
         parameters: {
             query?: never;
@@ -1973,6 +2007,56 @@ export interface components {
              * @default Backend-owned replay clock; accelerated simulation
              */
             clock_label: string;
+        };
+        /** Notification */
+        Notification: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "human_request" | "analysis_ready" | "blocked" | "recurring_issue";
+            /** Case Id */
+            case_id: string;
+            /** Task Id */
+            task_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
+            /** Ai Summary */
+            ai_summary?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Read */
+            read: boolean;
+        };
+        /** NotificationAcknowledgement */
+        NotificationAcknowledgement: {
+            /** Notification Id */
+            notification_id: string;
+            /**
+             * Read
+             * @default true
+             */
+            read: boolean;
+        };
+        /** NotificationPage */
+        NotificationPage: {
+            /** Items */
+            items: components["schemas"]["Notification"][];
+            /** Unread Count */
+            unread_count: number;
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** NotificationRead */
+        NotificationRead: {
+            /** Notification Id */
+            notification_id: string;
         };
         /** ObservationBatch */
         ObservationBatch: {
@@ -5003,6 +5087,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpeechResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    notification_feed_api_v1_plants__plant_id__notifications_get: {
+        parameters: {
+            query?: {
+                cursor?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_notification_api_v1_plants__plant_id__notifications_read_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                plant_id: string;
+            };
+            cookie: {
+                plantsense_staff: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationRead"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationAcknowledgement"];
                 };
             };
             /** @description Validation Error */

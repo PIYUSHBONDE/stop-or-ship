@@ -88,7 +88,7 @@ def foundation():
         )
     for suffix, readers in (
         ("migration", ["migrate"]),
-        ("releases", ["build-exec", "build-submit"]),
+        ("releases", []),
     ):
         bucket = f"gs://{PROJECT}-plantsense-{suffix}"
         if (
@@ -345,16 +345,14 @@ def backup_source():
     )
 
 
-def submit_build(tag, release=False, fingerprint=None):
+def submit_build(tag, release=False):
     config = (
         "infra/gcp/cloudbuild-release.yaml"
         if release
         else "infra/gcp/cloudbuild-backend.yaml"
     )
     substitutions = (
-        f"_COMMIT_SHA={tag},_FINGERPRINT={fingerprint}"
-        if release
-        else f"_IMAGE={REGISTRY}/backend:{tag}"
+        f"_COMMIT_SHA={tag}" if release else f"_IMAGE={REGISTRY}/backend:{tag}"
     )
     result = cloud(
         "builds",
@@ -789,7 +787,6 @@ if __name__ == "__main__":
     parser.add_argument("--image")
     parser.add_argument("--tag", default="migration-bootstrap")
     parser.add_argument("--release", action="store_true")
-    parser.add_argument("--fingerprint")
     args = parser.parse_args()
     try:
         if args.stage == "foundation":
@@ -799,9 +796,7 @@ if __name__ == "__main__":
         elif args.stage == "snapshot":
             backup_source()
         elif args.stage == "build":
-            if args.release and not args.fingerprint:
-                parser.error("Release builds require a matching fingerprint")
-            submit_build(args.tag, release=args.release, fingerprint=args.fingerprint)
+            submit_build(args.tag, release=args.release)
         elif args.stage == "migrate":
             migrate(args.image)
         elif args.stage == "restore":

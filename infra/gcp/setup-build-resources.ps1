@@ -33,6 +33,8 @@ Cloud @('projects','add-iam-policy-binding',$project,'--member',"serviceAccount:
 Cloud @('artifacts','repositories','add-iam-policy-binding','plantsense','--location',$region,'--project',$project,'--member',"serviceAccount:$executor",'--role=roles/artifactregistry.writer','--quiet') | Out-Null
 Cloud @('storage','buckets','add-iam-policy-binding',"gs://$bucket",'--project',$project,'--member',"serviceAccount:$executor",'--role=roles/storage.objectViewer','--quiet') | Out-Null
 Cloud @('storage','buckets','add-iam-policy-binding',"gs://$bucket",'--project',$project,'--member',"serviceAccount:$submitter",'--role=roles/storage.objectUser','--quiet') | Out-Null
+# gcloud builds submit reads bucket metadata before uploading the source archive.
+Cloud @('storage','buckets','add-iam-policy-binding',"gs://$bucket",'--project',$project,'--member',"serviceAccount:$submitter",'--role=roles/storage.bucketViewer','--quiet') | Out-Null
 Write-Output "PLANTSENSE_CLOUD_BUILD_ACCOUNT=projects/$project/serviceAccounts/$executor"
 Write-Output "PLANTSENSE_BUILD_SOURCE_BUCKET=$bucket"
 Write-Output 'Build resources ready. No build was submitted and no deployment or plant-data access was granted.'

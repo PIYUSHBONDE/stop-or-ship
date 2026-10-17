@@ -17,7 +17,7 @@
 .heading p,
 .panel p,
 .saveBar p {
-  color: #8ea9b6;
+  color: var(--copy-muted);
   line-height: 1.6;
 }
 .metrics {
@@ -29,18 +29,18 @@
 .metrics div,
 .panel,
 .explanation > div {
-  background: #10232c;
-  border: 1px solid #29414c;
+  background: var(--surface-panel);
+  border: 1px solid var(--surface-border);
   border-radius: 12px;
   padding: 20px;
 }
 .metrics strong {
   display: block;
   font-size: 28px;
-  color: #a3e9c9;
+  color: var(--accent);
 }
 .metrics span {
-  color: #9db4bf;
+  color: var(--copy-muted);
   font-size: 12px;
 }
 .explanation {
@@ -50,7 +50,7 @@
   margin-bottom: 22px;
 }
 .explanation svg {
-  color: #a3e9c9;
+  color: var(--accent);
 }
 .explanation h2,
 .panel h2 {
@@ -58,7 +58,7 @@
   margin: 12px 0;
 }
 .explanation p {
-  color: #9db4bf;
+  color: var(--copy-muted);
   line-height: 1.6;
   font-size: 13px;
 }
@@ -73,7 +73,7 @@
   font-size: 13px;
 }
 .notice {
-  background: #1c363d;
+  background: var(--surface-raised);
   padding: 14px 18px;
   border-radius: 8px;
   color: #cce7df;
@@ -102,15 +102,15 @@
 .workspace label {
   display: grid;
   gap: 7px;
-  color: #c6dce5;
+  color: var(--copy-muted);
   font-size: 13px;
 }
 .workspace input,
 .workspace select,
 .workspace textarea {
   color: #e5eff3;
-  border: 1px solid #3e5663;
-  background: #0a1a22;
+  border: 1px solid var(--surface-border-strong);
+  background: var(--surface-input);
   border-radius: 6px;
   padding: 10px;
   font: inherit;
@@ -118,7 +118,7 @@
   min-width: 0;
 }
 .workspace :focus-visible {
-  outline: 2px solid #a3e9c9;
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 .workspace :disabled {
@@ -132,13 +132,13 @@
 }
 .areaGrid label {
   padding: 12px;
-  border: 1px solid #29414c;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
 }
 .areaGrid span,
 .areaGrid small,
 .workspace th small {
-  color: #8ea9b6;
+  color: var(--copy-muted);
   font-size: 11px;
   display: block;
 }
@@ -154,7 +154,7 @@
 .workspace td,
 .workspace th {
   padding: 12px 8px;
-  border-bottom: 1px solid #29414c;
+  border-bottom: 1px solid var(--surface-border);
   font-size: 12px;
 }
 .coordinates {
@@ -174,11 +174,11 @@
   justify-content: space-between;
   gap: 10px;
   padding: 10px;
-  background: #0a1a22;
+  background: var(--surface-input);
   font-size: 12px;
 }
 .dependencies span {
-  color: #8ea9b6;
+  color: var(--copy-muted);
 }
 .workspace details {
   margin-top: 20px;

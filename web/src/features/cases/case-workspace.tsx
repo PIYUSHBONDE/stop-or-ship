@@ -7,6 +7,7 @@ import { usePlant } from '@/providers/plant-session-provider';
 import type { components } from '@/lib/generated/api-schema';
 import { CaseIntake } from './case-intake';
 import { CaseOverview } from './case-overview';
+import { CaseAction, CaseDialog } from './case-dialog';
 import { phaseNames } from './presentation';
 import styles from './cases.module.css';
 
@@ -19,6 +20,13 @@ export function CaseWorkspace() {
   const selected = query.get('workcase');
   const open = true;
   const [intake, setIntake] = useState(!!query.get('intake'));
+  const [action, setAction] = useState<string | null>(null);
+  const dialogState = useRef(action);
+  dialogState.current = action;
+  function openAction(name: string) {
+    setError('');
+    setAction(name);
+  }
   const [page, setPage] = useState<Schema['CasePage'] | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [policy, setPolicy] = useState<Schema['AutomationPolicy'] | null>(null);
@@ -60,9 +68,9 @@ export function CaseWorkspace() {
       if (epoch.current !== version || currentSelection.current !== identity) return;
       setPage(next);
       setPolicy(rule);
-      setEnabled(rule.enabled);
+      if (dialogState.current !== 'policy') setEnabled(rule.enabled);
       setDetail(record);
-      setError('');
+      if (!dialogState.current) setError('');
     } catch (cause) {
       if (epoch.current === version)
         setError(cause instanceof Error ? cause.message : 'Unable to load cases.');
@@ -72,6 +80,13 @@ export function CaseWorkspace() {
   }
   useEffect(() => {
     setDetail(null);
+    setAction(null);
+    setQuestion('');
+    setReason('');
+    setRequirements('');
+    setDue('');
+    setCancelReason('');
+    setLinkedIncident('');
     setEvidenceIds([]);
     setOutcome('');
   }, [selected]);
@@ -94,6 +109,7 @@ export function CaseWorkspace() {
     setError('');
     try {
       await caseRequest(path, body);
+      setAction(null);
       setFeedback('Action recorded. The case status below reflects the latest saved state.');
       await load();
     } catch (cause) {
@@ -103,8 +119,15 @@ export function CaseWorkspace() {
     }
   }
   const policyControls = policy && (
-    <details>
-      <summary>Automation policy · {policy.enabled ? 'enabled' : 'disabled'}</summary>
+    <CaseAction
+      title="Automation policy"
+      label={`Automation policy · ${policy.enabled ? 'enabled' : 'disabled'}`}
+      open={action === 'policy'}
+      onOpen={() => openAction('policy')}
+      onClose={() => setAction(null)}
+      pending={saving}
+      error={error}
+    >
       <p className={styles.note}>
         Internal evidence requests and findings only. Intervention approval, physical work and
         verification retain their existing controls. Live AI requires matching evaluation reports;
@@ -133,7 +156,7 @@ export function CaseWorkspace() {
           </button>
         </form>
       )}
-    </details>
+    </CaseAction>
   );
   const active = detail?.case && !['resolved', 'cancelled'].includes(detail.case.phase);
   return (
@@ -164,14 +187,16 @@ export function CaseWorkspace() {
           )}
         </div>
         {intake && (
-          <CaseIntake
-            onCreated={(item) => {
-              setIntake(false);
-              router.push(`/incidents?workcase=${encodeURIComponent(item.id)}`);
-            }}
-          />
+          <CaseDialog title="Report factory issue" onClose={() => setIntake(false)}>
+            <CaseIntake
+              onCreated={(item) => {
+                setIntake(false);
+                router.push(`/incidents?workcase=${encodeURIComponent(item.id)}`);
+              }}
+            />
+          </CaseDialog>
         )}
-        {error && (
+        {error && !action && (
           <p role="alert" className={styles.error}>
             {error}
           </p>
@@ -230,247 +255,280 @@ export function CaseWorkspace() {
         )}
         {detail && (
           <section className={styles.detail} aria-label="Factory case detail">
-            <CaseOverview detail={detail} onChanged={() => void load()}>
-              <details className={styles.controls} id="case-controls">
-                <summary>Case controls and human decisions</summary>
-                {feedback && (
-                  <p role="status" className={styles.success}>
-                    {feedback}
-                  </p>
-                )}
-                {policyControls}
-                {active &&
-                  reviewer &&
-                  !detail.case.incident_id &&
-                  ['equipment', 'maintenance'].includes(detail.case.category) && (
-                    <details>
-                      <summary>Link an observation-based incident</summary>
-                      <form
-                        className={styles.form}
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          void mutate(`/cases/${detail.case.id}/link-incident`, {
-                            expected_revision: detail.case.revision,
-                            incident_id: linkedIncident,
-                          });
-                        }}
-                      >
-                        <label>
-                          Matching incident
-                          <select
-                            aria-label="Matching incident"
-                            required
-                            value={linkedIncident}
-                            onChange={(e) => setLinkedIncident(e.target.value)}
-                          >
-                            <option value="">Select an incident</option>
-                            {state?.incidents
-                              .filter(
-                                (item) =>
-                                  item.record_origin === 'plant_observation' &&
-                                  (!detail.case.asset_id || item.asset_id === detail.case.asset_id),
-                              )
-                              .map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {item.asset_id} · {item.id.slice(0, 8)} · {item.state}
-                                </option>
-                              ))}
-                          </select>
-                        </label>
-                        <p className={styles.note}>
-                          The report remains a staff statement. Linked repair and verification stay
-                          in the incident workflow.
-                        </p>
-                        <button className="secondary" disabled={saving}>
-                          Link incident
-                        </button>
-                      </form>
-                    </details>
+            <CaseOverview detail={detail} onChanged={() => void load()} onAction={openAction}>
+              <section
+                className={styles.controls}
+                id="case-controls"
+                aria-label="Case controls and human decisions"
+              >
+                <h3>Case actions</h3>
+                <div className={styles.actionBar}>
+                  {feedback && (
+                    <p role="status" className={styles.success}>
+                      {feedback}
+                    </p>
                   )}
-                {detail.case.incident_id && (
-                  <Link href={`/incidents?incident=${encodeURIComponent(detail.case.incident_id)}`}>
-                    Open linked incident and intervention controls
-                  </Link>
-                )}
-                {active && reviewer && (
-                  <button
-                    className="secondary"
-                    disabled={
-                      saving ||
-                      !policy?.enabled ||
-                      !['equipment', 'production'].includes(detail.case.category)
-                    }
-                    onClick={() =>
-                      void mutate(`/cases/${detail.case.id}/analysis`, {
-                        expected_revision: detail.case.revision,
-                      })
-                    }
-                  >
-                    Request analysis / retry
-                  </button>
-                )}
-                {active && reviewer && (
-                  <details data-case-control="information">
-                    <summary>Request information</summary>
-                    <form
-                      className={styles.form}
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void mutate(`/cases/${detail.case.id}/tasks`, {
-                          expected_revision: detail.case.revision,
-                          question,
-                          reason,
-                          completion_requirements: requirements,
-                          target_role: role,
-                          due_at: due ? new Date(due).toISOString() : null,
-                        });
-                      }}
+                  {policyControls}
+                  {active &&
+                    reviewer &&
+                    !detail.case.incident_id &&
+                    ['equipment', 'maintenance'].includes(detail.case.category) && (
+                      <CaseAction
+                        title="Link an observation-based incident"
+                        open={action === 'link'}
+                        onOpen={() => openAction('link')}
+                        onClose={() => setAction(null)}
+                        pending={saving}
+                        error={error}
+                      >
+                        <form
+                          className={styles.form}
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            void mutate(`/cases/${detail.case.id}/link-incident`, {
+                              expected_revision: detail.case.revision,
+                              incident_id: linkedIncident,
+                            });
+                          }}
+                        >
+                          <label>
+                            Matching incident
+                            <select
+                              aria-label="Matching incident"
+                              required
+                              value={linkedIncident}
+                              onChange={(e) => setLinkedIncident(e.target.value)}
+                            >
+                              <option value="">Select an incident</option>
+                              {state?.incidents
+                                .filter(
+                                  (item) =>
+                                    item.record_origin === 'plant_observation' &&
+                                    (!detail.case.asset_id ||
+                                      item.asset_id === detail.case.asset_id),
+                                )
+                                .map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {item.asset_id} · {item.id.slice(0, 8)} · {item.state}
+                                  </option>
+                                ))}
+                            </select>
+                          </label>
+                          <p className={styles.note}>
+                            The report remains a staff statement. Linked repair and verification
+                            stay in the incident workflow.
+                          </p>
+                          <button className="secondary" disabled={saving}>
+                            Link incident
+                          </button>
+                        </form>
+                      </CaseAction>
+                    )}
+                  {detail.case.incident_id && (
+                    <Link
+                      href={`/incidents?incident=${encodeURIComponent(detail.case.incident_id)}`}
                     >
-                      <label>
-                        Question
-                        <textarea
-                          aria-label="Question"
-                          required
-                          maxLength={3000}
-                          value={question}
-                          onChange={(e) => setQuestion(e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        Why this is needed
-                        <input
-                          required
-                          maxLength={3000}
-                          value={reason}
-                          onChange={(e) => setReason(e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        Completion requirements
-                        <input
-                          required
-                          maxLength={3000}
-                          value={requirements}
-                          onChange={(e) => setRequirements(e.target.value)}
-                        />
-                      </label>
-                      <div className={styles.fields}>
-                        <label>
-                          Responsible role
-                          <select
-                            aria-label="Responsible role"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value as typeof role)}
-                          >
-                            <option value="technician">Technician</option>
-                            <option value="reliability">Reliability</option>
-                            <option value="manager">Manager</option>
-                          </select>
-                        </label>
-                        <label>
-                          Due date (optional)
-                          <input
-                            type="datetime-local"
-                            value={due}
-                            onChange={(e) => setDue(e.target.value)}
-                          />
-                        </label>
-                      </div>
-                      <button className="primary" disabled={saving}>
-                        Create information request
-                      </button>
-                    </form>
-                  </details>
-                )}
-                {active &&
-                  manager &&
-                  !detail.case.incident_id &&
-                  !['equipment', 'maintenance'].includes(detail.case.category) && (
-                    <details data-case-control="outcome">
-                      <summary>Record manager outcome</summary>
+                      Open linked incident and intervention controls
+                    </Link>
+                  )}
+                  {active && reviewer && (
+                    <button
+                      className="secondary"
+                      disabled={
+                        saving ||
+                        !policy?.enabled ||
+                        !['equipment', 'production'].includes(detail.case.category)
+                      }
+                      onClick={() =>
+                        void mutate(`/cases/${detail.case.id}/analysis`, {
+                          expected_revision: detail.case.revision,
+                        })
+                      }
+                    >
+                      Request analysis / retry
+                    </button>
+                  )}
+                  {active && reviewer && (
+                    <CaseAction
+                      title="Request information"
+                      open={action === 'information'}
+                      onOpen={() => openAction('information')}
+                      onClose={() => setAction(null)}
+                      pending={saving}
+                      error={error}
+                    >
                       <form
                         className={styles.form}
                         onSubmit={(e) => {
                           e.preventDefault();
-                          void mutate(`/cases/${detail.case.id}/resolve`, {
+                          void mutate(`/cases/${detail.case.id}/tasks`, {
                             expected_revision: detail.case.revision,
-                            outcome,
-                            evidence_ids: evidenceIds,
+                            question,
+                            reason,
+                            completion_requirements: requirements,
+                            target_role: role,
+                            due_at: due ? new Date(due).toISOString() : null,
                           });
                         }}
                       >
                         <label>
-                          Outcome
+                          Question
                           <textarea
-                            aria-label="Outcome"
+                            aria-label="Question"
                             required
                             maxLength={3000}
-                            value={outcome}
-                            onChange={(e) => setOutcome(e.target.value)}
+                            value={question}
+                            onChange={(e) => setQuestion(e.target.value)}
                           />
                         </label>
-                        <p className={styles.note}>
-                          Select supporting evidence. This resolves the reported issue; it does not
-                          verify an equipment repair.
-                        </p>
-                        {detail.evidence.map((item) => (
-                          <label key={item.id}>
-                            <span>
-                              <input
-                                type="checkbox"
-                                checked={evidenceIds.includes(item.id)}
-                                onChange={(e) =>
-                                  setEvidenceIds((old) =>
-                                    e.target.checked
-                                      ? [...old, item.id]
-                                      : old.filter((id) => id !== item.id),
-                                  )
-                                }
-                              />{' '}
-                              {item.origin.replaceAll('_', ' ')} · {item.text.slice(0, 90)}
-                            </span>
+                        <label>
+                          Why this is needed
+                          <input
+                            required
+                            maxLength={3000}
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                          />
+                        </label>
+                        <label>
+                          Completion requirements
+                          <input
+                            required
+                            maxLength={3000}
+                            value={requirements}
+                            onChange={(e) => setRequirements(e.target.value)}
+                          />
+                        </label>
+                        <div className={styles.fields}>
+                          <label>
+                            Responsible role
+                            <select
+                              aria-label="Responsible role"
+                              value={role}
+                              onChange={(e) => setRole(e.target.value as typeof role)}
+                            >
+                              <option value="technician">Technician</option>
+                              <option value="reliability">Reliability</option>
+                              <option value="manager">Manager</option>
+                            </select>
                           </label>
-                        ))}
-                        <button className="primary" disabled={saving || !evidenceIds.length}>
-                          Resolve reported issue
+                          <label>
+                            Due date (optional)
+                            <input
+                              type="datetime-local"
+                              value={due}
+                              onChange={(e) => setDue(e.target.value)}
+                            />
+                          </label>
+                        </div>
+                        <button className="primary" disabled={saving}>
+                          Create information request
                         </button>
                       </form>
-                    </details>
+                    </CaseAction>
                   )}
-                {detail.case.outcome && (
-                  <p>
-                    <strong>Recorded outcome:</strong> {detail.case.outcome}
-                  </p>
-                )}
-                {active && reviewer && !detail.case.incident_id && (
-                  <details>
-                    <summary>Cancel case</summary>
-                    <form
-                      className={styles.form}
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void mutate(`/cases/${detail.case.id}/cancel`, {
-                          expected_revision: detail.case.revision,
-                          reason: cancelReason,
-                        });
-                      }}
+                  {active &&
+                    manager &&
+                    !detail.case.incident_id &&
+                    !['equipment', 'maintenance'].includes(detail.case.category) && (
+                      <CaseAction
+                        title="Record manager outcome"
+                        open={action === 'outcome'}
+                        onOpen={() => openAction('outcome')}
+                        onClose={() => setAction(null)}
+                        pending={saving}
+                        error={error}
+                      >
+                        <form
+                          className={styles.form}
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            void mutate(`/cases/${detail.case.id}/resolve`, {
+                              expected_revision: detail.case.revision,
+                              outcome,
+                              evidence_ids: evidenceIds,
+                            });
+                          }}
+                        >
+                          <label>
+                            Outcome
+                            <textarea
+                              aria-label="Outcome"
+                              required
+                              maxLength={3000}
+                              value={outcome}
+                              onChange={(e) => setOutcome(e.target.value)}
+                            />
+                          </label>
+                          <p className={styles.note}>
+                            Select supporting evidence. This resolves the reported issue; it does
+                            not verify an equipment repair.
+                          </p>
+                          {detail.evidence.map((item) => (
+                            <label key={item.id}>
+                              <span>
+                                <input
+                                  type="checkbox"
+                                  checked={evidenceIds.includes(item.id)}
+                                  onChange={(e) =>
+                                    setEvidenceIds((old) =>
+                                      e.target.checked
+                                        ? [...old, item.id]
+                                        : old.filter((id) => id !== item.id),
+                                    )
+                                  }
+                                />{' '}
+                                {item.origin.replaceAll('_', ' ')} · {item.text.slice(0, 90)}
+                              </span>
+                            </label>
+                          ))}
+                          <button className="primary" disabled={saving || !evidenceIds.length}>
+                            Resolve reported issue
+                          </button>
+                        </form>
+                      </CaseAction>
+                    )}
+                  {detail.case.outcome && (
+                    <p>
+                      <strong>Recorded outcome:</strong> {detail.case.outcome}
+                    </p>
+                  )}
+                  {active && reviewer && !detail.case.incident_id && (
+                    <CaseAction
+                      title="Cancel case"
+                      open={action === 'cancel'}
+                      onOpen={() => openAction('cancel')}
+                      onClose={() => setAction(null)}
+                      pending={saving}
+                      error={error}
                     >
-                      <label>
-                        Cancellation reason
-                        <input
-                          required
-                          maxLength={3000}
-                          value={cancelReason}
-                          onChange={(e) => setCancelReason(e.target.value)}
-                        />
-                      </label>
-                      <button className="secondary" disabled={saving}>
-                        Cancel reported case
-                      </button>
-                    </form>
-                  </details>
-                )}
-              </details>
+                      <form
+                        className={styles.form}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          void mutate(`/cases/${detail.case.id}/cancel`, {
+                            expected_revision: detail.case.revision,
+                            reason: cancelReason,
+                          });
+                        }}
+                      >
+                        <label>
+                          Cancellation reason
+                          <input
+                            required
+                            maxLength={3000}
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                          />
+                        </label>
+                        <button className="secondary" disabled={saving}>
+                          Cancel reported case
+                        </button>
+                      </form>
+                    </CaseAction>
+                  )}
+                </div>
+              </section>
             </CaseOverview>
           </section>
         )}
