@@ -6,9 +6,9 @@ INTERNAL_TEST_MODE = os.getenv("PLANTSENSE_INTERNAL_TEST_MODE", "false").lower()
 MODE = os.getenv("PLANTSENSE_MODE", "local")
 if MODE not in {"local", "cloud"}:
     raise RuntimeError("PLANTSENSE_MODE must be local or cloud")
-STORAGE = os.getenv("PLANTSENSE_STORAGE", "postgres" if MODE == "cloud" else "sqlite")
-POSTGRES_DSN = os.getenv("PLANTSENSE_POSTGRES_DSN", "")
+POSTGRES_DSN = os.getenv("PLANTSENSE_POSTGRES_DSN", os.getenv("DATABASE_URL", ""))
 POSTGRES_EVIDENCE_DSN = os.getenv("PLANTSENSE_POSTGRES_EVIDENCE_DSN", "")
+STORAGE = os.getenv("PLANTSENSE_STORAGE", "postgres" if MODE == "cloud" or POSTGRES_DSN else "sqlite")
 POSTGRES_SCHEMA = os.getenv("PLANTSENSE_POSTGRES_SCHEMA", "plantsense")
 if STORAGE not in {"sqlite", "postgres"}:
     raise RuntimeError("PLANTSENSE_STORAGE must be sqlite or postgres")
@@ -37,7 +37,7 @@ TASK_QUEUE = os.getenv("TASK_QUEUE", "plantsense-investigations")
 TASK_ACCOUNT = os.getenv("TASK_SERVICE_ACCOUNT", "")
 SERVICE_ROLE = os.getenv("SERVICE_ROLE", "api")
 REQUIRE_RELEASE_GATES = (
-    os.getenv("PLANTSENSE_REQUIRE_RELEASE_GATES", "true" if MODE == "cloud" else "false").lower() == "true"
+    MODE == "cloud" or os.getenv("PLANTSENSE_REQUIRE_RELEASE_GATES", "false").lower() == "true"
 )
 STAFF_WEB_ORIGINS = tuple(
     os.getenv("PLANTSENSE_STAFF_WEB_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")

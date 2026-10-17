@@ -1,8 +1,8 @@
 .shell {
   --sidebar-width: 88px;
   min-height: 100dvh;
-  color: #e4eeeb;
-  background: #101c22;
+  color: var(--copy-primary);
+  background: var(--surface-page);
 }
 .shell[data-expanded='true'] {
   --sidebar-width: 232px;
@@ -17,11 +17,11 @@
   flex-direction: column;
   gap: 18px;
   padding: 22px 10px 14px;
-  background: #102229;
-  border-right: 1px solid #2b4148;
+  background: var(--surface-panel);
+  border-right: 1px solid var(--surface-border);
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #3e5a61 #102229;
+  scrollbar-color: var(--surface-border-strong) var(--surface-panel);
 }
 .rail[data-expanded='true'] {
   --sidebar-width: 232px;
@@ -33,7 +33,7 @@
   justify-content: center;
   gap: 11px;
   min-height: 42px;
-  color: #eaf5ee;
+  color: var(--copy-primary);
   text-decoration: none;
   flex-shrink: 0;
 }
@@ -43,8 +43,8 @@
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: #8adbbd;
-  color: #163b32;
+  background: var(--accent);
+  color: var(--accent-ink);
   flex-shrink: 0;
 }
 .brandName,
@@ -62,7 +62,7 @@
   letter-spacing: -0.025em;
 }
 .plantName {
-  color: #b7cccd;
+  color: var(--copy-muted);
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -82,7 +82,7 @@
 .utilities {
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid #2b4148;
+  border-top: 1px solid var(--surface-border);
 }
 .item {
   position: relative;
@@ -97,7 +97,7 @@
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: #b3c8cc;
+  color: var(--copy-muted);
   font-size: 10px;
   line-height: 1.2;
   text-decoration: none;
@@ -110,12 +110,12 @@
   stroke-width: 1.7px;
 }
 .item:hover {
-  background: #1c343c;
-  color: #f0f7f3;
+  background: var(--surface-hover);
+  color: var(--copy-primary);
 }
 .item[aria-current='page'] {
-  background: #24433e;
-  color: #a4e6cc;
+  background: var(--surface-hover);
+  color: var(--accent);
 }
 .item[aria-current='page'] svg {
   stroke-width: 2px;
@@ -124,7 +124,7 @@
 .brand:focus-visible,
 .rail details > summary:focus-visible,
 .mobileTrigger:focus-visible {
-  outline: 2px solid #8adbbd;
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 .rail[data-expanded='true'] .item {
@@ -156,7 +156,7 @@
 }
 .expand {
   min-height: 34px;
-  color: #a0bbbf;
+  color: var(--copy-muted);
 }
 .expand .itemLabel {
   display: none;
@@ -206,7 +206,7 @@
   gap: 8px;
   padding: 11px 16px;
   border-radius: 9px;
-  background: #1c3d33;
+  background: var(--surface-raised);
   color: #bcf0d7;
 }
 .mobileTrigger,
@@ -220,8 +220,8 @@
   background: #06171da6;
 }
 .shell ::selection {
-  background: #8adbbd;
-  color: #102229;
+  background: var(--accent);
+  color: var(--surface-panel);
 }
 @media (max-width: 760px) {
   .workspace {
@@ -243,9 +243,9 @@
     height: 44px;
     display: grid;
     place-items: center;
-    border: 1px solid #3a535b;
+    border: 1px solid var(--surface-border-strong);
     border-radius: 11px;
-    background: #152e36;
+    background: var(--surface-panel);
     color: #e4f2eb;
     box-shadow: 0 4px 12px #07151d1f;
   }
@@ -272,11 +272,11 @@
     padding: 0;
     background: transparent;
     border: 0;
-    color: #b3c8cc;
+    color: var(--copy-muted);
     border-radius: 8px;
   }
   .mobileClose:hover {
-    background: #1c343c;
+    background: var(--surface-hover);
   }
   .expand {
     display: none !important;

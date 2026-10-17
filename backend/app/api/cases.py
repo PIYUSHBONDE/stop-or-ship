@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
 
+from app import notifications
 from app.api.dependencies import Storage
 from app.api.workspace import StaffToken, check_origin
 from app.cases import service
@@ -23,6 +24,7 @@ from app.contracts.cases import (
     TaskPage,
     TaskResponse,
 )
+from app.contracts.notifications import NotificationAcknowledgement, NotificationPage, NotificationRead
 from app.core import config
 from app.identity.staff_access import authorize
 
@@ -33,7 +35,7 @@ def require_enabled():
 
 
 def wake_jobs(request: Request, background: BackgroundTasks, store: Storage):
-    if config.MODE == "cloud" and request.method == "POST":
+    if config.MODE == "cloud" and request.method == "POST" and "/notifications/" not in request.url.path:
         from app.runtime.case_dispatch import wake
 
         background.add_task(wake, store)
@@ -46,6 +48,18 @@ router = APIRouter(
 Key = Annotated[str, Header(alias="Idempotency-Key", min_length=8, max_length=100)]
 Cursor = Annotated[int, Query(ge=0, le=100000)]
 Limit = Annotated[int, Query(ge=1, le=50)]
+
+
+@router.get("/notifications", response_model=NotificationPage)
+def notification_feed(
+    plant_id: str, token: StaffToken, store: Storage, cursor: Cursor = 0, limit: Limit = 25
+):
+    return notifications.list_notifications(store, token, plant_id, cursor, limit)
+
+
+@router.post("/notifications/read", response_model=NotificationAcknowledgement)
+def read_notification(plant_id: str, body: NotificationRead, token: StaffToken, store: Storage, key: Key):
+    return notifications.acknowledge(store, token, plant_id, body, key)
 
 
 @router.get("/cases", response_model=CasePage)

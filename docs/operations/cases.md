@@ -4,7 +4,7 @@ This feature runs locally. It requires the locked backend dependencies, includin
 
 ## Startup
 
-Inspect listening ports first. Back up an existing database before first startup with migration 7. Set the **same absolute database path and provider** in API and worker terminals. Use an unused frontend/API port pair and matching allowed web origin.
+Inspect listening ports first. Back up an existing database before first startup with migration 7. Set the **same database URL and provider** in API and worker terminals. Use an unused frontend/API port pair and matching allowed web origin. Local mode skips evaluation report files unless `PLANTSENSE_REQUIRE_RELEASE_GATES=true`; Cloud mode always requires them.
 
 ```powershell
 $env:PLANTSENSE_MODE='local'
@@ -12,11 +12,8 @@ $env:PLANTSENSE_AI_PROVIDER='vertex'
 $env:GEMINI_MODEL='gemini-3.8-flash'
 $env:GOOGLE_CLOUD_PROJECT='<your existing Vertex project>'
 $env:GOOGLE_CLOUD_LOCATION='global'
-$env:PLANTSENSE_AI_EVALUATION_FILE='<absolute matching investigation report path>'
-$env:PLANTSENSE_ASSISTANT_EVALUATION_FILE='<absolute matching assistant report path>'
-$env:PLANTSENSE_CASES_EVALUATION_FILE='<absolute matching case report path>'
 $env:PLANTSENSE_INTERNAL_TEST_MODE='false'
-$env:PLANTSENSE_DB='D:\Projects\AI Builders Cup\.runtime\local-cases.db'
+$env:DATABASE_URL='<postgresql://user:password@host:5432/database>'
 $env:PLANTSENSE_STAFF_WEB_ORIGINS='http://127.0.0.1:3000'
 .venv/Scripts/python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
 ```
@@ -30,11 +27,19 @@ $env:PYTHONPATH='backend'
 
 `--once` processes at most one available job. `--drain` processes available jobs and exits when none remain. A worker waiting for human evidence does not remain assigned to that case. Run frontend with `API_BASE_URL=http://127.0.0.1:8000`. Stop every standalone frontend before `npm.cmd --prefix web run build` on Windows.
 
-Sign in, select the plant, then open **Incidents → Factory cases and human requests**. Staff can explicitly report an issue, including through chat's **Start case** form. Administrators alone can enable plant coordination. **Requests** opens the role inbox; claim a task before responding. Review existing incident links for equipment actions. Managers record production outcomes with supporting evidence. Generated Operators assignments remain separate from authenticated staff tasks.
+Sign in, select the plant, then open **Incidents → Factory cases and human requests**. Staff can explicitly report an issue, including through chat's **Start case** form. Administrators alone can enable plant coordination. **My tasks** opens the role inbox; claim a task before responding. Review existing incident links for equipment actions. Managers record production outcomes with supporting evidence. Generated Operators assignments remain separate from authenticated staff tasks.
 
-Normal application execution requires live AI. Scripted providers are available only for isolated tests; ordinary API and worker startup reject scripted mode. Preserve configured budgets and all three matching report paths. Failed gates block new AI coordination without disabling manual tasks. Evaluation programs under `backend/scripts/evaluation/` use isolated databases and never enable a plant policy by themselves in the review database. Keep `PLANTSENSE_INTERNAL_TEST_MODE=false` for assistant evaluation so the missing-readings fixture cannot inherit synthetic replay readings. Do not substitute a scripted report for live acceptance.
+Normal application execution requires live AI. Scripted providers are available only for isolated tests; ordinary API and worker startup reject scripted mode. Local mode skips release evaluation reports by default; set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` when validating a local release. Cloud mode always enforces the matching investigation, assistant and case reports. Failed gates block new AI coordination without disabling manual tasks. Evaluation programs under `backend/scripts/evaluation/` use isolated databases and never enable a plant policy by themselves in the review database. Keep `PLANTSENSE_INTERNAL_TEST_MODE=false` for assistant evaluation so the missing-readings fixture cannot inherit synthetic replay readings. Do not substitute a scripted report for live acceptance.
 
 The optional trusted server setting `ASSISTANT_API_BASE_URL` routes only existing assistant question/transcription/speech endpoints to a separately validated local release. All other requests continue to `API_BASE_URL`. This supports preserving the previously validated assistant while candidate case automation is gated; it does not validate the candidate. Both services must use the intended same plant database and unchanged identity semantics. Restrict both to loopback.
+
+## Notifications and recorded recurrence
+
+Open **Notifications** in the sidebar. The unread count and read acknowledgements belong to the signed-in person and selected plant. Eligible staff receive open or claimed requests they can act on. Reviewers receive review-ready cases, blockers and recurring equipment issues. A case reporter can also see their own review-ready or blocked case. Viewers receive no actionable notifications. Reading an item does not claim a task, resume analysis, approve work or verify a repair. Use its case link to review evidence and take an explicitly authorized action. Read status survives refresh and service restart; other tabs update on their next poll.
+
+Recurring-issue items require at least three recorded equipment cases for one asset in the last 30 days and an open case. Linked duplicate incidents count once. Staff reports remain unverified reports; browser-generated cases do not contribute. The feed removes cancelled, closed or superseded actionable items and retains their history in the case. This is an actionable inbox, not a permanent notification archive. There is no email, SMS, browser push or external delivery.
+
+In a saved analysis, expand **Equipment issue history**, **Possible causes and evidence**, **How the assessment changed**, or **Compare previous verified repairs**. These sections show captured records, the investigator's cited proposals, distinct saved revisions and verified historical outcomes. Empty or malformed evidence is not substituted with generated content. New history enters subsequent analyses; existing saved snapshots remain unchanged. Recurrence adds one read-only MCP collection to the existing four specialist stages, without increasing model-call or spending limits. Matching live investigation, assistant/voice and case reports remain required before enabling a changed AI release.
 
 ## Failure and reconciliation
 

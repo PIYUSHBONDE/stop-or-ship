@@ -22,6 +22,7 @@ import {
 import { usePlant } from '@/providers/plant-session-provider';
 import { AssistantPanel } from '@/features/assistant/assistant-panel';
 import { TaskInbox } from '@/features/cases/task-inbox';
+import { NotificationInbox } from '@/features/cases/notification-inbox';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 import { FrameStatus } from './frame-status';
 import { PlantControlsContext } from './plant-controls-context';
@@ -153,6 +154,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </div>
       <div className={styles.utilities}>
+        {state.workspace && (
+          <NotificationInbox
+            key={`${state.workspace.id}:${state.workspace.user.id}`}
+            triggerClassName={styles.item}
+            onNavigate={() => setMenuOpen(false)}
+          />
+        )}
         {state.workspace && <TaskInbox triggerClassName={styles.item} />}
         {simulationPage && (
           <>

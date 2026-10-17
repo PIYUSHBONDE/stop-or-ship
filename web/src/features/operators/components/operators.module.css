@@ -20,7 +20,7 @@
 
 .heading p {
   margin-top: 9px;
-  color: #abc5c8;
+  color: var(--copy-muted);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -32,10 +32,10 @@
   flex: none;
   min-height: 42px;
   padding: 0 15px;
-  border: 1px solid #45646c;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 10px;
-  background: #1a313a;
-  color: #d6ede8;
+  background: var(--surface-raised);
+  color: var(--copy-primary);
   font-size: 13px;
   font-weight: 700;
 }
@@ -44,7 +44,7 @@
 .responseFooter a:hover,
 .mapFooter a:hover,
 .emptyResponse a:hover {
-  color: #a0ebce;
+  color: var(--accent);
 }
 
 .sourceNote {
@@ -52,13 +52,13 @@
   align-items: flex-start;
   gap: 13px;
   margin-top: 22px;
-  color: #b8d1d2;
+  color: var(--copy-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .sourceNote strong {
-  color: #e1f0eb;
+  color: var(--copy-primary);
 }
 
 .sourceDot {
@@ -67,7 +67,7 @@
   height: 8px;
   margin-top: 5px;
   border-radius: 50%;
-  background: #8bdac2;
+  background: var(--accent);
   box-shadow: 0 0 0 4px #8bdac21c;
 }
 
@@ -77,15 +77,15 @@
   gap: 0;
   margin: 27px 0 25px;
   padding: 15px 19px;
-  border: 1px solid #324b53;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 12px;
-  background: #172a33;
+  background: var(--surface-panel);
 }
 
 .summary > div {
   min-width: 0;
   padding: 0 24px;
-  border-left: 1px solid #36525a;
+  border-left: 1px solid var(--surface-border-strong);
 }
 
 .summary > div:first-child {
@@ -105,7 +105,7 @@
 
 .summary span {
   margin-top: 5px;
-  color: #acc6ca;
+  color: var(--copy-muted);
   font-size: 11px;
 }
 
@@ -114,7 +114,7 @@
   align-self: center;
   margin-left: auto;
   padding-left: 20px;
-  color: #acc6ca;
+  color: var(--copy-muted);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -150,9 +150,9 @@
 .mapPanel,
 .historyPanel {
   min-width: 0;
-  border: 1px solid #344e57;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 16px;
-  background: #192d36;
+  background: var(--surface-panel);
 }
 
 .response {
@@ -199,7 +199,7 @@
 
 .assignmentMeta {
   margin-top: 6px;
-  color: #afc7cb;
+  color: var(--copy-muted);
   font-size: 12px;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -213,7 +213,7 @@
 }
 
 .assignmentMeta a:hover {
-  color: #a0ebce;
+  color: var(--accent);
 }
 
 .reading {
@@ -223,8 +223,8 @@
   gap: 16px;
   margin-top: 25px;
   padding: 20px 0;
-  border-top: 1px solid #38535b;
-  border-bottom: 1px solid #38535b;
+  border-top: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
 }
 
 .reading span,
@@ -233,7 +233,7 @@
 }
 
 .reading span {
-  color: #b3cdd0;
+  color: var(--copy-muted);
   font-size: 12px;
 }
 
@@ -297,7 +297,7 @@
 
 .assignee > div > span,
 .rosterPerson small {
-  color: #b2c9ca;
+  color: var(--copy-muted);
   font-size: 11px;
   line-height: 1.3;
 }
@@ -311,8 +311,8 @@
 
 .timelineWrap {
   padding: 21px 27px 28px;
-  border-top: 1px solid #344e57;
-  background: #152932;
+  border-top: 1px solid var(--surface-border-strong);
+  background: var(--surface-panel);
 }
 
 .timelineHeading {
@@ -323,7 +323,7 @@
 }
 
 .timelineHeading span {
-  color: #a8c4c8;
+  color: var(--copy-muted);
 }
 
 .timeline {
@@ -337,8 +337,8 @@
 .timeline li {
   position: relative;
   padding-top: 15px;
-  border-top: 2px solid #49656c;
-  color: #9cb7bd;
+  border-top: 2px solid var(--surface-border-strong);
+  color: var(--copy-muted);
   font-size: 11px;
   line-height: 1.35;
 }
@@ -359,12 +359,12 @@
 }
 
 .timeline .stepDone {
-  border-color: #8bdac2;
+  border-color: var(--accent);
   color: #cce8e0;
 }
 
 .timeline .stepDone::before {
-  background: #8bdac2;
+  background: var(--accent);
 }
 
 .timeline .stepCurrent {
@@ -389,7 +389,7 @@
 }
 
 .responseFooter small {
-  color: #acc5c9;
+  color: var(--copy-muted);
   font-size: 11px;
   line-height: 1.4;
 }
@@ -414,7 +414,7 @@
 .emptyResponse p {
   max-width: 50ch;
   margin: 16px 0 25px;
-  color: #adc5c8;
+  color: var(--copy-muted);
   font-size: 13px;
   line-height: 1.55;
 }
@@ -425,7 +425,7 @@
 
 .otherAssignments h3 {
   margin: 0 0 8px;
-  color: #afc8cb;
+  color: var(--copy-muted);
   font-size: 12px;
 }
 
@@ -434,18 +434,18 @@
   align-items: center;
   gap: 12px;
   min-height: 42px;
-  border-top: 1px solid #36515a;
+  border-top: 1px solid var(--surface-border);
   color: #dcebe7;
   font-size: 12px;
 }
 
 .otherAssignments a:hover {
-  color: #a0ebce;
+  color: var(--accent);
 }
 
 .otherAssignments a span {
   margin-left: auto;
-  color: #b5ccd0;
+  color: var(--copy-muted);
 }
 
 .side {
@@ -463,7 +463,7 @@
 .mapPanel > p,
 .historyPanel p {
   margin-top: 7px;
-  color: #acc4c8;
+  color: var(--copy-muted);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -478,12 +478,12 @@
   gap: 10px;
   min-height: 57px;
   padding: 11px 0;
-  border-top: 1px solid #36515a;
+  border-top: 1px solid var(--surface-border);
   color: inherit;
 }
 
 a.rosterRow:hover {
-  background: #203941;
+  background: var(--surface-raised);
 }
 
 .rosterRow .avatar {
@@ -508,7 +508,7 @@ a.rosterRow:hover {
 
 .rosterState {
   margin-left: auto;
-  color: #a4e1c8;
+  color: var(--copy-muted);
   font-size: 11px;
   text-align: right;
   white-space: nowrap;
@@ -524,9 +524,9 @@ a.rosterRow:hover {
   height: auto;
   margin-top: 16px;
   overflow: hidden;
-  border: 1px solid #38535b;
+  border: 1px solid var(--surface-border);
   border-radius: 10px;
-  background: #12252e;
+  background: var(--surface-panel);
 }
 
 .mapAisle {
@@ -589,10 +589,10 @@ a.rosterRow:hover {
 .cell {
   width: 9px;
   height: 9px;
-  border: 1px solid #688890;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 50%;
   background: #49636c;
-  color: #cce0df;
+  color: var(--copy-muted);
   font-size: 9px;
   text-align: center;
 }
@@ -635,7 +635,7 @@ a.rosterRow:hover {
 .selectedActor {
   z-index: 3;
   background: #b6efdc;
-  outline: 2px solid #3c665f;
+  outline: 2px solid var(--surface-border-strong);
   outline-offset: 1px;
 }
 
@@ -645,7 +645,7 @@ a.rosterRow:hover {
   justify-content: space-between;
   gap: 12px;
   margin-top: 12px;
-  color: #b7cfd0;
+  color: var(--copy-muted);
   font-size: 11px;
 }
 
@@ -682,7 +682,7 @@ a.rosterRow:hover {
 .historyDescription {
   display: block;
   margin-top: 7px;
-  color: #acc4c8;
+  color: var(--copy-muted);
   line-height: 1.45;
 }
 .historyToggle {
@@ -692,11 +692,11 @@ a.rosterRow:hover {
   flex: none;
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid #527079;
+  border: 1px solid var(--surface-border-strong);
   border-radius: 8px;
 }
 .historyDisclosure summary:hover .historyToggle {
-  background: #25423f;
+  background: var(--surface-raised);
 }
 
 .historyDisclosure summary::-webkit-details-marker {
@@ -729,7 +729,7 @@ a.rosterRow:hover {
 }
 
 .historyDisclosure li + li {
-  border-top: 1px solid #36515a;
+  border-top: 1px solid var(--surface-border);
 }
 
 .historyDisclosure li a {
@@ -745,15 +745,15 @@ a.rosterRow:hover {
 }
 
 .historyDisclosure li a:hover {
-  color: #a0ebce;
-  background: #203c42;
+  color: var(--accent);
+  background: var(--surface-raised);
 }
 .historyDisclosure li a[aria-current='true'] {
-  background: #274640;
+  background: var(--surface-raised);
 }
 
 .historyDisclosure li span {
-  color: #abc5c8;
+  color: var(--copy-muted);
   overflow-wrap: anywhere;
 }
 

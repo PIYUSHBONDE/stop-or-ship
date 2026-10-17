@@ -57,6 +57,8 @@ def fingerprint():
 
 
 def require_evaluation():
+    if not config.REQUIRE_RELEASE_GATES:
+        return
     try:
         report = json.loads(Path(config.AI_EVALUATION_FILE).read_text(encoding="utf-8"))
         valid = (

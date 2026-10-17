@@ -22,6 +22,9 @@ QUESTIONS = {
 
 
 def require_case_evaluation():
+    if not config.REQUIRE_RELEASE_GATES:
+        return
+
     from app.ai.assistant_gate import require_assistant_evaluation
     from app.ai.evaluation_gate import fingerprint
 

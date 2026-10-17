@@ -10,6 +10,9 @@ from app.core import config
 def require_assistant_evaluation(*, voice=False):
     from fastapi import HTTPException
 
+    if not config.REQUIRE_RELEASE_GATES:
+        return
+
     try:
         require_evaluation()
     except RuntimeError as exc:

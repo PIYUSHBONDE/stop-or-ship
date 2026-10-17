@@ -27,7 +27,7 @@ class StageResult(RequestModel):
 
 
 INSTRUCTIONS = {
-    "investigator": "Identify competing explanations and the missing evidence that distinguishes them. Never confirm physical cause.",
+    "investigator": "Identify competing explanations and the missing evidence that distinguishes them. Compare recorded equipment history and verified repair references when relevant; repeated reports alone do not establish repeated failures or a common cause. Never confirm physical cause.",
     "reviewer": "Check each investigator claim against supplied sources. Distinguish an explicitly qualified hypothesis from an unsupported assertion. Missing readings are missing support, not automatically conflicting evidence. Identify the specific claim and missing check; do not merely repeat the report.",
     "Reliability": "Assess measurement quality, maintenance evidence and required human checks using reviewed procedures. Add only the reliability-specific conclusion, without repeating the investigator summary.",
     "Production": "Assess dependency-based production impact and available intervention tradeoffs. Rated capacity is not measured output. Add the production-specific consequence and uncertainty without repeating other specialists.",

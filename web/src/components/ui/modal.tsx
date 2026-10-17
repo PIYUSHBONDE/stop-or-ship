@@ -6,10 +6,12 @@ export default function Modal({
   children,
   title,
   onClose,
+  returnFocusRef,
 }: {
   children: React.ReactNode;
   title: string;
   onClose: () => void;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
 }) {
   const opener = useRef<HTMLElement | null>(
     typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
@@ -29,9 +31,10 @@ export default function Modal({
           className="modal"
           aria-describedby={undefined}
           onCloseAutoFocus={(event) => {
-            if (opener.current?.isConnected) {
+            const target = returnFocusRef?.current || opener.current;
+            if (target?.isConnected) {
               event.preventDefault();
-              opener.current.focus();
+              target.focus();
             }
           }}
         >

@@ -1,18 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import {
-  Check,
-  Clock3,
-  ShieldCheck,
-  ArrowRight,
-  FileText,
-  GitBranch,
-  CircleAlert,
-} from 'lucide-react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Check, ShieldCheck, ArrowRight, FileText, GitBranch, CircleAlert } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { HumanTaskCard } from './human-task';
+import { CaseInsights } from './case-insights';
 import {
   casePresentation,
   stageNames,
@@ -26,18 +19,23 @@ import styles from './cases.module.css';
 export function CaseOverview({
   detail,
   onChanged,
+  onAction,
   children,
 }: {
   detail: CaseDetail;
   onChanged: () => void;
+  onAction: (action: string) => void;
   children: ReactNode;
 }) {
   const { state } = usePlant();
   const [sourceId, setSourceId] = useState<string | null>(null);
   const sourcePanel = useRef<HTMLElement>(null);
+  const referenceGroup = useRef<HTMLDetailsElement>(null);
   const sourceTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (sourceId) {
+      if (referenceGroup.current?.querySelector('[aria-expanded="true"]'))
+        referenceGroup.current.open = true;
       sourcePanel.current?.focus({ preventScroll: true });
       sourcePanel.current?.scrollIntoView({ block: 'nearest' });
     }
@@ -65,14 +63,6 @@ export function CaseOverview({
     !detail.case.incident_id &&
     !['equipment', 'maintenance'].includes(detail.case.category) &&
     ['admin', 'manager'].includes(role || '');
-  function openControl(name: string) {
-    const controls = document.getElementById('case-controls');
-    controls?.setAttribute('open', '');
-    const target = controls?.querySelector<HTMLDetailsElement>(`[data-case-control="${name}"]`);
-    target?.setAttribute('open', '');
-    target?.scrollIntoView({ block: 'nearest' });
-    target?.querySelector('summary')?.focus();
-  }
   const stageIndex = view.terminal
     ? 3
     : view.next
@@ -82,11 +72,49 @@ export function CaseOverview({
         : phase === 'triage'
           ? 0
           : 3;
+  const completedSteps = [
+    true,
+    !!view.run?.steps.some((step) => step.stage === 'context' && step.state === 'completed'),
+    detail.tasks.some((task) => task.state === 'completed'),
+    phase === 'resolved',
+  ];
+  const selectedSourcePanel = source && (
+    <section
+      ref={sourcePanel}
+      tabIndex={-1}
+      className={styles.sourceDetail}
+      aria-label="Selected evidence source"
+    >
+      <div className={styles.line}>
+        <h4>{source.title}</h4>
+        <button
+          className={styles.textButton}
+          onClick={() => {
+            setSourceId(null);
+            sourceTrigger.current?.focus({ preventScroll: true });
+          }}
+        >
+          Close source
+        </button>
+      </div>
+      <p>{sourceSummary(source)}</p>
+      {source.status === 'reference' && !source.text.trim().startsWith('{') && <p>{source.text}</p>}
+      <details>
+        <summary>Saved source details</summary>
+        <pre>{source.text}</pre>
+      </details>
+    </section>
+  );
   return (
     <div className={styles.caseWorkspace}>
       <header className={styles.caseHeading}>
         <div>
-          <h1>{detail.case.title}</h1>
+          <div className={styles.titleLine}>
+            <h1>{detail.case.title}</h1>
+            <span className={styles.statusPill} data-phase={phase} role="status" aria-atomic="true">
+              {view.status}
+            </span>
+          </div>
           <p>
             {asset?.name || 'Plant-wide issue'}
             {detail.case.asset_id ? ` · ${detail.case.asset_id}` : ''} ·{' '}
@@ -107,18 +135,6 @@ export function CaseOverview({
           </Link>
         </div>
       </header>
-      <div className={styles.statusBand} role="status" aria-atomic="true" data-phase={phase}>
-        <Clock3 size={20} aria-hidden="true" />
-        <div>
-          <strong>{view.status}</strong>
-          <p>{view.explanation}</p>
-        </div>
-        {view.next && (
-          <span className={styles.ownerBadge}>
-            {view.next.target_role} · {view.mine ? 'You' : view.next.owner_name || 'Unclaimed'}
-          </span>
-        )}
-      </div>
       {feedback && (
         <p role="status" className={styles.success}>
           {feedback}
@@ -127,19 +143,13 @@ export function CaseOverview({
       <ol className={styles.journey} aria-label="Case progress">
         {['Report recorded', 'Evidence review', 'Human finding', 'Next decision'].map(
           (name, index) => (
-            <li key={name} aria-current={index === stageIndex ? 'step' : undefined}>
+            <li
+              key={name}
+              data-complete={completedSteps[index]}
+              aria-current={index === stageIndex ? 'step' : undefined}
+            >
               <span>
-                {index === 0 ||
-                (index === 1 &&
-                  view.run?.steps.some(
-                    (step) => step.stage === 'context' && step.state === 'completed',
-                  )) ||
-                (index === 2 && detail.tasks.some((task) => task.state === 'completed')) ||
-                (index === 3 && view.terminal) ? (
-                  <Check size={13} aria-hidden="true" />
-                ) : (
-                  index + 1
-                )}
+                {completedSteps[index] ? <Check size={13} aria-hidden="true" /> : index + 1}
               </span>
               {name}
             </li>
@@ -157,31 +167,34 @@ export function CaseOverview({
               {view.investigator?.summary ||
                 'The report is recorded. No completed assessment is available for the current evidence revision.'}
             </p>
-            {!!view.missing.length && (
-              <div className={styles.evidenceGap}>
-                <CircleAlert size={18} aria-hidden="true" />
-                <div>
-                  <strong>What still needs checking</strong>
-                  <p>{view.missing.map((item) => item.title).join('; ')}.</p>
-                  <small>Missing evidence does not confirm a fault.</small>
+            <CaseInsights detail={detail} onSource={openSource} />
+            <div className={styles.assessmentCallouts}>
+              {!!view.missing.length && (
+                <div className={styles.evidenceGap}>
+                  <CircleAlert size={18} aria-hidden="true" />
+                  <div>
+                    <strong>What still needs checking</strong>
+                    <p>{view.missing.map((item) => item.title).join('; ')}.</p>
+                    <small>Missing evidence does not confirm a fault.</small>
+                  </div>
                 </div>
-              </div>
-            )}
-            {view.production && (
-              <div className={styles.productionImpact}>
-                <GitBranch size={18} aria-hidden="true" />
-                <div>
-                  <h4>Production impact</h4>
-                  <p>{view.production.summary}</p>
+              )}
+              {view.production && (
+                <div className={styles.productionImpact}>
+                  <GitBranch size={18} aria-hidden="true" />
+                  <div>
+                    <h4>Production impact</h4>
+                    <p>{view.production.summary}</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             <p className={styles.note}>
               Staff reports and AI findings do not verify physical cause, spending approval or
               repair.
             </p>
             {view.run && (
-              <details>
+              <details className={styles.specialistFindings}>
                 <summary>Specialist findings</summary>
                 {view.run.steps
                   .filter((step) => step.stage !== 'context')
@@ -248,144 +261,83 @@ export function CaseOverview({
           </section>
           <section className={styles.evidenceSection} aria-labelledby="case-evidence-heading">
             <h3 id="case-evidence-heading">Evidence behind this assessment</h3>
-            {detail.evidence.map((item) => (
-              <details className={styles.evidenceRow} key={item.id}>
-                <summary>
-                  <FileText size={15} aria-hidden="true" />
-                  <span>
-                    {item.origin === 'staff_report'
-                      ? 'Staff report'
-                      : item.origin === 'manager_outcome'
-                        ? 'Manager outcome'
-                        : 'Human finding'}
-                    <small>
-                      {item.actor_name || 'Recorded staff member'} ·{' '}
-                      {new Date(item.created_at).toLocaleString()}
-                    </small>
-                  </span>
-                </summary>
-                <p>{item.text}</p>
-                {(item.values ?? []).map((value, index) => (
-                  <p key={index}>
-                    {value.signal_id}: {value.value} {value.unit} · Staff-reported
-                  </p>
-                ))}
-              </details>
-            ))}
-            {view.run?.sources
-              ?.filter((item) => item.id in sourceNames)
-              .map((item) => (
-                <button
-                  className={styles.sourceRow}
-                  key={item.id}
-                  aria-expanded={sourceId === item.id}
-                  onClick={(event) => openSource(item.id, event.currentTarget)}
-                >
-                  <span>
-                    <strong>{item.title}</strong>
-                    <small>{sourceSummary(item)}</small>
-                  </span>
-                  <span className={styles.sourceStatus} data-status={item.status}>
-                    {item.status === 'missing'
-                      ? 'Not available'
-                      : item.status === 'reference'
-                        ? 'Reference'
-                        : 'Saved source'}{' '}
-                    <ArrowRight size={13} aria-hidden="true" />
-                  </span>
-                </button>
+            <div className={styles.humanEvidence} aria-label="Human submissions">
+              {detail.evidence.map((item) => (
+                <details className={styles.evidenceRow} key={item.id}>
+                  <summary>
+                    <FileText size={15} aria-hidden="true" />
+                    <span>
+                      {item.origin === 'staff_report'
+                        ? 'Staff report'
+                        : item.origin === 'manager_outcome'
+                          ? 'Manager outcome'
+                          : 'Human finding'}
+                      <small>
+                        {item.actor_name || 'Recorded staff member'} ·{' '}
+                        {new Date(item.created_at).toLocaleString()}
+                      </small>
+                    </span>
+                  </summary>
+                  <p>{item.text}</p>
+                  {(item.values ?? []).map((value, index) => (
+                    <p key={index}>
+                      {value.signal_id}: {value.value} {value.unit} · Staff-reported
+                    </p>
+                  ))}
+                </details>
               ))}
+            </div>
+            <div className={styles.systemSources} aria-label="Saved analysis sources">
+              {view.run?.sources
+                ?.filter((item) => item.id in sourceNames)
+                .map((item) => (
+                  <Fragment key={item.id}>
+                    <button
+                      className={styles.sourceRow}
+                      key={item.id}
+                      aria-expanded={sourceId === item.id}
+                      onClick={(event) => openSource(item.id, event.currentTarget)}
+                    >
+                      <span>
+                        <strong>{item.title}</strong>
+                        <small>{sourceSummary(item)}</small>
+                      </span>
+                      <span className={styles.sourceStatus} data-status={item.status}>
+                        {item.status === 'missing'
+                          ? 'Not available'
+                          : item.status === 'reference'
+                            ? 'Reference'
+                            : 'Saved source'}{' '}
+                        <ArrowRight size={13} aria-hidden="true" />
+                      </span>
+                    </button>
+                    {sourceId === item.id && selectedSourcePanel}
+                  </Fragment>
+                ))}
+            </div>
             {!!references.length && (
-              <details className={styles.referenceGroup}>
+              <details ref={referenceGroup} className={styles.referenceGroup}>
                 <summary>Procedure and repair references ({references.length})</summary>
                 {references.map((item) => (
-                  <button
-                    className={styles.sourceRow}
-                    key={item.id}
-                    onClick={(event) => openSource(item.id, event.currentTarget)}
-                  >
-                    {item.title} · {item.id}
-                    <ArrowRight size={13} aria-hidden="true" />
-                  </button>
+                  <Fragment key={item.id}>
+                    <button
+                      className={styles.sourceRow}
+                      key={item.id}
+                      aria-expanded={sourceId === item.id}
+                      onClick={(event) => openSource(item.id, event.currentTarget)}
+                    >
+                      {item.title} · {item.id}
+                      <ArrowRight size={13} aria-hidden="true" />
+                    </button>
+                    {sourceId === item.id && selectedSourcePanel}
+                  </Fragment>
                 ))}
               </details>
             )}
             {!detail.evidence.length && !view.run?.sources?.length && (
               <p className={styles.note}>No evidence submissions have been recorded yet.</p>
             )}
-            {source && (
-              <section
-                ref={sourcePanel}
-                tabIndex={-1}
-                className={styles.sourceDetail}
-                aria-label="Selected evidence source"
-              >
-                <div className={styles.line}>
-                  <h4>{source.title}</h4>
-                  <button
-                    className={styles.textButton}
-                    onClick={() => {
-                      setSourceId(null);
-                      sourceTrigger.current?.focus({ preventScroll: true });
-                    }}
-                  >
-                    Close source
-                  </button>
-                </div>
-                <p>{sourceSummary(source)}</p>
-                {source.status === 'reference' && !source.text.trim().startsWith('{') && (
-                  <p>{source.text}</p>
-                )}
-                <details>
-                  <summary>Saved source details</summary>
-                  <pre>{source.text}</pre>
-                </details>
-              </section>
-            )}
           </section>
-          <section className={styles.timeline}>
-            <h3>What happened</h3>
-            {detail.events.slice(0, 3).map((event) => (
-              <div key={event.sequence} className={styles.activityItem}>
-                <span className={styles.activityDot} />
-                <div>
-                  <p>{eventTitle(event)}</p>
-                  <time dateTime={event.at}>{new Date(event.at).toLocaleString()}</time>
-                </div>
-              </div>
-            ))}
-            <details>
-              <summary>View complete recorded activity</summary>
-              {detail.events.slice(3).map((event) => (
-                <p className={styles.note} key={event.sequence}>
-                  {new Date(event.at).toLocaleString()} · {eventTitle(event)}
-                </p>
-              ))}
-            </details>
-          </section>
-          <details>
-            <summary>Previous analysis revisions</summary>
-            {detail.runs
-              .filter((run) => run.id !== view.run?.id)
-              .map((run) => (
-                <details key={run.id}>
-                  <summary>
-                    Revision {run.analysis_version} · {run.provider} ·{' '}
-                    {run.state.replaceAll('_', ' ')}
-                  </summary>
-                  {run.steps.map((step) => (
-                    <p key={step.stage}>
-                      <strong>{stageNames[step.stage] || step.stage}</strong> ·{' '}
-                      {step.summary || step.state}
-                    </p>
-                  ))}
-                </details>
-              ))}
-            {detail.runs.length < 2 && (
-              <p className={styles.note}>No earlier revisions recorded.</p>
-            )}
-          </details>
-          {children}
         </div>
         <aside className={styles.caseAside} aria-label="Next case action">
           <section className={styles.nextAction}>
@@ -422,7 +374,7 @@ export function CaseOverview({
                 {!view.terminal && !view.next && reviewer && phase !== 'investigating' && (
                   <button
                     className="secondary"
-                    onClick={() => openControl(outcomeAction ? 'outcome' : 'information')}
+                    onClick={() => onAction(outcomeAction ? 'outcome' : 'information')}
                   >
                     {outcomeAction ? 'Record outcome' : 'Request missing information'}
                   </button>
@@ -445,7 +397,6 @@ export function CaseOverview({
               </p>
             ))}
             {!view.run && <p>No analysis has started for this revision.</p>}
-            <p>{view.status}</p>
             <small>
               Last case update{' '}
               <time dateTime={detail.case.updated_at}>
@@ -462,6 +413,59 @@ export function CaseOverview({
             </details>
           )}
         </aside>
+      </div>
+      <div className={styles.caseBottom}>
+        <section className={styles.timeline}>
+          <h3>What happened</h3>
+          {detail.events.slice(0, 3).map((event) => (
+            <div key={event.sequence} className={styles.activityItem}>
+              <span className={styles.activityDot} />
+              <div>
+                <p>{eventTitle(event)}</p>
+                <time dateTime={event.at}>{new Date(event.at).toLocaleString()}</time>
+              </div>
+            </div>
+          ))}
+          <details>
+            <summary>View complete recorded activity</summary>
+            <div
+              className={styles.activityLog}
+              role="region"
+              aria-label="Complete recorded activity"
+              tabIndex={0}
+            >
+              {detail.events.slice(3).map((event) => (
+                <div className={styles.logRow} key={event.sequence}>
+                  <time dateTime={event.at}>{new Date(event.at).toLocaleString()}</time>
+                  <span>{eventTitle(event)}</span>
+                </div>
+              ))}
+            </div>
+          </details>
+          <details className={styles.previousAnalyses}>
+            <summary>Previous analysis revisions</summary>
+            {detail.runs
+              .filter((run) => run.id !== view.run?.id)
+              .map((run) => (
+                <details key={run.id}>
+                  <summary>
+                    Revision {run.analysis_version} · {run.provider} ·{' '}
+                    {run.state.replaceAll('_', ' ')}
+                  </summary>
+                  {run.steps.map((step) => (
+                    <p key={step.stage}>
+                      <strong>{stageNames[step.stage] || step.stage}</strong> ·{' '}
+                      {step.summary || step.state}
+                    </p>
+                  ))}
+                </details>
+              ))}
+            {detail.runs.length < 2 && (
+              <p className={styles.note}>No earlier revisions recorded.</p>
+            )}
+          </details>
+        </section>
+        <div className={styles.caseControls}>{children}</div>
       </div>
       <p className={styles.boundary}>
         <ShieldCheck size={15} aria-hidden="true" /> AI findings are advisory. Approvals and repair

@@ -32,7 +32,7 @@
 .open {
   margin-top: 10px;
   font-size: 12px;
-  color: #85ddba;
+  color: var(--accent);
 }
 
 .card.ooc {
