@@ -941,6 +941,47 @@ export interface components {
              */
             identity_provider: string;
         };
+        /** AgentRunView */
+        AgentRunView: {
+            /** Id */
+            id: string;
+            /** Analysis Version */
+            analysis_version: number;
+            /** Provider */
+            provider: string;
+            /** State */
+            state: string;
+            /** Created At */
+            created_at: string;
+            /** Steps */
+            steps: components["schemas"]["AgentStepView"][];
+            /** Error */
+            error?: string | null;
+            /** Sources */
+            sources?: components["schemas"]["CaseSource"][];
+        };
+        /** AgentStepView */
+        AgentStepView: {
+            /** Stage */
+            stage: string;
+            /** State */
+            state: string;
+            /** Updated At */
+            updated_at: string;
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Citations */
+            citations?: string[];
+            /** Error */
+            error?: string | null;
+            /** Hypotheses */
+            hypotheses?: components["schemas"]["Hypothesis"][];
+            /** Unsupported Claims */
+            unsupported_claims?: string[];
+        };
         /** Approval */
         Approval: {
             /** Option Id */
@@ -1086,6 +1127,19 @@ export interface components {
             /** Next Cursor */
             next_cursor: number | null;
         };
+        /** AutomationPolicy */
+        AutomationPolicy: {
+            /** Version */
+            version: number;
+            /** Enabled */
+            enabled: boolean;
+            /** Request Information */
+            request_information: boolean;
+            /** Record Findings */
+            record_findings: boolean;
+            /** Escalate Overdue */
+            escalate_overdue: boolean;
+        };
         /** Calculation */
         Calculation: {
             /** Options */
@@ -1111,6 +1165,142 @@ export interface components {
              * @default 1
              */
             risk_multiplier: number;
+        };
+        /** CaseCancel */
+        CaseCancel: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Reason */
+            reason: string;
+        };
+        /** CaseCreate */
+        CaseCreate: {
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "equipment" | "production" | "maintenance" | "quality" | "staffing" | "materials" | "general";
+            /** Asset Id */
+            asset_id?: string | null;
+        };
+        /** CaseDetail */
+        CaseDetail: {
+            case: components["schemas"]["CaseView"];
+            /** Tasks */
+            tasks: components["schemas"]["HumanTask"][];
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceSubmission"][];
+            /** Runs */
+            runs: components["schemas"]["AgentRunView"][];
+            /** Events */
+            events: components["schemas"]["CaseEvent"][];
+        };
+        /** CaseEvent */
+        CaseEvent: {
+            /** Sequence */
+            sequence: number;
+            /** At */
+            at: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /** Action */
+            action: string;
+            /** Message */
+            message: string;
+        };
+        /** CaseLink */
+        CaseLink: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Incident Id */
+            incident_id: string;
+        };
+        /** CaseMutation */
+        CaseMutation: {
+            /** Expected Revision */
+            expected_revision: number;
+        };
+        /** CaseOutcome */
+        CaseOutcome: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Outcome */
+            outcome: string;
+            /** Evidence Ids */
+            evidence_ids: string[];
+        };
+        /** CasePage */
+        CasePage: {
+            /** Items */
+            items: components["schemas"]["CaseView"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** CaseSource */
+        CaseSource: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "recorded" | "missing" | "reference";
+            /** Text */
+            text: string;
+        };
+        /** CaseView */
+        CaseView: {
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "equipment" | "production" | "maintenance" | "quality" | "staffing" | "materials" | "general";
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id: string;
+            /** Plant Id */
+            plant_id: string;
+            /** Incident Id */
+            incident_id: string | null;
+            /**
+             * Phase
+             * @enum {string}
+             */
+            phase: "triage" | "investigating" | "waiting_for_input" | "awaiting_decision" | "in_progress" | "verifying" | "resolved" | "blocked" | "cancelled";
+            /** Revision */
+            revision: number;
+            /** Analysis Version */
+            analysis_version: number;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "staff_report" | "plant_observation";
+            /** Outcome */
+            outcome?: string | null;
+            /** Next Action */
+            next_action?: string | null;
+            /** Next Owner */
+            next_owner?: string | null;
         };
         /** ConfigurationUpdate */
         ConfigurationUpdate: {
@@ -1285,6 +1475,48 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HumanTask */
+        HumanTask: {
+            /** Id */
+            id: string;
+            /** Organization Id */
+            organization_id: string;
+            /** Plant Id */
+            plant_id: string;
+            /** Case Id */
+            case_id: string;
+            /**
+             * Target Role
+             * @enum {string}
+             */
+            target_role: "reliability" | "manager" | "technician";
+            /** Owner Id */
+            owner_id: string | null;
+            /** Owner Name */
+            owner_name?: string | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "open" | "claimed" | "completed" | "cancelled";
+            /** Revision */
+            revision: number;
+            /** Due At */
+            due_at: string | null;
+            /** Created At */
+            created_at: string;
+            /** Question */
+            question: string;
+            /** Reason */
+            reason: string;
+            /** Completion Requirements */
+            completion_requirements: string;
+            /**
+             * Escalated
+             * @default false
+             */
+            escalated: boolean;
         };
         /** Hypothesis */
         Hypothesis: {
@@ -1513,6 +1745,56 @@ export interface components {
              */
             clock_label: string;
         };
+        /** Notification */
+        Notification: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "human_request" | "analysis_ready" | "blocked" | "recurring_issue";
+            /** Case Id */
+            case_id: string;
+            /** Task Id */
+            task_id?: string | null;
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Title */
+            title: string;
+            /** Message */
+            message: string;
+            /** Ai Summary */
+            ai_summary?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Read */
+            read: boolean;
+        };
+        /** NotificationAcknowledgement */
+        NotificationAcknowledgement: {
+            /** Notification Id */
+            notification_id: string;
+            /**
+             * Read
+             * @default true
+             */
+            read: boolean;
+        };
+        /** NotificationPage */
+        NotificationPage: {
+            /** Items */
+            items: components["schemas"]["Notification"][];
+            /** Unread Count */
+            unread_count: number;
+            /** Next Cursor */
+            next_cursor: number | null;
+        };
+        /** NotificationRead */
+        NotificationRead: {
+            /** Notification Id */
+            notification_id: string;
+        };
         /** ObservationBatch */
         ObservationBatch: {
             /** Expected Version */
@@ -1669,6 +1951,28 @@ export interface components {
             data_mode: string;
             /** Simulated Minutes */
             simulated_minutes: number;
+        };
+        /** PolicyUpdate */
+        PolicyUpdate: {
+            /** Expected Version */
+            expected_version: number;
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Request Information
+             * @default true
+             */
+            request_information: boolean;
+            /**
+             * Record Findings
+             * @default true
+             */
+            record_findings: boolean;
+            /**
+             * Escalate Overdue
+             * @default true
+             */
+            escalate_overdue: boolean;
         };
         /** ProgressRecord */
         ProgressRecord: {
@@ -2027,6 +2331,164 @@ export interface components {
             /** Upper */
             upper?: number | null;
         };
+        /** SimulationAssignment */
+        SimulationAssignment: {
+            /** Id */
+            id: string;
+            /** Asset Id */
+            asset_id: string;
+            /** Operator Id */
+            operator_id: string;
+            /** Status */
+            status: string;
+            /** Note */
+            note: string;
+            /** Operator Name */
+            operator_name?: string | null;
+            /** Craft */
+            craft?: string | null;
+            /** Experience Years */
+            experience_years?: number | null;
+        };
+        /** SimulationCase */
+        SimulationCase: {
+            /** Id */
+            id: string;
+            /** Asset Id */
+            asset_id: string;
+            /** Operator Id */
+            operator_id: string;
+            /** Status */
+            status: string;
+            /** Note */
+            note: string;
+        };
+        /** SimulationCaseEvidence */
+        SimulationCaseEvidence: {
+            /** Case Id */
+            case_id: string;
+            /** Asset Id */
+            asset_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Attended At */
+            attended_at?: string | null;
+            /** Fixed At */
+            fixed_at?: string | null;
+            /** Recovered At */
+            recovered_at?: string | null;
+            /**
+             * Interrupted
+             * @default false
+             */
+            interrupted: boolean;
+            detection: components["schemas"]["SimulationReading"];
+            /** Topology Captured */
+            topology_captured: boolean;
+            /** Affected Asset Ids */
+            affected_asset_ids: string[];
+            /** Lines */
+            lines: components["schemas"]["SimulationImpactLine"][];
+            /**
+             * Recovery Basis
+             * @default scenario_timer
+             * @constant
+             */
+            recovery_basis: "scenario_timer";
+        };
+        /** SimulationContext */
+        SimulationContext: {
+            /**
+             * Captured At
+             * Format: date-time
+             */
+            captured_at: string;
+            /** Selected Case Id */
+            selected_case_id?: string | null;
+            /** Selected Assignment Id */
+            selected_assignment_id?: string | null;
+            /** Equipment */
+            equipment: components["schemas"]["SimulationEquipment"][];
+            /** Assignments */
+            assignments: components["schemas"]["SimulationAssignment"][];
+            /** Cases */
+            cases: components["schemas"]["SimulationCase"][];
+            case_evidence?: components["schemas"]["SimulationCaseEvidence"] | null;
+            process?: components["schemas"]["SimulationProcessContext"] | null;
+        };
+        /** SimulationEquipment */
+        SimulationEquipment: {
+            /** Asset Id */
+            asset_id: string;
+            /** Readings */
+            readings: components["schemas"]["SimulationReading"][];
+            /** Mode */
+            mode?: ("idle" | "running" | "degraded" | "stopped" | "under_repair" | "recovering") | null;
+        };
+        /** SimulationImpactLine */
+        SimulationImpactLine: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Capacity Per Hour */
+            capacity_per_hour: number;
+        };
+        /** SimulationProcessContext */
+        SimulationProcessContext: {
+            /**
+             * Simulated At
+             * Format: date-time
+             */
+            simulated_at: string;
+            /** Paused */
+            paused: boolean;
+            /**
+             * Speed
+             * @enum {integer}
+             */
+            speed: 1 | 10;
+            /** Phase */
+            phase: string;
+            /** Fault Asset Id */
+            fault_asset_id?: string | null;
+            /** Affected Asset Ids */
+            affected_asset_ids: string[];
+            /** Lines */
+            lines: components["schemas"]["SimulationProductionLine"][];
+        };
+        /** SimulationProductionLine */
+        SimulationProductionLine: {
+            /** Id */
+            id: string;
+            /** Capacity Per Hour */
+            capacity_per_hour: number;
+            /** Output Per Hour */
+            output_per_hour: number;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "idle" | "running" | "degraded" | "stopped" | "under_repair" | "recovering";
+        };
+        /** SimulationReading */
+        SimulationReading: {
+            /** Signal Id */
+            signal_id: string;
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+            /** Low */
+            low: number;
+            /** High */
+            high: number;
+            /** Ooc */
+            ooc: boolean;
+        };
         /** SourceBinding */
         SourceBinding: {
             /** Asset Id */
@@ -2181,6 +2643,42 @@ export interface components {
          * @enum {string}
          */
         Status: "unknown" | "healthy" | "degrading" | "investigating" | "critical" | "affected" | "stopped" | "verifying";
+        /** TaskCreate */
+        TaskCreate: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Question */
+            question: string;
+            /** Reason */
+            reason: string;
+            /** Completion Requirements */
+            completion_requirements: string;
+            /**
+             * Target Role
+             * @enum {string}
+             */
+            target_role: "reliability" | "manager" | "technician";
+            /** Due At */
+            due_at?: string | null;
+        };
+        /** TaskPage */
+        TaskPage: {
+            /** Items */
+            items: components["schemas"]["HumanTask"][];
+            /** Next Cursor */
+            next_cursor: number | null;
+            /** Actionable Count */
+            actionable_count: number;
+        };
+        /** TaskResponse */
+        TaskResponse: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Text */
+            text: string;
+            /** Values */
+            values?: components["schemas"]["EvidenceValue"][];
+        };
         /** TelemetryWindow */
         TelemetryWindow: {
             /** Source Id */

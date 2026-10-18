@@ -1,9 +1,16 @@
 import {
   OPERATORS,
+  RECOVERY_MS,
   timelineFor,
   type PreviewAssignment,
 } from '@/features/operators/lib/preview-dispatch';
 import type { PreviewReading } from '@/features/plant/lib/preview-telemetry';
+import type { ProcessCatalog } from '@/features/plant/lib/process-simulation';
+import {
+  captureCaseContext,
+  validCaseContext,
+  type SimulationCaseContext,
+} from '@/features/incidents/lib/simulation-case';
 
 export const MAX_SAMPLES = 48;
 export const MAX_CASES = 40;
@@ -28,6 +35,8 @@ export type CaseMetadata = {
 };
 
 export type MachineCase = {
+  context?: SimulationCaseContext;
+  interrupted?: boolean;
   id: string;
   assetId: string;
   assetType: string;
@@ -78,6 +87,15 @@ export function attendedAtFor(item: PreviewAssignment) {
   return item.openedAt + wait;
 }
 
+export function fixedAtFor(item: PreviewAssignment) {
+  return (
+    item.openedAt +
+    timelineFor(item.severity)
+      .filter((step) => step.ooc)
+      .reduce((total, step) => total + step.ms, 0)
+  );
+}
+
 export function caseMessage(item: PreviewAssignment) {
   const signal = item.signalId.replaceAll('_', ' ');
   return `${signal} reached ${item.value} ${item.unit}, outside preview limits ${item.low}–${item.high}. ${item.severity} OOC on ${item.assetId}. Operator note: inspect the ${signal} path, confirm the envelope, and restore the cell before release.`;
@@ -123,13 +141,14 @@ export function syncCases(
   open: PreviewAssignment[],
   history: PreviewAssignment[],
   now: number,
+  context?: ProcessCatalog,
 ): PreviewLedger {
   const byId = new Map(ledger.cases.map((item) => [item.id, item]));
   for (const item of [...history].reverse()) {
-    byId.set(item.id, toCase(item, now, byId.get(item.id), true));
+    byId.set(item.id, toCase(item, now, byId.get(item.id), context));
   }
   for (const item of open) {
-    byId.set(item.id, toCase(item, now, byId.get(item.id), false));
+    byId.set(item.id, toCase(item, now, byId.get(item.id), context));
   }
   const cases = [...byId.values()]
     .sort((left, right) => right.openedAt - left.openedAt)
@@ -147,10 +166,11 @@ export function recordTick(
     now: number;
     open: PreviewAssignment[];
     history: PreviewAssignment[];
+    context?: ProcessCatalog;
   },
 ): PreviewLedger {
   const base = ledger.plantId === input.plantId ? ledger : emptyLedger(input.plantId);
-  return syncCases(appendSamples(base, input), input.open, input.history, input.now);
+  return syncCases(appendSamples(base, input), input.open, input.history, input.now, input.context);
 }
 
 export function parseLedger(raw: string | null, plantId: string): PreviewLedger {
@@ -178,13 +198,22 @@ function toCase(
   item: PreviewAssignment,
   now: number,
   existing: MachineCase | undefined,
-  finished: boolean,
+  context?: ProcessCatalog,
 ): MachineCase {
   const operator = OPERATORS.find((person) => person.id === item.operatorId);
   const attend = attendedAtFor(item);
   const attendedAt = existing?.attendedAt ?? (now >= attend ? attend : null);
-  const clearedAt = finished ? (existing?.clearedAt ?? existing?.fixedAt ?? now) : null;
+  const completion = fixedAtFor(item);
+  const fixedAt =
+    existing?.fixedAt ?? existing?.clearedAt ?? (now >= completion ? completion : null);
+  const clearedAt =
+    existing?.clearedAt ?? (now >= completion + RECOVERY_MS ? completion + RECOVERY_MS : null);
   return {
+    ...(existing?.context
+      ? { context: existing.context }
+      : !existing && context
+        ? { context: captureCaseContext(context, item.assetId) }
+        : {}),
     id: item.id,
     assetId: item.assetId,
     assetType: item.assetType,
@@ -198,7 +227,7 @@ function toCase(
     occurredAt: existing?.occurredAt ?? item.openedAt,
     attendedAt,
     clearedAt,
-    fixedAt: clearedAt,
+    fixedAt,
     message: existing?.message || caseMessage(item),
     metadata: existing?.metadata || {
       assignmentId: item.id,
@@ -217,6 +246,7 @@ export function normalizeCase(raw: Partial<MachineCase> & { id?: string }): Mach
   const openedAt = raw.openedAt ?? raw.occurredAt ?? 0;
   const clearedAt = raw.clearedAt ?? raw.fixedAt ?? null;
   return {
+    ...(validCaseContext(raw.context) ? { context: raw.context } : {}),
     id: raw.id || 'ASN-unknown',
     assetId: raw.assetId || '',
     assetType: raw.assetType || raw.metadata?.assetType || '',

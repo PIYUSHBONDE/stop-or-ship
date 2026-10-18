@@ -1,29 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { useCallback, useState } from 'react';
-import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
-import { PHASE_COPY } from '@/features/operators/lib/preview-dispatch';
-import previewStyles from '@/features/plant/components/plant-preview.module.css';
-import {
-  ArrowRight,
-  ChevronRight,
-  Focus,
-  Layers,
-  Search,
-  PanelRightClose,
-  PanelRightOpen,
-} from 'lucide-react';
-import { usePlant } from '@/providers/plant-session-provider';
-import { money } from '@/lib/api/client';
-import Sparkline from '@/components/ui/sparkline';
-import EvidenceDialog from '@/features/incidents/components/evidence-dialog';
-
-const PlantScene = dynamic(() => import('@/features/plant/components/plant-scene'), {
-  ssr: false,
-  loading: () => <div className="scene-loading">Preparing your factory view…</div>,
-});
+import { useSearchParams } from 'next/navigation';
+import { ObservationWorkspace } from './observation-workspace';
+import { SimulationWorkspace } from './simulation-workspace';
 
 export function FactoryWorkspace() {
   const { state, selected, selectAsset } = usePlant();

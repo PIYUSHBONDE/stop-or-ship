@@ -11,8 +11,14 @@ import {
 } from '@/features/operators/lib/preview-dispatch';
 import type { PreviewReading } from '@/features/plant/lib/preview-telemetry';
 import type { PreviewLedger } from '@/features/monitoring/lib/preview-records';
+import type {
+  ProcessState,
+  SimulationCommand,
+  processView,
+} from '@/features/plant/lib/process-simulation';
+import type { Asset } from '@/lib/types';
 
-const EMPTY: { id: string; type: string; position: number[] }[] = [];
+const EMPTY: Asset[] = [];
 
 type PreviewDispatch = {
   enabled: boolean;

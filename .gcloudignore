@@ -1,4 +1,5 @@
 .gcloudignore
+#!include:.gitignore
 .git
 .codex
 .codex-remote-attachments
@@ -21,3 +22,5 @@ docs/artifacts/*.png
 **/*credentials*.json
 **/*service-account*.json
 secrets/
+.runtime/
+gha-creds-*.json

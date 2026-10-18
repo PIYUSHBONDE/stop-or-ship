@@ -1,0 +1,87 @@
+# Local production-like stack: live Vertex, Cloud SQL Auth Proxy and worker.
+x-plantsense-environment: &plantsense-environment
+  PLANTSENSE_MODE: ${PLANTSENSE_MODE:-local}
+  PLANTSENSE_AI_PROVIDER: ${PLANTSENSE_AI_PROVIDER:-vertex}
+  GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+  GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:?Set GOOGLE_CLOUD_PROJECT in .env}
+  GOOGLE_CLOUD_LOCATION: ${GOOGLE_CLOUD_LOCATION:-global}
+  GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_adc.json
+  DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+  PLANTSENSE_POSTGRES_EVIDENCE_DSN: ${PLANTSENSE_POSTGRES_EVIDENCE_DSN:?Set PLANTSENSE_POSTGRES_EVIDENCE_DSN in .env}
+  PLANTSENSE_STAFF_WEB_ORIGINS: http://localhost:${PLANTSENSE_WEB_PORT:-3000},http://127.0.0.1:${PLANTSENSE_WEB_PORT:-3000}
+  DAILY_AI_LIMIT: ${DAILY_AI_LIMIT:-60}
+  DAILY_AI_SPEND_MICRO_USD: ${DAILY_AI_SPEND_MICRO_USD:-2000000}
+  INVESTIGATION_AI_SPEND_MICRO_USD: ${INVESTIGATION_AI_SPEND_MICRO_USD:-750000}
+
+services:
+  cloud-sql-proxy:
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.26.2
+    command:
+      - --address=0.0.0.0
+      - --port=5432
+      - --structured-logs
+      - ${PLANTSENSE_CLOUD_SQL_INSTANCE:?Set PLANTSENSE_CLOUD_SQL_INSTANCE in .env}
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google_adc.json
+    volumes:
+      - type: bind
+        source: ${PLANTSENSE_ADC_FILE:?Set PLANTSENSE_ADC_FILE in .env}
+        target: /run/secrets/google_adc.json
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    depends_on:
+      cloud-sql-proxy:
+        condition: service_started
+    environment:
+      <<: *plantsense-environment
+    volumes:
+      - type: bind
+        source: ${PLANTSENSE_ADC_FILE:?Set PLANTSENSE_ADC_FILE in .env}
+        target: /run/secrets/google_adc.json
+        read_only: true
+        bind:
+          create_host_path: false
+
+  case-worker:
+    build:
+      context: ./backend
+    command: ["python", "-m", "app.cases.worker"]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      <<: *plantsense-environment
+      SERVICE_ROLE: worker
+      PLANTSENSE_DB: /var/lib/plantsense/local.db
+    volumes:
+      - plant-data:/var/lib/plantsense
+      - type: bind
+        source: ${PLANTSENSE_ADC_FILE:?Set PLANTSENSE_ADC_FILE in .env}
+        target: /run/secrets/google_adc.json
+        read_only: true
+        bind:
+          create_host_path: false
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+    stop_grace_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

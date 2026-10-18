@@ -11,6 +11,7 @@ import {
   reconcileDispatch,
   timelineFor,
   timelineMs,
+  selectAssignment,
 } from '../../src/features/operators/lib/preview-dispatch';
 
 const assets = [
@@ -18,6 +19,16 @@ const assets = [
   { id: 'P-107', type: 'pump', position: [0, 0, 0] },
   { id: 'G-1', type: 'goods', position: [-4, 0, 2] },
 ];
+
+test('requested historical assignment takes precedence over an unrelated active job', () => {
+  const active = { id: 'active', operatorId: 'OP-04' };
+  const completed = { id: 'completed', operatorId: 'OP-12' };
+  expect(selectAssignment([active], [completed], 'completed')).toBe(completed);
+  expect(selectAssignment([active], [completed], 'OP-12')).toBe(completed);
+  expect(selectAssignment([active], [completed], 'active')).toBe(active);
+  expect(selectAssignment([active], [completed], null)).toBe(active);
+  expect(selectAssignment([], [completed], 'completed')).toBe(completed);
+});
 
 test('press excursions rate as critical and assign the most experienced idle operator', () => {
   const catalog = previewCatalog(assets, 5, 20);
@@ -77,6 +88,8 @@ test('assignment phases walk to the cell, clear OOC, then return', () => {
   expect(walking.travel).toBeLessThan(1);
   expect(liveAssignment(item, correctingAt).phase).toBe('correcting');
   expect(liveAssignment(item, correctingAt).ooc).toBe(true);
+  expect(liveAssignment(item, walkingAt, true).phase).toBe('en_route');
+  expect(liveAssignment(item, correctingAt, true).phase).toBe('correcting');
   expect(liveAssignment(item, timelineMs(item.severity) + 1).phase).toBe('returned');
   const mid = actorPosition(
     OPERATORS.find((operator) => operator.id === 'OP-12')!,

@@ -1,0 +1,30 @@
+# Disposable fixture database only. No production SQL, secrets or Vertex permissions.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: postgres
+    args:
+      - run
+      - --detach
+      - --network=cloudbuild
+      - --name=postgres-fixture
+      - --env=POSTGRES_HOST_AUTH_METHOD=trust
+      - --env=POSTGRES_DB=plantsense_test
+      - postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+  - name: python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89
+    id: checks
+    entrypoint: bash
+    env:
+      - PYTHONPATH=/workspace/backend:/workspace/infra/postgres
+      - UV_PROJECT_ENVIRONMENT=/workspace/.acceptance-venv
+      - PLANTSENSE_TEST_POSTGRES_DSN=postgresql://postgres@postgres-fixture:5432/plantsense_test
+      - PLANTSENSE_INTERNAL_TEST_MODE=true
+      - PLANTSENSE_AI_PROVIDER=scripted
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir uv==0.12.23
+        uv sync --project backend --frozen --extra dev
+        .acceptance-venv/bin/python -m pytest backend/tests infra/postgres/tests -q -p no:cacheprovider
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1200s

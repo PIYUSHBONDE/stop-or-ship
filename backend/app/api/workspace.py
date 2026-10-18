@@ -73,7 +73,7 @@ def set_session(response, request, token):
         token,
         max_age=SESSION_SECONDS,
         httponly=True,
-        secure=request.url.scheme == "https",
+        secure=config.MODE == "cloud" or request.url.scheme == "https",
         samesite="strict",
         path="/",
     )

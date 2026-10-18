@@ -1,17 +1,20 @@
-# Three-minute demo narrative
+# Submission demonstration: under three minutes
 
-The supplied local recording is a silent rehearsal with on-screen captions. Its investigator is scripted and marked accordingly. Record the final submission against the cloud deployment after live-model validation, using this narration.
+Earlier local recordings show previous interfaces and a scripted investigator. They do not prove current live AI or public deployment. Record the final version after matching live evaluations and public staff-workflow acceptance pass. Use a separate demonstration account and plant, never the main staff database.
 
 | Time | Show | Narration |
 |---|---|---|
-| 0:00–0:20 | Whole plant, selectable equipment, healthy state | “PlantSense connects a plant's operational signals to a maintenance decision. This is a simulated hydraulic manufacturing plant with two lines and shared utilities.” |
-| 0:20–0:45 | Pump replay, persistent alert, downstream path | “Measured hydraulic test-rig data is replayed through a conventional anomaly detector. A persistent change at P-107 affects Press A, its conveyor and finished output; the parallel line remains independent.” |
-| 0:45–1:15 | Tool progress, hypothesis, cited telemetry and SOP | “The investigator gathers telemetry, plant context, procedures and confirmed cases. It ranks possible causes and identifies the inspection needed to distinguish them. Evidence is inspectable, and uncertainty stays visible.” |
-| 1:15–1:55 | Reliability/Production positions, option costs and assumptions | “Reliability and Production see the same facts. Python calculates contribution-margin loss, repairs, penalties and incremental exposure. These failure probabilities are labelled assumptions. Hard constraints precede cost ranking.” |
-| 1:55–2:15 | Human approval and work order | “The manager approves a versioned plan. The agent cannot issue consequential work by itself.” |
-| 2:15–2:40 | Technician correction, three recovery windows | “The technician confirms the observed cause. Closing the work order starts verification; it does not prove that the fault disappeared.” |
-| 2:40–3:00 | Verified memory and later retrieval | “Healthy telemetry verifies the repair. The confirmed outcome becomes evidence for the next investigation. We reuse knowledge without claiming online retraining or plug-and-play connectivity.” |
+| 0:00–0:20 | Automatic simulated plant, pump fault and unaffected parallel line | “PlantSense helps a manufacturing team connect abnormal readings to a maintenance decision. This reference factory illustrates how a pump affects one line. These readings and output are simulated.” |
+| 0:20–0:35 | Existing machine records and expandable case table | “The case stores detection, attendance, repair and recovery times. Automatic repair and recovery here are a scenario, not an inspection or authorization.” |
+| 0:35–1:05 | Explicit switch to isolated authored operational-workflow fixture; investigation evidence | “Now we demonstrate the decision workflow with labeled authored inputs. The read-only investigator gathers observations, procedures and confirmed history, ranks possible causes and identifies missing checks.” |
+| 1:05–1:35 | Reliability/Production positions and intervention comparison | “Both perspectives receive the same evidence. Python calculates repair and production trade-offs. Failure exposure is a configured planning assumption, not a measured probability or realized saving.” |
+| 1:35–1:55 | Exact-version human approval and authorized work | “The manager approves this version of the plan. AI cannot authorize work. Physical isolation and site procedures remain the responsibility of authorized people.” |
+| 1:55–2:20 | Technician correction and post-repair verification | “The technician records the observed cause and repair. Work completion starts verification; distinct healthy observations must establish recovery.” |
+| 2:20–2:45 | Matching verified memory and later retrieval | “The verified outcome retains the original hypothesis and technician correction. A later investigation can retrieve this evidence without model retraining.” |
+| 2:45–2:50 | Product promise and observed evaluation summary | “From evidence to a human decision, then proof of recovery. Evaluation results and limitations accompany the prototype.” |
 
-Use ₹ values from the current cost table. Do not describe configured exposure as realized savings. Do not claim that one sensor anomaly determines a confirmed mechanical fault. Additional sensor-uncertainty and failed-recovery scenarios are available for judge exploration.
+Operational-workflow demonstration inputs must be explicitly authored and isolated, not described as field measurements. Historical data can support read-only analysis, not current authorization. Show the exact model/provider and label stored results, scripted fallbacks and provider failures truthfully. Recovery needs three complete 60-second post-completion windows; label any video cuts or time-lapse and show original timestamps. Do not shorten production verification rules for recording.
 
-Submission package: proposal PDF, three-minute public video link, public working prototype URL, repository/setup documentation, architecture and evaluation. Public uploading has not been performed without a connected account.
+Use displayed values and observed results. Do not claim industrial diagnostic accuracy, avoided downtime, safety certification, physical integration or public deployment without evidence. Sensor-disagreement, malicious-note, missing-data and failed-recovery checks support the demonstration; they are not physical validation.
+
+Submission package: PDF proposal/deck, public video under three minutes, public working Google Cloud prototype, public repository/setup documentation, architecture and evaluation. Select Manufacturing: Intelligent Operations & Industrial Efficiency. See [delivery scope](../product/hackathon-delivery.md). Deployment and public uploading remain paused under the user's local-only instruction.

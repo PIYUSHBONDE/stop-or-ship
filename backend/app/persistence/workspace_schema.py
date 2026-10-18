@@ -138,3 +138,6 @@ def migrate(db, at):
             case["record_origin"] = "legacy_replay"
             db.execute("UPDATE plant_cases SET data=? WHERE id=?", (json.dumps(case), case_id))
         db.execute("INSERT INTO workspace_migrations VALUES (5, ?)", (at,))
+    from app.cases.schema import migrate as migrate_cases
+
+    migrate_cases(db, at)

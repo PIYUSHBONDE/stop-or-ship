@@ -36,6 +36,7 @@ export function usePlantSession(
   const pollPending = useRef(false);
   const assistantPending = useRef(false);
   const approvalKeys = useRef(new Map<string, string>());
+  const caseKeys = useRef(new Map<string, string>());
   const plantId = workspace?.plantId;
   const incidentId = workspace?.incidentId;
   const contextKey = JSON.stringify([enabled, plantId, incidentId]);

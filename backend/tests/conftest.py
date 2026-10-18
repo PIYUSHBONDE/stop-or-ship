@@ -13,6 +13,7 @@ def pytest_configure(config):
 
 @pytest.fixture(autouse=True)
 def internal_test_adapter(monkeypatch, request):
+    monkeypatch.setattr(config, "AI_PROVIDER", "scripted")
     monkeypatch.setattr(config, "INTERNAL_TEST_MODE", request.node.get_closest_marker("operational") is None)
 
 

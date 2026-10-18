@@ -2,13 +2,15 @@
 
 ## Start locally
 
-Use Docker Desktop with Linux containers on Windows/macOS, or Docker Engine with Compose v2 on Linux. Docker must be running. From the repository root:
+Use Docker Desktop with Linux containers on Windows/macOS, or Docker Engine with Compose v2 on Linux. Docker must be running. Copy `.env.example` to `.env`, then set `PLANTSENSE_ADC_FILE`, `DATABASE_URL` and the evidence database DSN. On Windows, the example selects the local overlay through `COMPOSE_FILE`. Run `gcloud auth application-default login` once. Compose reads `.env` automatically; Git ignores it and Docker excludes it from build contexts.
+
+From the repository root:
 
 ```sh
 docker compose up --build --wait
 ```
 
-Open **http://127.0.0.1:3000**. The web service proxies requests to the private API container. Both services must be healthy before startup completes.
+Open **http://127.0.0.1:3000**. Compose starts the web app, private API, Cloud SQL Auth Proxy and case worker. The API uses Vertex AI and PostgreSQL from `.env`; local live AI needs no evaluation reports. `compose.local.yaml` gives the API and worker the same PostgreSQL DSNs and mounts ADC read-only.
 
 The entry page is now `/workspace`. Set up the initial local administrator/plant, or sign in to an existing staff account. Shared plant history has no reset action. See [shared plant review](../history/shared-plant-review.md) for roles and a separate acceptance stack.
 
@@ -27,7 +29,7 @@ PLANTSENSE_WEB_PORT=3010 docker compose up --build --wait
 
 Inspect startup problems with `docker compose ps` and `docker compose logs --tail=100`. Stop with `docker compose down`. The named `plant-data` volume retains sessions and repair records across restarts. `docker compose down --volumes` permanently deletes that container stack's saved sessions; use it only when intentionally clearing that data.
 
-The stack uses local persistence and the scripted investigator by default. It requires no cloud credentials. Named staff identity and roles are enforced locally; this identity adapter is intended for localhost development. Public or real-plant deployment requires managed identity, TLS and a separate deployment review. Compose derives allowed staff web origins from `PLANTSENSE_WEB_PORT`.
+The ADC file path in `PLANTSENSE_ADC_FILE` is mounted read-only into the API, worker and proxy. The proxy connects by the instance connection name and does not require a public IP allowlist. Use the app and evidence database passwords from Secret Manager in `.env`; never commit those values. Google recommends the [Cloud SQL Auth Proxy](https://docs.cloud.google.com/sql/docs/postgres/connect-auth-proxy), which authenticates the connection and encrypts it. Named staff identity and roles are enforced locally; public or real-plant deployment requires managed identity, TLS and a separate deployment review. Compose derives allowed staff web origins from `PLANTSENSE_WEB_PORT`.
 
 ## Data and repeatable builds
 

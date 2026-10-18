@@ -1,0 +1,18 @@
+# Builds immutable application images. Database migrations remain separate.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: backend
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/plantsense/backend:${_COMMIT_SHA}', 'backend']
+  - name: gcr.io/cloud-builders/docker
+    id: web
+    waitFor: ['-']
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/$PROJECT_ID/plantsense/web:${_COMMIT_SHA}', 'web']
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/plantsense/backend:${_COMMIT_SHA}'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/plantsense/web:${_COMMIT_SHA}'
+substitutions:
+  _REGION: asia-south1
+  _COMMIT_SHA: unset
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: 1800s

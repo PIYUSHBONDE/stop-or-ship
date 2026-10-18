@@ -18,7 +18,7 @@ from app.api.sources import router as source_router
 from app.api.workspace import router as workspace_router
 from app.contracts.models import InvestigationJob
 from app.core import config
-from app.persistence.store import Store
+from app.persistence.store import Store, create_store
 from app.telemetry.datasets import sample
 
 log = logging.getLogger("plantsense.api")
@@ -37,7 +37,12 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
         if config.INTERNAL_TEST_MODE:
             await asyncio.to_thread(sample, 0, None)
         task = None
-        if shared_runtime and config.SERVICE_ROLE == "api" and not application.state.store.cloud:
+        if (
+            shared_runtime
+            and config.MODE == "local"
+            and config.SERVICE_ROLE == "api"
+            and not application.state.store.cloud
+        ):
             from app.runtime.local_runtime import run
 
             task = asyncio.create_task(run(application.state.store))
@@ -48,6 +53,7 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
                 task.cancel()
                 with suppress(asyncio.CancelledError):
                     await task
+            await cache.close()
 
     application = FastAPI(title="PlantSense API", version="1.0.0", lifespan=lifespan)
     application.add_middleware(RequestBoundary)
@@ -68,6 +74,9 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
         return {"status": "ok", "mode": config.MODE, "role": config.SERVICE_ROLE}
 
     if config.SERVICE_ROLE == "worker" and config.MODE == "cloud":
+        from app.api.worker import router as worker_router
+
+        application.include_router(worker_router)
 
         @application.post("/internal/investigate", include_in_schema=False)
         async def worker(job: InvestigationJob, store: Storage):

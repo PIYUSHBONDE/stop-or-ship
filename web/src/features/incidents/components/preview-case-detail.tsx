@@ -21,6 +21,9 @@ export function PreviewCaseDetail({ item }: { item: MachineCase }) {
         {item.assetId} · {asset?.name || item.assetType}
       </h2>
       <p>{item.message}</p>
+      {item.interrupted && (
+        <p>Interrupted simulation: this legacy case has no saved active dispatch.</p>
+      )}
       <dl className={recordStyles.meta}>
         <div>
           <dt>Occurred</dt>
@@ -28,16 +31,40 @@ export function PreviewCaseDetail({ item }: { item: MachineCase }) {
         </div>
         <div>
           <dt>Attended</dt>
-          <dd>{item.attendedAt ? clock(item.attendedAt) : 'Operator still walking'}</dd>
+          <dd>
+            {item.attendedAt
+              ? clock(item.attendedAt)
+              : item.interrupted
+                ? 'Not retained in legacy dispatch state'
+                : 'Operator still walking'}
+          </dd>
         </div>
         <div>
           <dt>Fixed</dt>
-          <dd>{item.fixedAt ? clock(item.fixedAt) : 'Fix in progress · at least 2 minutes'}</dd>
+          <dd>
+            {item.fixedAt
+              ? clock(item.fixedAt)
+              : item.interrupted
+                ? 'Interrupted simulation'
+                : 'Fix in progress · at least 2 minutes'}
+          </dd>
         </div>
         <div>
           <dt>Operator</dt>
           <dd>
             {item.operatorId} {item.operatorName} · {item.metadata.years}y {item.metadata.craft}
+          </dd>
+        </div>
+        <div>
+          <dt>Recovered</dt>
+          <dd>
+            {item.clearedAt
+              ? clock(item.clearedAt)
+              : item.interrupted
+                ? 'Interrupted simulation'
+                : item.fixedAt
+                  ? 'Checking stable pressure'
+                  : 'Awaiting repair and recovery'}
           </dd>
         </div>
         <div>

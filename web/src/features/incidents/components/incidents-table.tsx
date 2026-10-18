@@ -163,11 +163,15 @@ function CaseRows({
   const name = state.assets.find((asset) => asset.id === machine)?.name || machine;
   const owner = preview ? `${preview.operatorId} ${preview.operatorName}` : 'Operational case';
   const status = preview
-    ? preview.fixedAt
-      ? 'cleared'
-      : preview.attendedAt
-        ? 'attended'
-        : 'assigned'
+    ? preview.interrupted
+      ? 'interrupted'
+      : preview.clearedAt
+        ? 'cleared'
+        : preview.fixedAt
+          ? 'recovering'
+          : preview.attendedAt
+            ? 'attended'
+            : 'assigned'
     : incident
       ? stateNames[incident.state]
       : '';

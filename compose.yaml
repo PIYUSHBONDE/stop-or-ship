@@ -1,16 +1,25 @@
 name: plantsense
 
+x-plantsense-environment: &plantsense-environment
+  PLANTSENSE_MODE: ${PLANTSENSE_MODE:-local}
+  PLANTSENSE_AI_PROVIDER: ${PLANTSENSE_AI_PROVIDER:-vertex}
+  GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+  GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:-}
+  GOOGLE_CLOUD_LOCATION: ${GOOGLE_CLOUD_LOCATION:-global}
+  DATABASE_URL: ${DATABASE_URL:-}
+  PLANTSENSE_STAFF_WEB_ORIGINS: http://localhost:${PLANTSENSE_WEB_PORT:-3000},http://127.0.0.1:${PLANTSENSE_WEB_PORT:-3000}
+  DAILY_AI_LIMIT: ${DAILY_AI_LIMIT:-60}
+  DAILY_AI_SPEND_MICRO_USD: ${DAILY_AI_SPEND_MICRO_USD:-2000000}
+  INVESTIGATION_AI_SPEND_MICRO_USD: ${INVESTIGATION_AI_SPEND_MICRO_USD:-750000}
+
 services:
   api:
     build:
       context: ./backend
     environment:
-      PLANTSENSE_MODE: local
-      PLANTSENSE_AI_PROVIDER: scripted
+      <<: *plantsense-environment
       SERVICE_ROLE: api
       PLANTSENSE_DB: /var/lib/plantsense/local.db
-      PLANTSENSE_STAFF_WEB_ORIGINS: http://localhost:${PLANTSENSE_WEB_PORT:-3000},http://127.0.0.1:${PLANTSENSE_WEB_PORT:-3000}
-      DAILY_AI_LIMIT: "60"
       PORT: "8080"
     volumes:
       - plant-data:/var/lib/plantsense

@@ -48,7 +48,7 @@ test('expanded plant has unknown equipment and separate production measures', as
     data: { expected_version: current.version, configuration: template },
   });
   expect(activated.ok()).toBeTruthy();
-  await page.reload();
+  await page.goto('/plant?view=observations');
   await expect(
     page.getByRole('button', { name: /Start scenario|Play replay|Reset demo/ }),
   ).toHaveCount(0);
@@ -59,7 +59,7 @@ test('expanded plant has unknown equipment and separate production measures', as
   expect(state.assets.every((asset: { status: string }) => asset.status === 'unknown')).toBe(true);
   expect(state.measured_output_per_hour).toBeNull();
   await page.getByRole('button', { name: '2D plan', exact: true }).click();
-  await page.screenshot({ path: '../docs/artifacts/product-plant.png' });
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-plant.png' });
   await expect(page.getByText(/measured parts\/h/)).toBeVisible();
   await expect(page.getByText(/parts\/h rated capacity/)).toBeVisible();
   await expect(page.getByText('synthetic preview � not plant health')).toHaveCount(0);
@@ -109,7 +109,7 @@ test('reviewed historical import preserves provenance and cannot authorize', asy
   await page.setViewportSize({ width: 430, height: 900 });
   await expect(card).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: '../docs/artifacts/product-monitor-mobile.png' });
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-monitor-mobile.png' });
 });
 
 test('operational incident, dirty decisions, authorized repair and incoming recovery', async ({
@@ -213,7 +213,7 @@ test('operational incident, dirty decisions, authorized repair and incoming reco
   await page.goto('/memory');
   await expect(page.getByText('VERIFIED FROM OPERATIONAL OBSERVATIONS')).toBeVisible();
   await expect(page.getByText('Valve bypass confirmed by inspection').first()).toBeVisible();
-  await page.screenshot({ path: '../docs/artifacts/product-memory.png' });
+  await page.screenshot({ path: '../.runtime/statistics-integration/product-memory.png' });
   expect(errors).toEqual([]);
 });
 
@@ -230,6 +230,7 @@ test('WebGL failure retains the plant plan and keyboard equipment access', async
     } as typeof original;
   });
   await owner(page);
+  await page.goto('/plant?view=observations');
   const plan = page.getByRole('region', { name: 'Accessible plant plan' });
   await expect(plan).toBeVisible();
   await expect(plan.getByRole('button')).toHaveCount(36);

@@ -109,6 +109,10 @@ def save_runtime(db, state, actor=None, action="investigation.update"):
                     json.dumps(order),
                 ),
             )
+        from app.cases.service import sync_incident
+
+        if config.CASES_ENABLED:
+            sync_incident(db, plant_id, incident, actor)
     for case in state["memory"]:
         db.execute(
             "INSERT OR IGNORE INTO plant_cases VALUES (?,?,?,?)",

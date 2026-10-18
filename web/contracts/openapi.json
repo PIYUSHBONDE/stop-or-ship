@@ -3756,6 +3756,125 @@
         ],
         "title": "AccessState"
       },
+      "AgentRunView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "analysis_version": {
+            "type": "integer",
+            "title": "Analysis Version"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/AgentStepView"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "analysis_version",
+          "provider",
+          "state",
+          "created_at",
+          "steps"
+        ],
+        "title": "AgentRunView"
+      },
+      "AgentStepView": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "citations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "type": "array",
+            "title": "Hypotheses"
+          },
+          "unsupported_claims": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsupported Claims"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage",
+          "state",
+          "updated_at"
+        ],
+        "title": "AgentStepView"
+      },
       "Approval": {
         "properties": {
           "option_id": {
@@ -4229,6 +4348,40 @@
         ],
         "title": "AuditPage"
       },
+      "AutomationPolicy": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "request_information": {
+            "type": "boolean",
+            "title": "Request Information"
+          },
+          "record_findings": {
+            "type": "boolean",
+            "title": "Record Findings"
+          },
+          "escalate_overdue": {
+            "type": "boolean",
+            "title": "Escalate Overdue"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "enabled",
+          "request_information",
+          "record_findings",
+          "escalate_overdue"
+        ],
+        "title": "AutomationPolicy"
+      },
       "Calculation": {
         "properties": {
           "options": {
@@ -4288,6 +4441,459 @@
         "additionalProperties": false,
         "type": "object",
         "title": "CalculationRequest"
+      },
+      "CaseCancel": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision",
+          "reason"
+        ],
+        "title": "CaseCancel"
+      },
+      "CaseCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "equipment",
+              "production",
+              "maintenance",
+              "quality",
+              "staffing",
+              "materials",
+              "general"
+            ],
+            "title": "Category"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "category"
+        ],
+        "title": "CaseCreate"
+      },
+      "CaseDetail": {
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/CaseView"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/HumanTask"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceSubmission"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/AgentRunView"
+            },
+            "type": "array",
+            "title": "Runs"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CaseEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case",
+          "tasks",
+          "evidence",
+          "runs",
+          "events"
+        ],
+        "title": "CaseDetail"
+      },
+      "CaseEvent": {
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Id"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sequence",
+          "at",
+          "actor_id",
+          "action",
+          "message"
+        ],
+        "title": "CaseEvent"
+      },
+      "CaseLink": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "incident_id": {
+            "type": "string",
+            "pattern": "^[a-f0-9-]{36}$",
+            "title": "Incident Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision",
+          "incident_id"
+        ],
+        "title": "CaseLink"
+      },
+      "CaseMutation": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision"
+        ],
+        "title": "CaseMutation"
+      },
+      "CaseOutcome": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "outcome": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Outcome"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Evidence Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision",
+          "outcome",
+          "evidence_ids"
+        ],
+        "title": "CaseOutcome"
+      },
+      "CasePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CaseView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "CasePage"
+      },
+      "CaseSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "recorded",
+              "missing",
+              "reference"
+            ],
+            "title": "Status"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status",
+          "text"
+        ],
+        "title": "CaseSource"
+      },
+      "CaseView": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "equipment",
+              "production",
+              "maintenance",
+              "quality",
+              "staffing",
+              "materials",
+              "general"
+            ],
+            "title": "Category"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id"
+          },
+          "plant_id": {
+            "type": "string",
+            "title": "Plant Id"
+          },
+          "incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incident Id"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "triage",
+              "investigating",
+              "waiting_for_input",
+              "awaiting_decision",
+              "in_progress",
+              "verifying",
+              "resolved",
+              "blocked",
+              "cancelled"
+            ],
+            "title": "Phase"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "analysis_version": {
+            "type": "integer",
+            "title": "Analysis Version"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "staff_report",
+              "plant_observation"
+            ],
+            "title": "Origin"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "next_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Action"
+          },
+          "next_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Owner"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "category",
+          "id",
+          "organization_id",
+          "plant_id",
+          "incident_id",
+          "phase",
+          "revision",
+          "analysis_version",
+          "created_at",
+          "updated_at",
+          "created_by",
+          "origin"
+        ],
+        "title": "CaseView"
       },
       "ConfigurationUpdate": {
         "properties": {
@@ -4794,6 +5400,120 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HumanTask": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id"
+          },
+          "plant_id": {
+            "type": "string",
+            "title": "Plant Id"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "target_role": {
+            "type": "string",
+            "enum": [
+              "reliability",
+              "manager",
+              "technician"
+            ],
+            "title": "Target Role"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
+          },
+          "owner_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Name"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "claimed",
+              "completed",
+              "cancelled"
+            ],
+            "title": "State"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "completion_requirements": {
+            "type": "string",
+            "title": "Completion Requirements"
+          },
+          "escalated": {
+            "type": "boolean",
+            "title": "Escalated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "plant_id",
+          "case_id",
+          "target_role",
+          "owner_id",
+          "state",
+          "revision",
+          "due_at",
+          "created_at",
+          "question",
+          "reason",
+          "completion_requirements"
+        ],
+        "title": "HumanTask"
       },
       "Hypothesis": {
         "properties": {
@@ -5418,6 +6138,159 @@
         ],
         "title": "MonitoringView"
       },
+      "Notification": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "human_request",
+              "analysis_ready",
+              "blocked",
+              "recurring_issue"
+            ],
+            "title": "Kind"
+          },
+          "case_id": {
+            "type": "string",
+            "title": "Case Id"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "ai_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Summary"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "read": {
+            "type": "boolean",
+            "title": "Read"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "case_id",
+          "title",
+          "message",
+          "created_at",
+          "read"
+        ],
+        "title": "Notification"
+      },
+      "NotificationAcknowledgement": {
+        "properties": {
+          "notification_id": {
+            "type": "string",
+            "title": "Notification Id"
+          },
+          "read": {
+            "type": "boolean",
+            "title": "Read",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "notification_id"
+        ],
+        "title": "NotificationAcknowledgement"
+      },
+      "NotificationPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "unread_count": {
+            "type": "integer",
+            "title": "Unread Count"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "unread_count",
+          "next_cursor"
+        ],
+        "title": "NotificationPage"
+      },
+      "NotificationRead": {
+        "properties": {
+          "notification_id": {
+            "type": "string",
+            "maxLength": 82,
+            "minLength": 8,
+            "pattern": "^[a-z0-9:-]+$",
+            "title": "Notification Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "notification_id"
+        ],
+        "title": "NotificationRead"
+      },
       "ObservationBatch": {
         "properties": {
           "expected_version": {
@@ -5890,6 +6763,41 @@
           "simulated_minutes"
         ],
         "title": "PlantSnapshot"
+      },
+      "PolicyUpdate": {
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected Version"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "request_information": {
+            "type": "boolean",
+            "title": "Request Information",
+            "default": true
+          },
+          "record_findings": {
+            "type": "boolean",
+            "title": "Record Findings",
+            "default": true
+          },
+          "escalate_overdue": {
+            "type": "boolean",
+            "title": "Escalate Overdue",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_version",
+          "enabled"
+        ],
+        "title": "PolicyUpdate"
       },
       "ProgressRecord": {
         "properties": {
@@ -6923,6 +7831,550 @@
         ],
         "title": "SignalRule"
       },
+      "SimulationAssignment": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Asset Id"
+          },
+          "operator_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Operator Id"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Note"
+          },
+          "operator_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator Name"
+          },
+          "craft": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Craft"
+          },
+          "experience_years": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 80.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experience Years"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "operator_id",
+          "status",
+          "note"
+        ],
+        "title": "SimulationAssignment"
+      },
+      "SimulationCase": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Asset Id"
+          },
+          "operator_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Operator Id"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "asset_id",
+          "operator_id",
+          "status",
+          "note"
+        ],
+        "title": "SimulationCase"
+      },
+      "SimulationCaseEvidence": {
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Case Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Asset Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "attended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attended At"
+          },
+          "fixed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed At"
+          },
+          "recovered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recovered At"
+          },
+          "interrupted": {
+            "type": "boolean",
+            "title": "Interrupted",
+            "default": false
+          },
+          "detection": {
+            "$ref": "#/components/schemas/SimulationReading"
+          },
+          "topology_captured": {
+            "type": "boolean",
+            "title": "Topology Captured"
+          },
+          "affected_asset_ids": {
+            "items": {
+              "type": "string",
+              "maxLength": 160,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 36,
+            "title": "Affected Asset Ids"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationImpactLine"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Lines"
+          },
+          "recovery_basis": {
+            "type": "string",
+            "const": "scenario_timer",
+            "title": "Recovery Basis",
+            "default": "scenario_timer"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "case_id",
+          "asset_id",
+          "occurred_at",
+          "detection",
+          "topology_captured",
+          "affected_asset_ids",
+          "lines"
+        ],
+        "title": "SimulationCaseEvidence"
+      },
+      "SimulationContext": {
+        "properties": {
+          "captured_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Captured At"
+          },
+          "selected_case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Case Id"
+          },
+          "selected_assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Assignment Id"
+          },
+          "equipment": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationEquipment"
+            },
+            "type": "array",
+            "maxItems": 36,
+            "title": "Equipment"
+          },
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationAssignment"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Assignments"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationCase"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Cases"
+          },
+          "case_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimulationCaseEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "process": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimulationProcessContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "captured_at",
+          "equipment",
+          "assignments",
+          "cases"
+        ],
+        "title": "SimulationContext"
+      },
+      "SimulationEquipment": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Asset Id"
+          },
+          "readings": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationReading"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Readings"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "idle",
+                  "running",
+                  "degraded",
+                  "stopped",
+                  "under_repair",
+                  "recovering"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "asset_id",
+          "readings"
+        ],
+        "title": "SimulationEquipment"
+      },
+      "SimulationImpactLine": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "capacity_per_hour": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Capacity Per Hour"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "capacity_per_hour"
+        ],
+        "title": "SimulationImpactLine"
+      },
+      "SimulationProcessContext": {
+        "properties": {
+          "simulated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Simulated At"
+          },
+          "paused": {
+            "type": "boolean",
+            "title": "Paused"
+          },
+          "speed": {
+            "type": "integer",
+            "enum": [
+              1,
+              10
+            ],
+            "title": "Speed"
+          },
+          "phase": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Phase"
+          },
+          "fault_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fault Asset Id"
+          },
+          "affected_asset_ids": {
+            "items": {
+              "type": "string",
+              "maxLength": 160,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 36,
+            "title": "Affected Asset Ids"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SimulationProductionLine"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Lines"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "simulated_at",
+          "paused",
+          "speed",
+          "phase",
+          "affected_asset_ids",
+          "lines"
+        ],
+        "title": "SimulationProcessContext"
+      },
+      "SimulationProductionLine": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "capacity_per_hour": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Capacity Per Hour"
+          },
+          "output_per_hour": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Output Per Hour"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "running",
+              "degraded",
+              "stopped",
+              "under_repair",
+              "recovering"
+            ],
+            "title": "Mode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "capacity_per_hour",
+          "output_per_hour",
+          "mode"
+        ],
+        "title": "SimulationProductionLine"
+      },
+      "SimulationReading": {
+        "properties": {
+          "signal_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Signal Id"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Unit"
+          },
+          "low": {
+            "type": "number",
+            "title": "Low"
+          },
+          "high": {
+            "type": "number",
+            "title": "High"
+          },
+          "ooc": {
+            "type": "boolean",
+            "title": "Ooc"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "signal_id",
+          "value",
+          "unit",
+          "low",
+          "high",
+          "ooc"
+        ],
+        "title": "SimulationReading"
+      },
       "SourceBinding": {
         "properties": {
           "asset_id": {
@@ -7340,6 +8792,129 @@
           "verifying"
         ],
         "title": "Status"
+      },
+      "TaskCreate": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "question": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Question"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "completion_requirements": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Completion Requirements"
+          },
+          "target_role": {
+            "type": "string",
+            "enum": [
+              "reliability",
+              "manager",
+              "technician"
+            ],
+            "title": "Target Role"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision",
+          "question",
+          "reason",
+          "completion_requirements",
+          "target_role"
+        ],
+        "title": "TaskCreate"
+      },
+      "TaskPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HumanTask"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "actionable_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Actionable Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor",
+          "actionable_count"
+        ],
+        "title": "TaskPage"
+      },
+      "TaskResponse": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceValue"
+            },
+            "type": "array",
+            "maxItems": 16,
+            "title": "Values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision",
+          "text"
+        ],
+        "title": "TaskResponse"
       },
       "TelemetryWindow": {
         "properties": {

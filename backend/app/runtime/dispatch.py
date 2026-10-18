@@ -13,6 +13,11 @@ log = logging.getLogger("plantsense.dispatch")
 def dispatch(store, job, background):
     if not job:
         return
+    if not store.cloud:
+        from app.cases.jobs import managed_incident
+
+        if managed_incident(store, job["incident_id"]):
+            return
     if config.MODE == "local":
 
         async def run_local():

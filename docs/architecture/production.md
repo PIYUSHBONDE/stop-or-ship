@@ -1,6 +1,6 @@
 # PlantSense production architecture proposal
 
-Status: proposed target for a real plant application, reviewed against the current repository on 8 October 2026. This document does not claim that the target has been implemented or deployed. Development remains local while launch scope and the first data source are established.
+Status: production target updated on 15 October 2026. Local case coordination now uses SQLite and a separate worker; the production services below are design only. Development remains local. The [case foundation](case-foundation.md) describes implemented records, coordination boundaries, acceptance and the planned SQLite-to-PostgreSQL transition.
 
 The shared local foundation was implemented on 8–9 October: plant-scoped catalogs, named staff/memberships, authenticated approval actors, concurrent per-incident workflows and retained audit. See [implemented scope and review](../history/shared-plant-review.md) and [observed validation](../status.md). The findings below describe the earlier baseline that motivated the target; managed cloud identity, real ingestion, durable production dispatch and launch operations remain outstanding.
 
@@ -35,14 +35,14 @@ Existing typed contracts, integer-paise calculations, approval version checks, i
 
 ## Proposed deployment shape
 
-Keep one modular Python codebase, deployed as API and worker roles. Keep Next.js as the interface and server proxy. Firestore is the provisional workflow store to preserve the existing Google Cloud direction; confirm its query patterns and transaction boundaries before fixing the final schema. Store large telemetry and document objects separately.
+Keep one modular Python codebase, deployed as API and worker roles. Keep Next.js as the interface and server proxy. **Cloud SQL PostgreSQL supersedes the earlier provisional Firestore target for shared operational state.** Existing isolated-demo Firestore adapters are historical compatibility code, not the deployment path for customer case management. Store large telemetry and versioned evidence objects in Cloud Storage.
 
 ```mermaid
 flowchart TD
     Staff["Authenticated plant staff"] --> Web["Next.js application"]
-    Identity["Firebase Authentication"] --> Web
+    Identity["Managed identity mapped to internal staff"] --> Web
     Web --> API["FastAPI API and permission checks"]
-    API <--> State[("Firestore: organizations, plants,<br/>incidents, approvals, orders and audit")]
+    API <--> State[("Cloud SQL PostgreSQL: organizations, plants,<br/>cases, human tasks, approvals, jobs and audit")]
 
     Source["Historical file import or<br/>approved plant connector"] --> Ingest["Ingestion and data validation"]
     Ingest --> Objects[("Object storage: raw telemetry<br/>and versioned documents")]
@@ -59,7 +59,7 @@ flowchart TD
     Evidence --> Calculate["Deterministic costs and constraints"]
 ```
 
-On Google Cloud, use Cloud Run for the web, API and private worker; Cloud Tasks for bounded jobs; Cloud Storage for objects; and Firestore for operational records and the document index. Live-stream transport is selected after the actual plant interface and sampling rate are known. A file-import release does not need a streaming stack.
+On Google Cloud, use Cloud Run for the web, API and independently scaled private workers; Cloud Tasks for bounded delivery; Cloud Storage for objects; Cloud SQL PostgreSQL for operational records; and Vertex AI for models. Persist job identity, budgets and checkpoints in PostgreSQL even when Cloud Tasks delivers work. Select a tenant-scoped retrieval index and live-stream transport only after query patterns and source requirements are established.
 
 The ingestion box is a logical module. It does not imply another independently deployed service for the first release.
 
@@ -81,7 +81,7 @@ Initial permissions should cover viewing, investigating, maintaining configurati
 
 Approve an incident using its current calculation version, a stable idempotency key and a verified authorized actor. Concurrent edits return an explicit conflict. Historical authorization snapshots remain inspectable. Audit events include actor, entity, action, time, request ID, revision and reason; ordinary application actions cannot edit or silently discard them.
 
-Firestore server libraries use IAM access, so backend authorization is essential even when browser Firestore rules deny access. Use separate records and queryable collections rather than accumulating the complete plant history inside one document. Use explicit migration and index versions.
+Service authorization remains mandatory. Add PostgreSQL row policies as defense in depth, using a non-owner application role without `BYPASSRLS` and transaction-local organization/plant context. Connection-pool reuse must clear scope. Table owners and privileged roles can bypass row security, so row policies do not replace service checks. Use explicit migration and index versions. [PostgreSQL row-security behavior](https://www.postgresql.org/docs/current/ddl-rowsecurity.html).
 
 ## Data ingestion and verification
 

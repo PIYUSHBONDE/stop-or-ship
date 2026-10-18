@@ -12,7 +12,9 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
     PLANTSENSE_DB=/var/lib/plantsense/local.db \
     OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 COPY --from=dependencies /opt/venv /opt/venv
+COPY pyproject.toml uv.lock ./
 COPY app ./app
+COPY release ./release
 # The build context permits only the knowledge pack and optional reviewed replay artifacts.
 COPY data ./data
 RUN groupadd --gid 10001 appuser \

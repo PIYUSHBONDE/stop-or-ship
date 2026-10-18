@@ -1,0 +1,1314 @@
+.workspace {
+  --surface: var(--surface-panel);
+  --subtle: var(--copy-muted);
+  --edge: var(--surface-border);
+  --elevation: 0 12px 32px #07151d33;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  color: var(--copy-primary);
+  background: #b8c4c5;
+  font-family: var(--font);
+}
+.workspace [hidden] {
+  display: none;
+}
+.workspace ::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.workspace input {
+  caret-color: var(--accent);
+}
+.workspace button:focus-visible,
+.workspace a:focus-visible,
+.inspector h2:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.workspace button {
+  min-height: 34px;
+}
+.workarea {
+  position: absolute;
+  inset: 0 0 80px;
+}
+.floor,
+.stage {
+  position: absolute;
+  inset: 0;
+}
+.stage {
+  isolation: isolate;
+}
+.stage > div {
+  height: 100%;
+  width: 100%;
+}
+.heading {
+  position: absolute;
+  left: 26px;
+  top: 25px;
+  z-index: 2;
+  max-width: calc(100% - 350px);
+  pointer-events: none;
+  color: #163139;
+}
+.heading h1 {
+  font-size: 27px;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.heading p {
+  font-size: 12px;
+  margin-top: 6px;
+  color: #294750;
+}
+.compactSummary {
+  position: absolute;
+  top: 99px;
+  left: 26px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  padding: 9px 0;
+  border-radius: 7px;
+  background: var(--copy-primary);
+  color: #1d3f38;
+  font-size: 12px;
+}
+.compactSummary > span {
+  padding: 0 12px;
+}
+.compactSummary > span + span {
+  border-left: 1px solid #bccfc8;
+}
+.panelActions {
+  position: absolute;
+  top: 154px;
+  left: 26px;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+.panelActions button {
+  background: var(--surface);
+  border: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  color: var(--copy-primary);
+  box-shadow: var(--elevation);
+  font-size: 12px;
+}
+.panelActions button:hover {
+  background: var(--surface-raised);
+}
+.catalog,
+.inspector,
+.details {
+  position: absolute;
+  z-index: 4;
+  background: var(--surface);
+  border-radius: 13px;
+  padding: 17px 19px;
+  box-shadow: var(--elevation);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #50717a var(--surface);
+}
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.panelHeader h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.panelHeader > span {
+  color: var(--subtle);
+  font-size: 11px;
+}
+.panelHeader > button,
+.closeControls {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--subtle);
+  flex-shrink: 0;
+}
+.panelHeader > button:hover {
+  background: var(--surface-hover);
+}
+.catalog {
+  left: 26px;
+  top: 204px;
+  bottom: 80px;
+  width: 230px;
+}
+.catalog label {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin-top: 12px;
+}
+.catalog input {
+  width: 100%;
+  min-width: 0;
+  background: var(--surface-panel);
+  padding: 9px 8px;
+  font-size: 12px;
+  border-color: var(--edge);
+}
+.catalog input::placeholder {
+  color: var(--subtle);
+  opacity: 1;
+}
+.catalog h2 {
+  font-size: 11px;
+  color: var(--subtle);
+  font-weight: 500;
+  margin: 20px 0 7px;
+}
+.catalog button[aria-pressed] {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: transparent;
+  color: var(--copy-primary);
+  border: 0;
+  border-radius: 6px;
+  text-align: left;
+  padding: 10px 8px;
+  font-size: 12px;
+}
+.catalog button[aria-pressed]:hover {
+  background: var(--surface-raised);
+}
+.catalog button[aria-pressed='true'] {
+  background: var(--surface-raised);
+}
+.catalog button small {
+  display: block;
+  font-size: 11px;
+  color: var(--subtle);
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+.empty {
+  margin-top: 16px;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.inspector {
+  top: 26px;
+  right: 24px;
+  width: 282px;
+  max-height: calc(100% - 108px);
+}
+.inspector[data-open='false'] {
+  display: none;
+}
+.inspector > .eyebrow {
+  display: none;
+}
+.inspector h2 {
+  font-size: 21px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 11px 0 9px;
+}
+.inspector h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+  padding-top: 15px;
+  border-top: 1px solid var(--edge);
+}
+.inspector p {
+  font-size: 13px;
+  color: var(--subtle);
+  line-height: 1.6;
+}
+.inspector a,
+.notice a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  text-underline-offset: 4px;
+  font-size: 12px;
+}
+.inspector > a {
+  margin-top: 12px;
+}
+.state {
+  display: inline-block;
+  padding: 4px 7px;
+  background: var(--surface-raised);
+  color: #c6f0da;
+  font-size: 11px;
+  border-radius: 5px;
+  margin: 0 0 12px;
+  text-transform: capitalize;
+}
+.workspace [data-mode='degraded'] {
+  --mode: #f1b675;
+}
+.workspace [data-mode='under_repair'] {
+  --mode: #c5b8fa;
+}
+.workspace [data-mode='recovering'] {
+  --mode: #9fcef1;
+}
+.workspace [data-mode='stopped'],
+.workspace [data-mode='idle'] {
+  --mode: #f1a9aa;
+}
+.state[data-mode] {
+  color: var(--mode, #c6f0da);
+  background: var(--surface-raised);
+}
+.dot,
+.legend i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mode, var(--accent));
+  flex-shrink: 0;
+}
+.reading {
+  border-bottom: 1px solid var(--edge);
+  padding: 10px 0;
+}
+.reading > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+}
+.reading > div > span {
+  text-transform: capitalize;
+}
+.reading strong {
+  font-size: 23px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.reading strong small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--subtle);
+}
+.reading > small {
+  display: block;
+  color: var(--subtle);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.reading svg {
+  max-width: 100%;
+  height: 32px;
+}
+.dependencies {
+  display: grid;
+  gap: 6px;
+}
+.dependencies button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  border: 0;
+  background: var(--surface-raised);
+  border-radius: 6px;
+  padding: 9px;
+  color: #c5ebdd;
+  font-size: 12px;
+  text-align: left;
+}
+.dependencies small {
+  color: var(--subtle);
+  font-size: 12px;
+}
+.case {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+  border-bottom: 1px solid var(--edge);
+  padding: 9px 0;
+  font-size: 11px !important;
+  overflow-wrap: anywhere;
+}
+.case small {
+  color: var(--subtle);
+}
+.inspectorTrigger {
+  display: none;
+  position: absolute;
+  right: 24px;
+  top: 26px;
+  z-index: 3;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  color: var(--copy-primary);
+  border: 0;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: var(--elevation);
+  font-size: 12px;
+  text-align: left;
+}
+.inspectorTrigger[data-open='false'] {
+  display: flex;
+}
+.inspectorTrigger small {
+  display: block;
+  color: var(--accent);
+  margin-top: 4px;
+  font-size: 11px;
+}
+.toolbar {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--surface-panel);
+  box-shadow: var(--elevation);
+  white-space: nowrap;
+}
+.toolbar strong {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.toolbar button {
+  padding: 8px 10px;
+  font-size: 11px;
+  min-height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--copy-primary);
+}
+.toolbar button[aria-pressed='true'] {
+  background: #375951;
+  color: #c4f1dc;
+}
+.toolbar button:hover {
+  background: var(--surface-raised);
+}
+.toolbar select {
+  font-size: 11px;
+  padding: 7px;
+  background: var(--surface-panel);
+  border: 1px solid var(--edge);
+  max-width: 120px;
+}
+.legend {
+  position: absolute;
+  bottom: 9px;
+  right: 24px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  padding: 7px 9px;
+  border-radius: 7px;
+  color: var(--subtle);
+  font-size: 10px;
+  z-index: 2;
+  max-width: 285px;
+}
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.notice {
+  position: absolute;
+  z-index: 2;
+  left: 26px;
+  bottom: 108px;
+  max-width: 340px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #23414a;
+  pointer-events: none;
+}
+.notice a {
+  pointer-events: auto;
+  color: #214a43;
+  display: flex;
+  margin-top: 3px;
+  font-size: 12px;
+}
+.controls {
+  position: absolute;
+  z-index: 5;
+  bottom: 0;
+  left: 0;
+  right: 375px;
+  height: 80px;
+  background: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+}
+.controls label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--subtle);
+  font-size: 11px;
+}
+.controls select {
+  min-width: 0;
+  max-width: 185px;
+  font-size: 12px;
+  padding: 9px;
+}
+.controls > button {
+  font-size: 12px;
+}
+.controls :global(.primary) {
+  color: #15382b;
+  background: var(--accent);
+  border: 0;
+}
+.controls :global(.secondary) {
+  border: 1px solid var(--edge);
+  background: var(--surface-panel);
+}
+.controls .closeControls {
+  display: none;
+}
+.dock {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 5;
+  height: 80px;
+  width: 375px;
+  background: var(--accent-ink);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px;
+  gap: 10px;
+}
+.dock > button {
+  font-size: 11px;
+  padding: 8px;
+  gap: 5px;
+}
+.dock label {
+  display: grid;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--subtle);
+}
+.dock select {
+  font-size: 11px;
+  padding: 6px;
+  width: 115px;
+}
+.clock {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.clock strong {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.clock small {
+  font-size: 10px;
+  color: var(--subtle);
+}
+.running {
+  color: var(--accent);
+}
+.paused {
+  color: #f1c583;
+}
+.controlsTrigger {
+  display: none !important;
+}
+.scenarioStatus {
+  position: absolute;
+  z-index: 2;
+  bottom: 87px;
+  left: 26px;
+  max-width: min(55%, 490px);
+  background: var(--copy-primary);
+  color: #23414a;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+}
+.scenarioStatus:empty {
+  display: none;
+}
+.scenarioStatus [role='alert'] {
+  color: #803726;
+}
+.confirm {
+  color: var(--copy-primary);
+  background: var(--surface);
+  border: 0;
+  border-radius: 13px;
+  padding: 24px;
+  width: min(430px, calc(100vw - 30px));
+  box-shadow: var(--elevation);
+}
+.confirm::backdrop {
+  background: #091c25aa;
+}
+.confirm strong {
+  font-size: 20px;
+}
+.confirm p {
+  color: var(--subtle);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 14px 0 20px;
+}
+.confirm button {
+  margin-right: 8px;
+}
+.details {
+  left: 26px;
+  top: 204px;
+  bottom: 80px;
+  width: min(620px, calc(100% - 52px));
+}
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 20px;
+}
+.summary > div {
+  display: grid;
+  gap: 5px;
+}
+.summary small {
+  font-size: 11px;
+  color: var(--subtle);
+}
+.summary strong {
+  font-size: 23px;
+}
+.summary strong span {
+  font-size: 12px;
+  font-weight: 400;
+}
+.flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 22px 0 15px;
+  font-size: 11px;
+}
+.flow small {
+  width: 100%;
+  color: var(--subtle);
+  line-height: 1.5;
+}
+.lineList {
+  display: grid;
+  gap: 8px;
+}
+.lineList button {
+  background: var(--surface-raised);
+  border: 0;
+  border-radius: 6px;
+  color: var(--copy-primary);
+  padding: 12px;
+  text-align: left;
+  display: grid;
+  gap: 7px;
+}
+.lineList span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.lineList small {
+  color: var(--subtle);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+.lineList meter {
+  width: 100%;
+  height: 5px;
+  accent-color: var(--accent);
+}
+.activity {
+  margin-top: 24px;
+}
+.activity header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.activity h2 {
+  font-size: 14px;
+}
+.activity header small {
+  color: var(--subtle);
+  font-size: 10px;
+}
+.activity ol {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+}
+.activity li {
+  display: grid;
+  grid-template-columns: 44px 64px 1fr;
+  gap: 8px;
+  padding: 11px 0;
+  border-top: 1px solid var(--edge);
+  font-size: 12px;
+}
+.activity time {
+  color: var(--subtle);
+  font-variant-numeric: tabular-nums;
+}
+.activity li button {
+  color: var(--accent);
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 11px;
+  min-height: 0;
+}
+.activity p {
+  color: var(--subtle);
+  line-height: 1.6;
+}
+@media (max-width: 1250px) {
+  .controls {
+    right: 345px;
+    padding: 0 14px;
+    gap: 7px;
+  }
+  .controls label {
+    font-size: 0;
+  }
+  .controls select {
+    max-width: 155px;
+  }
+  .controls > button {
+    padding: 9px;
+    font-size: 11px;
+  }
+  .dock {
+    width: 345px;
+    padding: 0 12px;
+    gap: 7px;
+  }
+  .dock select {
+    width: 95px;
+  }
+  .dock > button {
+    font-size: 0;
+  }
+  .heading h1 {
+    font-size: 24px;
+  }
+  .legend {
+    display: none;
+  }
+}
+@media (max-width: 1000px) {
+  .controls {
+    display: none;
+    right: auto;
+    bottom: 90px;
+    left: 16px;
+    width: 325px;
+    height: auto;
+    padding: 20px;
+    border-radius: 13px;
+    box-shadow: var(--elevation);
+    flex-wrap: wrap;
+  }
+  .controls[data-open='true'] {
+    display: flex;
+  }
+  .controls label {
+    display: grid;
+    width: 100%;
+    font-size: 12px;
+  }
+  .controls select {
+    max-width: 100%;
+    width: 100%;
+  }
+  .controls .closeControls {
+    display: grid;
+    margin-left: auto;
+  }
+  .dock {
+    width: 100%;
+    justify-content: flex-end;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .dock .controlsTrigger {
+    display: inline-flex !important;
+    margin-right: auto;
+    font-size: 11px;
+  }
+  .heading {
+    max-width: calc(100% - 315px);
+  }
+  .inspector {
+    width: 255px;
+    right: 16px;
+  }
+  .compactSummary {
+    font-size: 11px;
+  }
+  .compactSummary span {
+    padding: 0 8px;
+  }
+  .compactSummary span:last-child {
+    display: none;
+  }
+  .toolbar {
+    left: 26px;
+    transform: none;
+  }
+}
+@media (max-width: 760px) {
+  .workarea {
+    bottom: 74px;
+  }
+  .heading {
+    top: 20px;
+    left: 17px;
+    right: 17px;
+    max-width: none;
+  }
+  .heading h1 {
+    font-size: 21px;
+    max-width: 100%;
+  }
+  .heading p {
+    font-size: 11px;
+  }
+  .compactSummary {
+    top: 100px;
+    left: 17px;
+    font-size: 11px;
+  }
+  .panelActions {
+    top: 151px;
+    left: 17px;
+    gap: 7px;
+  }
+  .panelActions button {
+    font-size: 11px;
+    padding: 9px 10px;
+  }
+  .catalog {
+    top: 201px;
+    left: 17px;
+    bottom: 100px;
+    width: min(265px, calc(100% - 34px));
+  }
+  .details {
+    top: 201px;
+    bottom: 100px;
+    left: 10px;
+    width: calc(100% - 20px);
+  }
+  .inspector:not([data-open='true']) {
+    display: none;
+  }
+  .inspector {
+    top: auto;
+    bottom: 104px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 72%;
+  }
+  .inspectorTrigger {
+    display: flex;
+    top: auto;
+    bottom: 104px;
+    left: 17px;
+    right: 17px;
+    justify-content: space-between;
+  }
+  .inspectorTrigger[data-open='true'] {
+    display: none;
+  }
+  .toolbar {
+    left: 50%;
+    bottom: 36px;
+    transform: translateX(-50%);
+    gap: 3px;
+    padding: 5px;
+  }
+  .toolbar button {
+    font-size: 11px;
+    padding: 7px 9px;
+    min-height: 36px;
+  }
+  .toolbar select {
+    font-size: 10px;
+    max-width: 94px;
+    padding: 6px 4px;
+  }
+  .notice {
+    left: 17px;
+    bottom: 245px;
+    max-width: 260px;
+    font-size: 10px;
+  }
+  .notice a {
+    font-size: 10px;
+  }
+  .scenarioStatus {
+    left: 17px;
+    bottom: 81px;
+    max-width: calc(100% - 34px);
+    font-size: 9px;
+  }
+  .dock {
+    height: 74px;
+    padding: 0 12px;
+    gap: 7px;
+  }
+  .dock .controlsTrigger {
+    font-size: 10px;
+    padding: 9px 7px;
+    gap: 5px;
+  }
+  .dock > button {
+    min-width: 34px;
+    min-height: 36px;
+    padding: 7px;
+  }
+  .dock select {
+    width: 76px;
+    font-size: 10px;
+    padding: 5px;
+  }
+  .dock label {
+    font-size: 9px;
+  }
+  .clock strong {
+    font-size: 12px;
+  }
+  .clock small {
+    display: none;
+  }
+  .clock {
+    font-size: 10px;
+  }
+  .controls {
+    bottom: 84px;
+    left: 10px;
+    width: calc(100% - 20px);
+    max-height: calc(100% - 100px);
+    overflow: auto;
+  }
+  .summary {
+    gap: 12px;
+  }
+  .activity li {
+    grid-template-columns: 37px 58px 1fr;
+    font-size: 11px;
+    gap: 6px;
+  }
+}
+@media (max-height: 650px) and (min-width: 761px) {
+  .heading {
+    top: 12px;
+  }
+  .compactSummary {
+    top: 78px;
+  }
+  .panelActions {
+    top: 123px;
+  }
+  .catalog,
+  .details {
+    top: 170px;
+  }
+  .inspector {
+    top: 12px;
+  }
+}
+
+/* Approved frame: scenario controls and playback share one aligned bottom strip. */
+.workarea {
+  bottom: 76px;
+}
+.controls {
+  height: 76px;
+  right: 275px;
+  padding: 0 23px;
+  gap: 10px;
+}
+.controls label {
+  font-size: 11px;
+}
+.controls select {
+  width: 170px;
+  max-width: 170px;
+}
+.controls > button {
+  min-height: 36px;
+  font-size: 12px;
+}
+.controls > button[aria-label='Reset scenario'] {
+  background: transparent;
+  border: 0;
+  color: var(--subtle);
+  padding: 8px 10px;
+}
+.dock {
+  height: 76px;
+  width: 275px;
+  padding: 0 23px;
+  gap: 14px;
+}
+.dock > button {
+  width: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  justify-content: center;
+  padding: 7px;
+}
+.dock label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.dock select {
+  width: 64px;
+  font-size: 12px;
+  padding: 7px;
+}
+.clock {
+  font-size: 10px;
+  gap: 3px;
+}
+.clock strong {
+  font-size: 14px;
+}
+.clock small {
+  display: none;
+}
+.toolbar {
+  width: 570px;
+  max-width: calc(100% - 40px);
+  flex-wrap: wrap;
+  justify-content: center;
+  bottom: 22px;
+  padding: 7px 8px 6px;
+}
+.legend {
+  position: static;
+  width: 100%;
+  max-width: none;
+  justify-content: center;
+  border-top: 1px solid var(--edge);
+  padding: 6px 0 1px;
+  margin-top: 4px;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  font-size: 10px;
+}
+@media (max-width: 1250px) {
+  .controls {
+    padding: 0 16px;
+    gap: 7px;
+  }
+  .controls label {
+    font-size: 0;
+  }
+  .controls select {
+    max-width: 155px;
+  }
+  .dock {
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .toolbar {
+    width: 475px;
+  }
+}
+@media (max-width: 1000px) {
+  .controls {
+    height: auto;
+    right: auto;
+    padding: 20px;
+  }
+  .controls label {
+    font-size: 12px;
+  }
+  .controls select {
+    width: 100%;
+    max-width: none;
+  }
+  .dock {
+    width: 100%;
+    padding: 0 16px;
+  }
+  .dock .controlsTrigger {
+    width: auto;
+  }
+}
+@media (max-width: 760px) {
+  .workarea {
+    bottom: 76px;
+  }
+  .dock {
+    padding: 0 15px;
+    gap: 9px;
+  }
+  .dock .controlsTrigger {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+  .dock select {
+    width: 54px;
+    padding: 5px;
+    font-size: 11px;
+  }
+  .dock label {
+    font-size: 0;
+  }
+  .clock strong {
+    font-size: 12px;
+  }
+  .inspectorTrigger {
+    right: 83px;
+  }
+  .toolbar {
+    width: calc(100% - 34px);
+    max-width: none;
+    bottom: 12px;
+    gap: 3px;
+    padding: 5px;
+  }
+  .toolbar button {
+    font-size: 10px;
+    padding: 6px 7px;
+  }
+  .toolbar select {
+    font-size: 10px;
+    max-width: 88px;
+  }
+  .legend {
+    font-size: 9px;
+    gap: 9px;
+  }
+  .controls {
+    height: auto;
+    padding: 18px;
+  }
+}
+
+.notice {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--copy-primary);
+}
+.notice .scenarioStatus {
+  position: static;
+  margin-bottom: 7px;
+  max-width: 100%;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  background: transparent;
+}
+.scenarioOutput {
+  margin-bottom: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.controls select {
+  width: 225px;
+  max-width: 225px;
+}
+.clock small {
+  display: block;
+  font-size: 9px;
+}
+@media (max-width: 1000px) {
+  .controls[data-open='true'] {
+    z-index: 40;
+  }
+}
+@media (max-width: 760px) {
+  .catalog,
+  .inspector,
+  .details {
+    z-index: 40;
+  }
+}
+@media (max-width: 1250px) {
+  .controls select {
+    max-width: 170px;
+  }
+}
+@media (max-width: 1000px) {
+  .controls select {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* Sidebar-owned controls leave the factory floor at the full viewport height. */
+.workarea {
+  bottom: 0;
+}
+.notice {
+  bottom: 22px;
+}
+.controlPanel {
+  position: absolute;
+  left: 26px;
+  top: 204px;
+  z-index: 55;
+  width: 320px;
+  max-width: calc(100% - 52px);
+  max-height: calc(100% - 228px);
+  overflow-y: auto;
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--copy-primary);
+  box-shadow: var(--elevation);
+  scrollbar-width: thin;
+  scrollbar-color: #50717a var(--surface);
+}
+.controlPanel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.controlPanel label {
+  display: grid;
+  gap: 8px;
+  color: var(--subtle);
+  font-size: 12px;
+}
+.controlPanel select {
+  width: 100%;
+  min-width: 0;
+  background: var(--surface-panel);
+  color: var(--copy-primary);
+  border: 1px solid var(--edge);
+  font-size: 12px;
+}
+.controlPanel > button {
+  justify-self: start;
+}
+.controlPanel :global(.primary) {
+  color: #15382b;
+  background: var(--accent);
+  border: 0;
+}
+.controlNote {
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.playback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-block: 1px solid var(--edge);
+}
+.playback .clock strong {
+  font-size: 22px;
+}
+.playback button {
+  gap: 7px;
+}
+@media (max-width: 1100px) {
+  .notice {
+    bottom: 126px;
+  }
+}
+@media (max-width: 760px) {
+  .heading {
+    top: 77px;
+  }
+  .compactSummary {
+    top: 156px;
+  }
+  .panelActions {
+    top: 207px;
+  }
+  .catalog,
+  .details {
+    top: 257px;
+    bottom: 112px;
+  }
+  .controlPanel {
+    top: 76px;
+    left: 14px;
+    width: calc(100% - 28px);
+    max-width: none;
+    max-height: calc(100% - 92px);
+    padding: 20px;
+  }
+  .controlPanel button {
+    min-height: 44px;
+  }
+  .notice {
+    bottom: 190px;
+    max-width: calc(100% - 34px);
+  }
+  .inspector {
+    bottom: 110px;
+    max-height: calc(100% - 185px);
+  }
+  .inspectorTrigger {
+    bottom: 110px;
+  }
+}

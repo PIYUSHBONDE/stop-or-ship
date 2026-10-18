@@ -8,6 +8,22 @@ from fastapi import HTTPException
 from app.core import config
 
 
+def create_store():
+    if config.STORAGE == "postgres":
+        from app.persistence.postgres import PostgresStore
+
+        if config.MODE == "cloud" and not config.POSTGRES_EVIDENCE_DSN:
+            raise RuntimeError("Cloud PostgreSQL requires a separate read-only evidence identity")
+        store = PostgresStore(
+            config.POSTGRES_DSN, schema=config.POSTGRES_SCHEMA, evidence_dsn=config.POSTGRES_EVIDENCE_DSN
+        )
+        store.check_ready()
+        return store
+    if config.MODE == "cloud":
+        raise RuntimeError("Cloud application startup requires PostgreSQL persistence")
+    return Store(cloud=False)
+
+
 class Store:
     """Atomic session mutations. No session state is authoritative in process memory."""
 

@@ -2,23 +2,35 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { createInstances, Line, OrbitControls } from '@react-three/drei';
-import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { Asset, State } from '@/lib/types';
 import { FactoryEnvironment } from '@/features/plant/components/factory-environment';
 import { ConfiguredEnvironment } from '@/features/plant/components/configured-environment';
-import { plantBounds, planPoint, planPosition } from '@/lib/plant-layout';
-import { PreviewCard } from '@/features/plant/components/preview-card';
+import { plantBounds } from '@/lib/plant-layout';
+import { PlantPlan } from './plant-plan';
 import { PreviewMarker } from '@/features/plant/components/preview-marker';
 import { OocHalo } from '@/features/plant/components/ooc-halo';
 import { OperatorFigure } from '@/features/plant/components/operator-figure';
 import type { PreviewReading } from '@/features/plant/lib/preview-telemetry';
 import type { FloorActor } from '@/features/operators/lib/preview-dispatch';
-import planStyles from '@/features/plant/components/plant-plan.module.css';
-import previewStyles from '@/features/plant/components/plant-preview.module.css';
 
 const [BoxInstances, BoxInstance] = createInstances();
 const [CylinderInstances, CylinderInstance] = createInstances();
+
+function ContextLossFallback({ onLoss }: { onLoss: () => void }) {
+  const { gl } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const lost = (event: Event) => {
+      event.preventDefault();
+      onLoss();
+    };
+    canvas.addEventListener('webglcontextlost', lost);
+    return () => canvas.removeEventListener('webglcontextlost', lost);
+  }, [gl, onLoss]);
+  return null;
+}
 
 export type PlantPreview = {
   focusId: string | null;
@@ -392,6 +404,30 @@ function RenderBudget({ onSlowDevice }: { onSlowDevice?: () => void }) {
   return null;
 }
 
+function PlantShadow({ bounds }: { bounds: ReturnType<typeof plantBounds> }) {
+  const light = useRef<THREE.DirectionalLight>(null);
+  const span = Math.max(bounds.width, bounds.depth);
+  useLayoutEffect(() => {
+    if (light.current) light.current.shadow.needsUpdate = true;
+  }, [span, bounds.x, bounds.z]);
+  return (
+    <directionalLight
+      ref={light}
+      position={[bounds.x + 4, Math.max(16, bounds.depth), bounds.z + 8]}
+      intensity={2.8}
+      castShadow
+      shadow-mapSize={[1024, 1024]}
+      shadow-camera-left={-span}
+      shadow-camera-right={span}
+      shadow-camera-top={span}
+      shadow-camera-bottom={-span}
+      shadow-camera-far={1000}
+      shadow-bias={-0.0005}
+      shadow-autoUpdate={false}
+    />
+  );
+}
+
 function SceneContent({
   state,
   selected,
@@ -402,6 +438,8 @@ function SceneContent({
   overlay,
   onSlowDevice,
   preview,
+  isSimulation,
+  simulationPaused,
 }: {
   state: State;
   selected: string;
@@ -412,6 +450,8 @@ function SceneContent({
   overlay: 'health' | 'impact';
   onSlowDevice?: () => void;
   preview?: PlantPreview;
+  isSimulation?: boolean;
+  simulationPaused?: boolean;
 }) {
   const { gl } = useThree();
   const bounds = plantBounds(state.assets);
@@ -423,20 +463,7 @@ function SceneContent({
       <color attach="background" args={['#b8c3c3']} />
       <ambientLight intensity={0.9} />
       <hemisphereLight args={['#e7f3fa', '#687976', 1.5]} />
-      <directionalLight
-        position={[bounds.x + 4, Math.max(16, bounds.depth), bounds.z + 8]}
-        intensity={2.8}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-Math.max(bounds.width, bounds.depth)}
-        shadow-camera-right={Math.max(bounds.width, bounds.depth)}
-        shadow-camera-top={Math.max(bounds.width, bounds.depth)}
-        shadow-camera-bottom={-Math.max(bounds.width, bounds.depth)}
-        shadow-camera-far={1000}
-        shadow-bias={-0.0005}
-        shadow-autoUpdate={false}
-        shadow-needsUpdate
-      />
+      <PlantShadow bounds={bounds} />
       <directionalLight position={[-10, 5, -3]} intensity={0.8} color="#8eb9d0" />
       {(state.configuration_version || 1) > 1 ? (
         <ConfiguredEnvironment key={state.configuration_version} state={state} />
@@ -488,13 +515,18 @@ function SceneContent({
               ooc={preview?.oocIds.includes(a.id) || false}
               onSelect={onSelect}
               onHover={preview?.onHover || (() => undefined)}
-              reduced={reduced || !!state.workspace || a.status === 'unknown'}
+              reduced={
+                reduced ||
+                !!simulationPaused ||
+                (!isSimulation && !!state.workspace) ||
+                ['unknown', 'stopped', 'investigating'].includes(a.status)
+              }
             />
           ))}
         </CylinderInstances>
       </BoxInstances>
       {preview?.actors?.map((actor) => (
-        <OperatorFigure key={actor.id} actor={actor} reduced={reduced} />
+        <OperatorFigure key={actor.id} actor={actor} reduced={reduced || !!simulationPaused} />
       ))}
       {preview?.focusId &&
         state.assets
@@ -550,6 +582,8 @@ export default function PlantScene({
   quality = 'detail',
   onSlowDevice,
   preview,
+  isSimulation = false,
+  simulationPaused = false,
 }: {
   state: State;
   selected: string;
@@ -561,6 +595,8 @@ export default function PlantScene({
   quality?: 'detail' | 'balanced';
   onSlowDevice?: () => void;
   preview?: PlantPreview;
+  isSimulation?: boolean;
+  simulationPaused?: boolean;
 }) {
   const [supported, setSupported] = useState<boolean | null>(null);
   const [reduced, setReduced] = useState(false);
@@ -579,65 +615,13 @@ export default function PlantScene({
     return () => media.removeEventListener('change', change);
   }, []);
   const fallback = (
-    <div className="plan-view" role="region" aria-label="Accessible plant plan">
-      <div className={planStyles.viewport}>
-        <div className={planStyles.board}>
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            {state.dependencies.map((d) => {
-              const a = state.assets.find((a) => a.id === d.source)!;
-              const b = state.assets.find((a) => a.id === d.target)!;
-              return (
-                <line
-                  key={d.source + d.target}
-                  x1={planPosition(a, bounds).x}
-                  y1={planPosition(a, bounds).y}
-                  x2={planPosition(b, bounds).x}
-                  y2={planPosition(b, bounds).y}
-                  stroke={state.affected.includes(d.target) ? '#dba062' : '#355362'}
-                  strokeWidth={d.source === selected || d.target === selected ? 2 : 1}
-                  vectorEffect="non-scaling-stroke"
-                />
-              );
-            })}
-          </svg>
-          {state.assets.map((a) => (
-            <button
-              key={a.id}
-              aria-label={`${a.id} ${a.name}`}
-              style={{
-                left: `${planPosition(a, bounds).x}%`,
-                top: `${planPosition(a, bounds).y}%`,
-              }}
-              className={`plan-asset ${selected === a.id ? 'selected' : ''} ${preview?.oocIds.includes(a.id) ? previewStyles.planOoc : ''}`}
-              onClick={() => onSelect(a.id)}
-              onMouseEnter={() => preview?.onHover(a.id)}
-              onMouseLeave={() => preview?.onHover(null)}
-            >
-              {preview?.focusId === a.id && (
-                <div className={previewStyles.planTip}>
-                  <PreviewCard id={a.id} name={a.name} readings={preview.readings[a.id] || []} />
-                </div>
-              )}
-              <span className={`dot ${a.status}`} />
-              <strong>{a.id}</strong>
-              <small>{a.name}</small>
-            </button>
-          ))}
-          {preview?.actors?.map((actor) => {
-            const point = planPoint(actor.position, bounds);
-            return (
-              <span
-                key={actor.id}
-                className={previewStyles.actor}
-                style={{ left: `${point.x}%`, top: `${point.y}%` }}
-              >
-                {actor.label}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    <PlantPlan
+      state={state}
+      selected={selected}
+      onSelect={onSelect}
+      preview={preview}
+      focusRequest={focusRequest}
+    />
   );
   if (planView || !supported) return fallback;
   return (
@@ -653,17 +637,8 @@ export default function PlantScene({
         }}
         dpr={quality === 'detail' ? [1, 1.5] : 0.7}
         gl={{ antialias: false }}
-        onCreated={({ gl }) => {
-          gl.domElement.addEventListener(
-            'webglcontextlost',
-            (event: Event) => {
-              event.preventDefault();
-              setSupported(false);
-            },
-            { once: true },
-          );
-        }}
       >
+        <ContextLossFallback onLoss={() => setSupported(false)} />
         <SceneContent
           state={state}
           selected={selected}
@@ -674,6 +649,8 @@ export default function PlantScene({
           overlay={overlay}
           onSlowDevice={onSlowDevice}
           preview={preview}
+          isSimulation={isSimulation}
+          simulationPaused={simulationPaused}
         />
       </Canvas>
     </SceneBoundary>

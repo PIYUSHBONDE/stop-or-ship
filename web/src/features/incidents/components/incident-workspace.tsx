@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ArrowRight, Check, CircleHelp, Clock3, LoaderCircle, TriangleAlert } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
@@ -14,6 +15,7 @@ import { EvidenceDetailsDialog } from '@/features/incidents/components/evidence/
 import { DependencyImpact } from '@/features/incidents/components/dependency-impact';
 import { IncidentDecision } from '@/features/incidents/components/incident-decision';
 import styles from '@/features/incidents/components/incidents.module.css';
+import { CaseWorkspace } from '@/features/cases/case-workspace';
 
 export function IncidentDetail({
   state,
@@ -291,34 +293,41 @@ export function IncidentDetail({
 
 export default function IncidentWorkspace() {
   const { state } = usePlant();
+  const factoryCase = useSearchParams().get('workcase');
   const preview = usePreviewDispatch();
   if (!state) return null;
   const open =
     state.incidents.filter((candidate) => candidate.state !== 'resolved').length +
-    preview.ledger.cases.filter((item) => !item.fixedAt).length;
+    preview.ledger.cases.filter((item) => !item.clearedAt && !item.interrupted).length;
   return (
     <div className={styles.workspace}>
-      <header className={styles.pageHeader}>
-        <div>
-          <span className={styles.eyebrow}>{state.plant.name.toUpperCase()} / RELIABILITY</span>
-          <h1>Incidents</h1>
-          <p>
-            Page the case table, then open a row to see occurred, attended, fixed times and the
-            operator note.
-          </p>
-        </div>
-        <div className={styles.counts}>
-          <strong>{open}</strong>
-          <span>
-            open incident{open === 1 ? '' : 's'}
-            <small>
-              {state.incidents.filter((candidate) => candidate.state === 'resolved').length}{' '}
-              verified resolutions
-            </small>
-          </span>
-        </div>
-      </header>
-      <IncidentsTable state={state} IncidentDetail={IncidentDetail} />
+      {!factoryCase && (
+        <header className={styles.pageHeader}>
+          <div>
+            <span className={styles.eyebrow}>{state.plant.name.toUpperCase()} / RELIABILITY</span>
+            <h1>{factoryCase ? 'Factory case' : 'Incidents'}</h1>
+            <p>
+              {factoryCase
+                ? 'Follow the issue, evidence and the person responsible for the next step.'
+                : 'Review factory issues and staff tasks. Browser-generated response records are listed separately below.'}
+            </p>
+          </div>
+          {!factoryCase && (
+            <div className={styles.counts}>
+              <strong>{open}</strong>
+              <span>
+                open incident{open === 1 ? '' : 's'}
+                <small>
+                  {state.incidents.filter((candidate) => candidate.state === 'resolved').length}{' '}
+                  verified resolutions
+                </small>
+              </span>
+            </div>
+          )}
+        </header>
+      )}
+      {state.workspace && <CaseWorkspace key={state.workspace.id} />}
+      {!factoryCase && <IncidentsTable state={state} IncidentDetail={IncidentDetail} />}
     </div>
   );
 }

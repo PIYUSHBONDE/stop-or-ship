@@ -1,0 +1,22 @@
+# Separate observation fixtures; do not reuse the replay browser database.
+services:
+  api:
+    command:
+      [
+        python,
+        -m,
+        uvicorn,
+        operational_browser_api:app,
+        --host,
+        0.0.0.0,
+        --port,
+        "8080",
+      ]
+    environment:
+      PLANTSENSE_INTERNAL_TEST_MODE: "true"
+      PLANTSENSE_AI_PROVIDER: scripted
+    volumes:
+      - operational-browser-data:/var/lib/plantsense
+      - ./.github/operational_browser_api.py:/app/operational_browser_api.py:ro
+volumes:
+  operational-browser-data:

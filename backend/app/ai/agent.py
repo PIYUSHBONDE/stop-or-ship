@@ -6,6 +6,7 @@ import uuid
 
 from app.ai.agent_workflow import specialists
 from app.ai.ai_client import client as model_client
+from app.ai.ai_client import thinking_config
 from app.ai.knowledge import search
 from app.ai.usage import InvestigationUsage
 from app.ai.validation import validate_narrative
@@ -101,6 +102,8 @@ async def investigate(store, job, *, client_factory=None):
             raise RuntimeError("Investigation claim expired or superseded")
 
     def claim(s):
+        if execution_guard:
+            execution_guard()
         i = s["incident"]
         if s["generation"] != job["generation"] or not i or i["id"] != job["incident_id"]:
             return False

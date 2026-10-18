@@ -17,6 +17,8 @@ test-results/
 playwright-report/
 *.log
 .gcloud/
+gha-creds-*.json
+backend/release/*.json
 .runtime/
 
 # Private identity material belongs outside the repository.

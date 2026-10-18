@@ -1,8 +1,12 @@
 # Architecture and implementation boundaries
 
+## Shared issue coordination
+
+Migration 7 adds scoped factory cases, immutable human evidence, role tasks, versioned policies, persisted agent stages and durable job/outbox records. An explicit local worker replaces request-bound dispatch for enabled case automation; legacy incident calculations, approval and repair verification remain authoritative. Read-only stdio MCP supplies scoped evidence to the ADK stages. Default policies are disabled. Manual case/task workflows remain usable when live gates fail. See the [case architecture and Cloud SQL PostgreSQL target](case-foundation.md) and [local worker runbook](../operations/cases.md). The earlier isolated-demo Firestore shape below is historical and does not define the shared customer deployment target.
+
 ## Operational product and source foundation
 
-The normal workspace requires staff identity and receives observations through versioned plant-scoped sources. It does not run replay clocks or generate asset readings. Equipment without usable current observations remains unknown. Historical files and legacy records cannot authorize current work or enter operational repair memory. See [telemetry source contract](../data/telemetry-sources.md).
+The operational workspace requires staff identity and receives observations through versioned plant-scoped sources. It does not run replay clocks or generate asset readings. Equipment without usable current observations remains unknown. Historical files and legacy records cannot authorize current work or enter operational repair memory. See [telemetry source contract](../data/telemetry-sources.md).
 
 ```mermaid
 flowchart LR
@@ -147,3 +151,21 @@ One active incident is permitted. Starting another scenario archives the resolve
 AI identity is independent of storage mode through `ai_client.py`. Live execution freezes a server-owned read-only evidence plan, then runs the ADK investigator and evidence reviewer. Reliability and Production receive separate copies of identical reviewed facts and computed options; their calls are serialized after observed concurrent provider timeouts. The Python cost engine ranks feasible actions. Output validation checks source IDs, role names, option feasibility, currency narratives and safety assurance. Historical origin, sparse signals and sensor disagreement enforce uncertainty. Transactional SQLite reservations track estimated model spending and observed tokens without giving the model workflow authority. This is bounded orchestration, not open-ended autonomous negotiation.
 
 Knowledge documents retain equipment-family metadata. Local retrieval filters equipment context before ranking. Cloud vector queries use an equipment-family equality prefilter and a matching composite vector index; reviewed shared documents are indexed for each applicable family. Verified cases remain session scoped and prioritized. Cloud index execution and model grounding still require live validation.
+
+## Automatic browser simulation and assistant context
+
+Simulation starts automatically and stays visibly labeled. A plant-keyed provider owns a versioned browser record containing seed, monotonic tick, bounded ledger and dispatch snapshot. Hydration precedes writes. Web Locks elect one writer per origin and plant; storage events update followers. Unavailable storage or coordination uses an explicit in-memory fallback. Existing ledgers migrate without deleting samples or cases; unfinished legacy cases become interrupted history.
+
+Assistant questions may carry a bounded synthetic snapshot with capture time, equipment readings, selected case, assignments and recent cases. Python contracts enforce finite numbers and bounded fields; ownership-checked plant reads validate every asset ID. Synthetic context has a separate citation and remains untrusted input. It does not modify authoritative evidence, economics, approval or verification. Retries retain the captured body and key. The default provider remains scripted; changed backend fingerprints invalidate earlier live evaluation reports.
+
+## Connected manufacturing simulation
+
+The UI was restored to `bd31976` at the user's request. The added case dossier, journey panels, scenario-history panel and navigation changes are removed. New synthetic records still retain optional detection-time context internally; existing samples, cases and backend safeguards are preserved. This metadata does not change operational evidence or the restored interface.
+
+Assistant contracts still support optional bounded saved synthetic detection evidence. The server validates its case/asset match and affected equipment/area ownership. The restored assistant keeps its previous UI and sends browser simulation only for synthetic screens/cases, preserving compatibility with the backend mixed-context safeguard. Retries preserve captured bodies and keys. Live activation still requires the six-case assistant report.
+
+`process-simulation.ts` owns deterministic browser simulation transitions and projects a configured dependency graph into machine modes, line output and readings. One hydraulic pump-pressure-loss scenario progresses through developing fault, dispatch/travel, inspection, repair, recovery and station return. Only the primary pressure breach dispatches a job; downstream symptoms do not spawn unrelated repairs. Independent lines retain output. The shared recovery duration separates repair completion from case closure; reduced-motion preferences change movement rather than lifecycle timing.
+
+The plant-scoped provider retains the version-2 browser record and adds a versioned process payload with virtual elapsed time, pause/speed, scenario, sequence and bounded activity events. Old samples/completed cases remain intact; unfinished old dispatch is marked interrupted. Web Locks retain one writer, storage events synchronize followers and BroadcastChannel carries commands with acknowledgements/timeouts. Reset preserves the ledger and monotonic IDs. No HTTP mutations, source observations or operational authorizations are produced by the simulator.
+
+The default Plant workspace projects synthetic statuses into the existing 3D/2D scene and presents line summaries, explicit simulation controls, equipment inspector and activity. `?view=observations` retains the operational inspector without synthetic overlay. The scenario supports configured pump-to-press paths; arbitrary equipment failure physics and material inventory are outside this first reference-factory slice.
