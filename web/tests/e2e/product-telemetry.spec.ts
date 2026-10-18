@@ -63,10 +63,11 @@ test('expanded plant has unknown equipment and separate production measures', as
   await expect(page.getByText(/measured parts\/h/)).toBeVisible();
   await expect(page.getByText(/parts\/h rated capacity/)).toBeVisible();
   await expect(page.getByText('synthetic preview � not plant health')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Maintenance', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Maintenance', exact: true })).toBeVisible();
   await page.goto('/operations');
-  await expect(page).toHaveURL(/plant/);
-  await page.screenshot({ path: '../.runtime/statistics-integration/product-operations.png' });
+  await expect(page.getByText('Measured plant output')).toBeVisible();
+  await expect(page.getByText('Unavailable', { exact: true })).toBeVisible();
+  await page.screenshot({ path: '../docs/artifacts/product-operations.png' });
 });
 
 test('reviewed historical import preserves provenance and cannot authorize', async ({ page }) => {
@@ -240,17 +241,18 @@ test('WebGL failure retains the plant plan and keyboard equipment access', async
   await expect(page.getByText('No data connected · Condition unknown')).toBeVisible();
 });
 
-test('simulation runs automatically and remains separate from operational snapshots', async ({
+test('synthetic preview is opt-in and does not persist into operational pages', async ({
   page,
 }) => {
   const plant = await owner(page);
+  await page.goto('/monitoring?preview=1');
+  await expect(page.getByRole('heading', { name: 'Machine records', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Machine preview records' })).toBeVisible();
   await page.goto('/monitoring');
-  await expect(page.getByRole('heading', { name: 'Line records', exact: true })).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Production line records' })).toBeVisible();
-  await page.getByRole('link', { name: 'Operators', exact: true }).click();
-  await expect(page).toHaveURL(/operators/);
-  await page.getByRole('link', { name: 'Monitor', exact: true }).click();
-  await expect(page.getByRole('list', { name: 'Production line records' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Telemetry sources', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Machine preview records' })).toHaveCount(0);
+  await page.goto('/incidents');
+  await expect(page.locator('tbody').getByText('preview', { exact: true })).toHaveCount(0);
   const snapshot = await (await page.request.get(`/api/v1/plants/${plant}/snapshot`)).json();
   expect(
     snapshot.incidents.every(

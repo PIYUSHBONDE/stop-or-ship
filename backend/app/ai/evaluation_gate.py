@@ -15,8 +15,6 @@ def fingerprint():
         root / "contracts/assistant.py",
         root / "api/assistant.py",
         root / "api/middleware.py",
-        root / "api/workspace.py",
-        root / "api/worker.py",
         root / "main.py",
         root / "persistence/workspace_store.py",
         root / "identity/staff_access.py",
@@ -29,21 +27,8 @@ def fingerprint():
         root / "plant/profiles.py",
         root / "persistence/ai_usage.py",
         root / "persistence/store.py",
-        root / "persistence/postgres.py",
-        root / "persistence/postgres-functions.sql",
-        root / "persistence/postgres_migration.py",
-        root / "persistence/cloud_migrate.py",
         root / "core/config.py",
         config.DATA / "knowledge.json",
-    ]
-    paths += sorted((root / "cases").glob("*.py")) + [
-        root / "contracts/cases.py",
-        root / "api/cases.py",
-        root / "persistence/workspace_schema.py",
-    ]
-    paths += sorted((root / "runtime").glob("*.py")) + [
-        root.parent / "pyproject.toml",
-        root.parent / "uv.lock",
     ]
     for path in paths:
         digest.update(path.name.encode())
@@ -57,8 +42,6 @@ def fingerprint():
 
 
 def require_evaluation():
-    if not config.REQUIRE_RELEASE_GATES:
-        return
     try:
         report = json.loads(Path(config.AI_EVALUATION_FILE).read_text(encoding="utf-8"))
         valid = (

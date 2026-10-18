@@ -15,9 +15,13 @@ export default function MemoryWorkspace() {
   return (
     <WorkspaceFrame
       plantName={state.plant.name}
-      title="Plant guide"
-      description="Every machine address, what can break, what can be fixed, and the station user guide."
+      title="Reliability memory"
+      description="Verified repairs, technician corrections, and reference guides."
     >
+      <section className={styles.editor}>
+        <MemoryPanel state={state} />
+      </section>
+      <h2>Plant reference guides</h2>
       <label className={styles.search}>
         <Search size={17} />
         <input
@@ -28,9 +32,6 @@ export default function MemoryWorkspace() {
         />
       </label>
       <PlantGuideBoard query={query} />
-      <section className={styles.editor}>
-        <MemoryPanel state={state} />
-      </section>
     </WorkspaceFrame>
   );
 }

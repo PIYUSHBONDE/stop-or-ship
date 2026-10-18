@@ -102,10 +102,6 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     );
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password)
       throw new Error('Invalid API configuration');
-    if (process.env.PLANTSENSE_CLOUD_AUTH === 'true') {
-      if (base.protocol !== 'https:') throw new Error('Cloud API requires HTTPS');
-      headers['X-Serverless-Authorization'] = `Bearer ${await serviceIdentity(base.origin)}`;
-    }
     const transcription =
       path.length === 5 &&
       path[1] === 'plants' &&

@@ -280,44 +280,6 @@ export function usePlantSession(
     }
   }
 
-  async function caseRequest<T>(path: string, body?: unknown, key?: string): Promise<T> {
-    const mutating = body !== undefined;
-    if (!/^\/(?:cases|tasks|automation-policy|notifications)(?:[/?]|$)/.test(path))
-      throw new ApiError('Unsupported case operation.', 400);
-    if (
-      (mutating && (actionPending.current || assistantPending.current)) ||
-      !current.current?.workspace
-    )
-      throw new ApiError('Another request is in progress. Try again after it completes.', 409);
-    if (mutating) assistantPending.current = true;
-    const intent = JSON.stringify([
-      current.current.workspace.id,
-      current.current.workspace.user.id,
-      path,
-      body,
-    ]);
-    const requestKey =
-      body === undefined ? undefined : key || caseKeys.current.get(intent) || crypto.randomUUID();
-    if (requestKey) caseKeys.current.set(intent, requestKey);
-    try {
-      return await serialize(async () => {
-        if (context.current !== contextKey || !current.current?.workspace)
-          throw new ApiError('Plant context changed. Reopen the current case.', 409);
-        const result = await staffRequest<T>(
-          `/plants/${encodeURIComponent(current.current.workspace.id)}${path}`,
-          body,
-          requestKey,
-        );
-        if (!mounted.current || context.current !== contextKey)
-          throw new ApiError('Plant context changed. Previous case response discarded.', 409);
-        caseKeys.current.delete(intent);
-        return result;
-      });
-    } finally {
-      if (mutating) assistantPending.current = false;
-    }
-  }
-
   async function configuration() {
     return perform((session) => {
       if (!session.workspace) throw new ApiError('Plant configuration requires staff access.', 403);
@@ -428,7 +390,6 @@ export function usePlantSession(
     approve,
     ask,
     assistantRequest,
-    caseRequest,
     configuration,
     configurationTemplate,
     saveConfiguration,

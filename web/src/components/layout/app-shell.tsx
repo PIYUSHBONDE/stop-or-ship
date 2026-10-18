@@ -12,7 +12,6 @@ import {
   Radio,
   LoaderCircle,
   Settings2,
-  Users,
   X,
   PanelLeftOpen,
   PanelLeftClose,
@@ -21,8 +20,6 @@ import {
 } from 'lucide-react';
 import { usePlant } from '@/providers/plant-session-provider';
 import { AssistantPanel } from '@/features/assistant/assistant-panel';
-import { TaskInbox } from '@/features/cases/task-inbox';
-import { NotificationInbox } from '@/features/cases/notification-inbox';
 import { usePreviewDispatch } from '@/features/operators/lib/preview-dispatch-provider';
 import { FrameStatus } from './frame-status';
 import { PlantControlsContext } from './plant-controls-context';
@@ -30,7 +27,8 @@ import styles from './app-shell.module.css';
 
 const destinations = [
   { href: '/plant', name: 'Plant', icon: Factory },
-  { href: '/operators', name: 'Operators', icon: Users },
+  { href: '/operations', name: 'Operations', icon: Workflow },
+  { href: '/maintenance', name: 'Maintenance', icon: Settings2 },
   { href: '/monitoring', name: 'Monitor', icon: Radio },
   { href: '/incidents', name: 'Incidents', icon: Activity },
   { href: '/memory', name: 'Memory', icon: BookOpen },
@@ -132,25 +130,67 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <span className={styles.brandMark}>
           <Workflow size={23} />
-        </span>
-        <span className={styles.brandName}>PlantSense</span>
-      </Link>
-      <Link className={styles.plantName} href="/workspace" title="Choose plant">
-        {state.plant.name}
-      </Link>
-      <div className={styles.destinations}>
-        {destinations.map(({ href, name, icon }) =>
-          navLink(
-            href,
-            name,
-            icon,
-            name === 'Operators'
-              ? preview.assignments.length
-              : name === 'Incidents'
-                ? Number(!!state.incident && state.incident.state !== 'resolved') +
-                  preview.ledger.cases.filter((c) => !c.clearedAt && !c.interrupted).length
-                : 0,
-          ),
+        </Link>
+        {destinations.map(({ href, name, icon: Icon }) => (
+          <Link
+            key={href}
+            href={
+              state.workspace && state.incident ? `${href}?incident=${state.incident.id}` : href
+            }
+            className={`rail-button ${pathname.startsWith(href) ? 'active' : ''}`}
+            aria-current={pathname.startsWith(href) ? 'page' : undefined}
+          >
+            <Icon size={21} />
+            <span>{name}</span>
+            {name === 'Incidents' &&
+              ((state.incident && state.incident.state !== 'resolved') ||
+                preview.ledger.cases.some((item) => !item.fixedAt)) && <i className="rail-dot" />}
+            {name === 'Operators' && preview.assignments.length > 0 && <i className="rail-dot" />}
+          </Link>
+        ))}
+        <div className="rail-bottom">
+          <Link href="/workspace" className="rail-button" aria-label="Staff and plant access">
+            <span className="avatar">
+              {state.workspace?.user.display_name.slice(0, 2).toUpperCase() || 'NP'}
+            </span>
+            <span>Access</span>
+          </Link>
+        </div>
+      </nav>
+      <div className="workspace v2-workspace">
+        <header className="topbar">
+          <div className="wordmark">
+            PlantSense<span> / </span>
+            <small>{state.plant.name.toUpperCase()}</small>
+          </div>
+          <div className="topbar-right">
+            <AssistantPanel />
+            <span className="demo-pill">
+              {state.sources?.some(
+                (source) =>
+                  source.configuration.kind === 'operational' && source.quality === 'fresh',
+              )
+                ? 'OBSERVATIONS AVAILABLE'
+                : 'NO CURRENT DATA'}
+            </span>
+            {state.workspace && (
+              <span className="connection">
+                {state.workspace.user.display_name} · {state.workspace.role}
+              </span>
+            )}
+            <span className="connection">
+              <Radio size={13} />
+              {connected ? 'API connected' : 'Reconnecting…'}
+            </span>
+          </div>
+        </header>
+        {error && (
+          <div className="error-banner" role="alert">
+            {error}
+            <button onClick={dismissError} aria-label="Dismiss error">
+              <X size={16} />
+            </button>
+          </div>
         )}
       </div>
       <div className={styles.utilities}>

@@ -60,7 +60,7 @@ export function IncidentsTable({
       router.replace('/incidents', { scroll: false });
       return;
     }
-    const next = row.kind === 'preview' ? `case=${row.id}` : `incident=${row.id}`;
+    const next = row.kind === 'preview' ? `preview=1&case=${row.id}` : `incident=${row.id}`;
     router.replace(`/incidents?${next}`, { scroll: false });
   }
 

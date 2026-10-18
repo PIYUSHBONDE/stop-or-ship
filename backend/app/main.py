@@ -10,7 +10,6 @@ from fastapi.responses import JSONResponse
 
 from app.ai.agent import investigate
 from app.api.assistant import router as assistant_router
-from app.api.cases import router as cases_router
 from app.api.dependencies import Storage
 from app.api.middleware import RequestBoundary
 from app.api.monitoring import router as monitoring_router
@@ -32,16 +31,8 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        if store is None and config.AI_PROVIDER == "scripted" and not config.INTERNAL_TEST_MODE:
-            raise RuntimeError("Scripted AI is test-only. Configure a live provider for application use.")
-        application.state.store = store if store is not None else create_store()
+        application.state.store = store if store is not None else Store()
         application.state.assistant_cache = cache
-        if config.REQUIRE_RELEASE_GATES:
-            from app.ai.assistant_gate import require_assistant_evaluation
-            from app.cases.worker import require_case_evaluation
-
-            require_assistant_evaluation(voice=True)
-            require_case_evaluation()
         # Validate and warm trusted replay/model artifacts before accepting judge traffic.
         if config.INTERNAL_TEST_MODE:
             await asyncio.to_thread(sample, 0, None)
@@ -71,7 +62,6 @@ def create_app(store: Store | None = None, *, shared_runtime=True, assistant_cac
     application.include_router(monitoring_router)
     application.include_router(source_router)
     application.include_router(assistant_router)
-    application.include_router(cases_router)
 
     @application.exception_handler(RequestValidationError)
     async def invalid_input(request: Request, exc: RequestValidationError):

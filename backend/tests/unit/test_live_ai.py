@@ -1,9 +1,6 @@
 """Release gate, money reservation and stale-worker regressions; no live-model claims."""
 
 import json
-import os
-import subprocess
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
@@ -153,7 +150,6 @@ def test_eight_call_budget_survives_retry_claim(ledger):
 
 def test_evaluation_gate_rejects_missing_failed_stale_and_wrong_provider(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "AI_EVALUATION_FILE", str(tmp_path / "evaluation.json"))
-    monkeypatch.setattr(config, "REQUIRE_RELEASE_GATES", True)
     with pytest.raises(RuntimeError, match="evaluation"):
         require_evaluation()
     report = {
@@ -187,77 +183,6 @@ def test_evaluation_gate_rejects_missing_failed_stale_and_wrong_provider(tmp_pat
         path.write_text(json.dumps({**report, field: value}))
         with pytest.raises(RuntimeError, match="evaluation"):
             require_evaluation()
-
-
-def test_local_live_ai_does_not_need_evaluation_reports(monkeypatch, tmp_path):
-    monkeypatch.setattr(config, "MODE", "local")
-    monkeypatch.setattr(config, "REQUIRE_RELEASE_GATES", False)
-    monkeypatch.setattr(config, "AI_EVALUATION_FILE", str(tmp_path / "missing-investigation.json"))
-    monkeypatch.setattr(config, "ASSISTANT_EVALUATION_FILE", str(tmp_path / "missing-assistant.json"))
-    monkeypatch.setattr(config, "CASES_EVALUATION_FILE", str(tmp_path / "missing-cases.json"))
-
-    from app.ai.assistant_gate import require_assistant_evaluation
-    from app.cases.worker import require_case_evaluation
-
-    require_evaluation()
-    require_assistant_evaluation(voice=True)
-    require_case_evaluation()
-
-
-def test_cloud_live_ai_keeps_evaluation_reports_required(monkeypatch, tmp_path):
-    monkeypatch.setattr(config, "MODE", "cloud")
-    monkeypatch.setattr(config, "REQUIRE_RELEASE_GATES", True)
-    monkeypatch.setattr(config, "AI_EVALUATION_FILE", str(tmp_path / "missing-investigation.json"))
-
-    with pytest.raises(RuntimeError, match="evaluation"):
-        require_evaluation()
-
-    from app.ai import assistant_gate
-    from app.cases import worker
-
-    monkeypatch.setattr(config, "ASSISTANT_EVALUATION_FILE", str(tmp_path / "missing-assistant.json"))
-    with pytest.raises(HTTPException, match="investigation evaluation"):
-        assistant_gate.require_assistant_evaluation()
-
-    monkeypatch.setattr(assistant_gate, "require_assistant_evaluation", lambda **_: None)
-    monkeypatch.setattr(config, "CASES_EVALUATION_FILE", str(tmp_path / "missing-cases.json"))
-    with pytest.raises(RuntimeError, match="Case automation requires"):
-        worker.require_case_evaluation()
-
-
-@pytest.mark.parametrize(
-    ("mode", "gate_override", "expected"),
-    [
-        ("local", None, "postgres|False"),
-        ("cloud", None, "postgres|True"),
-        ("cloud", "false", "postgres|False"),
-    ],
-)
-def test_database_url_selects_postgres_and_gate_setting(mode, gate_override, expected):
-    env = os.environ.copy()
-    env.update(
-        PLANTSENSE_MODE=mode,
-        GOOGLE_CLOUD_PROJECT="plantsense-test-project",
-        DATABASE_URL="postgresql://user:password@127.0.0.1:5432/plantsense",
-        PYTHONPATH=str(config.ROOT),
-    )
-    for key in ("PLANTSENSE_STORAGE", "PLANTSENSE_POSTGRES_DSN", "PLANTSENSE_REQUIRE_RELEASE_GATES"):
-        env.pop(key, None)
-    if gate_override is not None:
-        env["PLANTSENSE_REQUIRE_RELEASE_GATES"] = gate_override
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "from app.core import config; print(f'{config.STORAGE}|{config.REQUIRE_RELEASE_GATES}')",
-        ],
-        cwd=config.ROOT,
-        env=env,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert result.stdout.strip() == expected
 
 
 def test_citation_index_includes_all_validated_claim_references():

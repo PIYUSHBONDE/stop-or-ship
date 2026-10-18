@@ -2,32 +2,22 @@
 
 Plant reliability with configurable equipment, named staff access, observation-based incidents, evidence inspection, deterministic INR comparisons, human authorization and verified repair memory.
 
+## UI preview integration
+
+The updated landing page uses local staff email/password authentication, not Google or Microsoft SSO. Synthetic equipment and operator previews are opt-in through `?preview=1`; they do not establish equipment health or authorize work. Operational observations, incidents, maintenance and verified repair memory remain separate.
+
 ## Current product
 
-Cloud updates: follow the [deployment quickstart](docs/operations/release-quickstart.md) for the existing Mumbai deployment. Routine releases preserve the database and use GitHub Actions.
-
-- **Plant:** connected hydraulic-forming simulator with 3D/2D floor, line output, machine inspector and activity timeline. Configured layouts are preserved; reviewed operational observations have a separate view.
-- **Operators:** live assignment IDs, experience-based dispatch and walk-to-cell preview.
-- **Monitor:** machine cards, per-machine records/graphs, plus reviewed operational/historical sources.
-- **Incidents:** persistent factory cases, role-based human requests and retained incident links, alongside the paginated browser/operational incident table.
-- **Memory:** plant guide cards (address, what can break, what can be fixed) and confirmed repair memory.
+- **Plant:** dedicated 3D explorer and accessible 2D plan, adapting to reviewed two-to-eight-line configurations (up to 36 assets in supplied templates).
+- **Monitor:** reviewed operational/historical sources, freshness, units, record provenance, CSV validation, read-only preview and explicit import confirmation.
+- **Operations:** measured output, rated capacity and estimated dependency impact shown separately. Unconnected equipment remains unknown.
+- **Incidents:** retained evidence, uncertainty, specialist positions, intervention assumptions and versioned approval.
+- **Maintenance:** authorized work, UTC eligibility, technician outcomes and recovery from three qualifying post-repair observation windows.
+- **Memory:** confirmed operational repairs with original diagnosis and technician corrections.
+- **Ask PlantSense:** contextual read-only answers, inspectable citations, saved costs, editable English voice transcripts and playback on request. See [local activation and limits](docs/operations/assistant.md).
 - **Setup:** administrator-reviewed plant configuration and immutable revision history.
 
-Operations and Maintenance are no longer in the rail. `/operations` goes to Plant. `/maintenance` still serves authorized repair when opened from an approved incident.
-
-## Local admin sign-in
-
-Open **http://127.0.0.1:3000/**, choose Continue with email, then use the work-email form.
-
-| Role | Email | Password |
-| --- | --- | --- |
-| Administrator (this machine) | `akarshpriyadarshancp@gmail.com` | the passphrase set at first setup |
-| Local operator | `operator@plantsense.local` | `testing-only strong passphrase!` |
-| Product browser tests | `product-owner@example.test` | `testing-only strong passphrase!` |
-
-There is no default password for a new plant. Staff sessions use expiring HttpOnly cookies; only password hashes are stored. These local accounts do not grant cloud access.
-
-**Normal application use defaults to live Vertex AI with Gemini 3.8 Flash.** Evaluation reports are optional for prototype releases; set `PLANTSENSE_REQUIRE_RELEASE_GATES=true` to require matching reports. Cloud Run prototype releases explicitly disable that check. Live AI then runs without those evaluation results, so its performance is unvalidated. Missing credentials still block AI rather than substituting scripted answers. Scripted providers are restricted to explicitly isolated test execution; normal API and worker startup reject them. No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
+**The standard local stack defaults to the explicitly scripted investigator.** Live Gemini uses bounded evidence collection, independent specialist explanations, token/spend accounting and a matching real-response evaluation gate. See [local evaluation and activation](docs/operations/live-gemini.md) and [observed results](docs/status.md). No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
 
 ## Run with Docker
 
@@ -124,6 +114,7 @@ Use an isolated acceptance database/Compose project for browser tests; tests cre
 Development remains local. Draft proposals/recordings and earlier screenshots represent earlier iterations and must not be presented as proof of live Gemini or physical plant validation.
 
 See [repository structure](docs/engineering/repository-structure.md), [contributing](CONTRIBUTING.md), and the [documentation index](docs/README.md). Run `.venv/Scripts/python.exe scripts/validate.py` (Unix: `.venv/bin/python`) for portable local validation. Add `--skip-tests` for static checks only.
+<<<<<<< HEAD
 
 ## Recent local changes
 
@@ -150,4 +141,6 @@ Plant opens as a hydraulic-forming reference factory using the configured equipm
 
 Use **Start pump pressure loss**, **Pause/Resume**, **1x/10x speed**, and **Reset scenario**. Reset retains records and marks interrupted work. The writing browser tab serializes controls across tabs. Simulation speed changes simulated durations; it is not physical repair timing. Output derating and readings are authored demonstration assumptions, not a calibrated hydraulic model. The scenario requires a configured pump with a dependency path to a press.
 
-Open **Reviewed operational observations** from Plant to inspect backend observations and authorization. Simulation does not submit observations or change work orders. Old browser samples and completed cases are retained; unfinished pre-process dispatch cases become interrupted history when adopted by the new controller.
+# Open **Reviewed operational observations** from Plant to inspect backend observations and authorization. Simulation does not submit observations or change work orders. Old browser samples and completed cases are retained; unfinished pre-process dispatch cases become interrupted history when adopted by the new controller.
+
+> > > > > > > 2de8d47854fa8275935ffabcfe0073d08c96e14e

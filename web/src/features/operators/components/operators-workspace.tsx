@@ -229,7 +229,15 @@ export function OperatorsWorkspace() {
     query.get('assignment') || query.get('operator'),
   );
   if (!state) return null;
-
+  if (!preview.enabled)
+    return (
+      <main>
+        <h1>Operator dispatch preview</h1>
+        <p>No operational dispatch connector is configured.</p>
+        <Link href="/operators?preview=1">Open synthetic dispatch preview</Link>
+      </main>
+    );
+  const bounds = plantBounds(state.assets);
   const available = OPERATORS.filter(
     (operator) => !preview.assignments.some((item) => item.operatorId === operator.id),
   ).length;

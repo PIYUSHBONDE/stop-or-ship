@@ -6,14 +6,6 @@ import os
 from app.core import config
 
 
-def thinking_config():
-    from google.genai import types
-
-    # Gemini 3.8 rejects MINIMAL; LOW is its lowest supported reasoning level.
-    level = types.ThinkingLevel.LOW if config.MODEL.startswith("gemini-3.8") else types.ThinkingLevel.MINIMAL
-    return types.ThinkingConfig(thinking_level=level)
-
-
 def client(embedding=False, *, evaluation=False):
     from google import genai
     from google.genai import types

@@ -8,15 +8,7 @@ from app.core import config
 
 
 def require_assistant_evaluation(*, voice=False):
-    from fastapi import HTTPException
-
-    if not config.REQUIRE_RELEASE_GATES:
-        return
-
-    try:
-        require_evaluation()
-    except RuntimeError as exc:
-        raise HTTPException(503, "AI activation requires matching live investigation evaluation") from exc
+    require_evaluation()
     try:
         report = json.loads(Path(config.ASSISTANT_EVALUATION_FILE).read_text(encoding="utf-8"))
         valid = (
@@ -32,13 +24,14 @@ def require_assistant_evaluation(*, voice=False):
                 "historical_boundary",
                 "saved_costs",
                 "approval_blockers",
-                "synthetic_case_boundary",
             }
-            and len(report["cases"]) == 6
+            and len(report["cases"]) == 5
             and all(c["passed"] is True for c in report["cases"])
             and (not voice or report.get("voice_passed") is True)
         )
     except (OSError, ValueError, KeyError, TypeError):
         valid = False
     if not valid:
+        from fastapi import HTTPException
+
         raise HTTPException(503, "Assistant activation requires matching local text/voice evaluation")

@@ -20,43 +20,16 @@ export function LineRecords({
   query: string;
 }) {
   const preview = usePreviewDispatch();
-  const needle = query.trim().toLowerCase();
-  const known = new Set(areas.map((area) => area.id));
-  const extras: Area[] = [...new Set(assets.map((asset) => asset.area_id))]
-    .filter((id) => !known.has(id))
-    .map((id) => ({
-      id,
-      name: id,
-      purpose: 'Equipment without a configured line',
-      nominal_units_per_hour: 0,
-    }));
-  const groups = [...areas, ...extras]
-    .map((area) => {
-      const onLine = assets.filter((asset) => asset.area_id === area.id);
-      const lineText = `${area.name} ${area.id} ${area.purpose}`.toLowerCase();
-      const lineMatches = !needle || lineText.includes(needle);
-      const machines = onLine.filter(
-        (asset) =>
-          lineMatches || `${asset.name} ${asset.id} ${asset.type}`.toLowerCase().includes(needle),
-      );
-      return { area, machines };
-    })
-    .filter((group) => group.machines.length)
-    .sort(
-      (left, right) =>
-        Number(right.area.nominal_units_per_hour > 0) -
-          Number(left.area.nominal_units_per_hour > 0) ||
-        left.area.name.localeCompare(right.area.name),
-    );
-  if (!groups.length) return null;
+  if (!preview.enabled || !assets.length) return null;
   return (
     <div className={styles.lines} role="list" aria-label="Production line records">
       {groups.map(({ area, machines }) => {
         const live = preview.view?.lines.find((line) => line.id === area.id);
         const ooc = machines.some((machine) => preview.oocIds.includes(machine.id));
         return (
-          <section
-            key={area.id}
+          <Link
+            key={item.id}
+            href={`/monitoring/${encodeURIComponent(item.id)}?preview=1`}
             role="listitem"
             className={`${styles.line} ${ooc ? styles.ooc : ''}`}
             aria-label={`${area.name} records`}

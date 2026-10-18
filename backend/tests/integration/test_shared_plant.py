@@ -83,7 +83,6 @@ def test_plant_catalog_is_scoped_durable_and_additively_migrated(shared):
             (4,),
             (5,),
             (6,),
-            (7,),
         ]
 
 

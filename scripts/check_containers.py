@@ -72,20 +72,6 @@ def check_runtime(service: str, uid: str) -> dict:
             environment.get("PLANTSENSE_MODE") == "local",
             "Vertex override is not local",
         )
-    # Base Compose is manual-only until credentials and matching reports are supplied.
-    # Any supplied Vertex configuration still requires the complete read-only mounts.
-    if (
-        service == "api"
-        and environment.get("PLANTSENSE_AI_PROVIDER") == "vertex"
-        and any(
-            environment.get(key)
-            for key in (
-                "GOOGLE_APPLICATION_CREDENTIALS",
-                "PLANTSENSE_AI_EVALUATION_FILE",
-                "PLANTSENSE_ASSISTANT_EVALUATION_FILE",
-            )
-        )
-    ):
         allowed_bind_paths = {
             "/run/secrets/google_adc.json",
             "/run/secrets/gemini_evaluation.json",

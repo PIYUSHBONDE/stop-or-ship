@@ -40,6 +40,16 @@ export function MachineRecordPage({ assetId }: { assetId: string }) {
     else if (!detailId && dialog.open) dialog.close();
   }, [detailId]);
   if (!state) return null;
+  if (!preview.enabled)
+    return (
+      <main>
+        <h1>Machine preview records</h1>
+        <p>Synthetic readings are disabled. Inspect reviewed sources for operational data.</p>
+        <Link href={`/monitoring/${encodeURIComponent(assetId)}?preview=1`}>
+          Open synthetic preview
+        </Link>
+      </main>
+    );
   if (!asset)
     return (
       <div className={pageStyles.page}>

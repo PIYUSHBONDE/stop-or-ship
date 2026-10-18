@@ -5,10 +5,8 @@ import base64
 import binascii
 import io
 import math
-import re
 import struct
 import wave
-from xml.sax.saxutils import escape
 
 import google.auth
 import httpx
@@ -19,52 +17,6 @@ from app.ai.assistant import once, reserve, scope_for, usage_view
 from app.ai.assistant_gate import require_assistant_evaluation
 from app.contracts.assistant import SpeechResponse, TranscriptionResponse
 from app.core import config
-
-
-def spoken_input(answer):
-    """Render validated prose for speech, without interpreting model-authored SSML."""
-    text = re.sub(r"!?\[([^\]]+)\]\([^\n]*?\)", r"\1", answer)
-    text = re.sub(r"https?://\S+", "", text)
-    text = re.sub(r"```[^\n]*\n|```", "", text)
-    text = re.sub(r"(?m)^[ \t]*(?:#{1,6}[ \t]+|[-*•][ \t]+|\d+[.)][ \t]+)", "", text)
-    text = re.sub(r"(\*\*|__)(.+?)\1", r"\2", text)
-    text = re.sub(r"(?<!\w)[*_]([^\n]+?)[*_](?!\w)", r"\1", text)
-    text = text.replace("`", "").replace("(", ", ").replace(")", "")
-    text = text.replace("[", ", ").replace("]", "")
-    text = re.sub(r"\b([A-Z]{1,3})-(\d{2,6})\b", lambda m: " ".join(m[1]) + " " + " ".join(m[2]), text)
-    text = re.sub(r"(?<=\d)\s*[–—]\s*(?=-?\d)", " to ", text)
-    for pattern, spoken in (
-        (r"°\s*C\b", " degrees Celsius"),
-        (r"°\s*F\b", " degrees Fahrenheit"),
-        (r"\bL\s*/\s*min\b", "litres per minute"),
-        (r"\bparts\s*/\s*(?:h|hr|hour)\b", "parts per hour"),
-        (r"\brpm\b", "revolutions per minute"),
-        (r"\bkW\b", "kilowatts"),
-        (r"\bkPa\b", "kilopascals"),
-        (r"\bMPa\b", "megapascals"),
-        (r"\bkN\b", "kilonewtons"),
-        (r"\bmm\s*/\s*s\b", "millimetres per second"),
-    ):
-        text = re.sub(pattern, spoken, text)
-    text = text.replace("%", " percent").replace("&", " and ")
-    paragraphs = []
-    for paragraph in re.split(r"\n\s*\n", text):
-        lines = []
-        for line in paragraph.splitlines():
-            line = re.sub(r"\s+", " ", line).strip(" ,")
-            line = re.sub(r"\s+([,.;!?])", r"\1", line)
-            line = re.sub(r",\s*([.!?])", r"\1", line)
-            if line:
-                lines.append(line if line[-1] in ".!?;:" else line + ".")
-        if lines:
-            paragraphs.append(" ".join(lines))
-    plain = " ".join(paragraphs)
-    ssml = "<speak>" + "".join("<p>" + escape(p) + "</p>" for p in paragraphs) + "</speak>"
-    if not plain:
-        raise HTTPException(422, "No readable answer text is available for playback")
-    if len(plain) > 3000 or len(ssml.encode("utf-8")) > 5000:
-        raise HTTPException(422, "Answer is too long for playback; ask for a shorter explanation")
-    return ssml
 
 
 def wav_seconds(encoded):
@@ -168,8 +120,6 @@ async def speak(cache, store, token, plant_id, body, key, *, evaluation=False):
     answer = cache.get(body.answer_reference, scope)
     if answer is None:
         raise HTTPException(404, "Answer expired; ask again before playback")
-    if body.case_id and answer.case_revision != state["factory_case"]["case"]["revision"]:
-        raise HTTPException(409, "Case changed; ask again before playback")
     if answer.configuration_version != state["configuration_version"] or answer.calculation_version != (
         state.get("incident") or {}
     ).get("calculation_version"):
@@ -178,7 +128,7 @@ async def speak(cache, store, token, plant_id, body, key, *, evaluation=False):
         require_assistant_evaluation(voice=True)
 
     async def execute(identity):
-        text = spoken_input(answer.answer)
+        text = answer.answer[:3000]
         amount = len(text) * 4
         request_id = reserve(
             store,
@@ -195,9 +145,9 @@ async def speak(cache, store, token, plant_id, body, key, *, evaluation=False):
             data = await google_post(
                 "https://texttospeech.googleapis.com/v1/text:synthesize",
                 {
-                    "input": {"ssml": text},
+                    "input": {"text": text},
                     "voice": {"languageCode": "en-IN", "name": "en-IN-Wavenet-A"},
-                    "audioConfig": {"audioEncoding": "MP3", "speakingRate": 0.96},
+                    "audioConfig": {"audioEncoding": "MP3"},
                 },
             )
             audio = data["audioContent"]

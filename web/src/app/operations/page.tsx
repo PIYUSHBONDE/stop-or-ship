@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-
+import OperationsWorkspace from '@/features/operations/components/operations-workspace';
 export default function Page() {
-  redirect('/plant');
+  return <OperationsWorkspace />;
 }

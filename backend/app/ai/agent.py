@@ -33,7 +33,6 @@ Use only evidence IDs returned by tools. Report missing evidence that would dist
 Include every supporting and conflicting evidence ID in citations. Each field must use the exact supplied ID.
 Return ONLY JSON matching this schema: {schema}
 Currency amounts belong in the computed UI table; avoid monetary figures in any denomination in generated narrative.
-Do not include currency symbols, currency names or codes in narrative, even when describing unavailable costs.
 Do not restate numeric failure probabilities. They are planning assumptions, not calibrated predictions.
 """
 
@@ -80,7 +79,7 @@ def validate_result(result, evidence):
     return result.model_dump()
 
 
-async def investigate(store, job, *, client_factory=None, execution_guard=None, checkpoint=None):
+async def investigate(store, job, *, client_factory=None):
     sid, owner = job["session_id"], job["owner"]
     claim_token = uuid.uuid4().hex
 
@@ -95,8 +94,6 @@ async def investigate(store, job, *, client_factory=None, execution_guard=None, 
         )
 
     def require_active_claim(current):
-        if execution_guard:
-            execution_guard()
         if (
             not owns_claim(current)
             or current["incident"]["lease_until"] <= time.time()
@@ -453,7 +450,7 @@ async def investigate(store, job, *, client_factory=None, execution_guard=None, 
                     max_output_tokens=2400,
                     response_mime_type="application/json",
                     automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-                    thinking_config=thinking_config(),
+                    thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL),
                 ),
             )
             sessions = InMemorySessionService()
@@ -489,22 +486,9 @@ async def investigate(store, job, *, client_factory=None, execution_guard=None, 
             remaining = s["incident"]["deadline_at"] - time.time()
             if remaining <= 0:
                 raise TimeoutError("Investigation deadline exhausted")
-
-            async def initial_stage():
-                final = await asyncio.wait_for(run(), timeout=min(60, remaining))
-                final = final.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-                return validate_result(json.loads(final), list(evidence.values()))
-
-            result = (
-                await checkpoint(
-                    "investigator",
-                    InvestigationResult,
-                    {"evidence": list(evidence.values()), "calculation": s["incident"]["calculation"]},
-                    initial_stage,
-                )
-                if checkpoint
-                else await initial_stage()
-            )
+            final = await asyncio.wait_for(run(), timeout=min(60, remaining))
+            final = final.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+            result = validate_result(json.loads(final), list(evidence.values()))
             if result["roles"]:
                 raise ValueError("Investigator cannot impersonate independent specialists")
             if not result["missing_information"]:
@@ -540,7 +524,6 @@ async def investigate(store, job, *, client_factory=None, execution_guard=None, 
                     usage.before,
                     update_progress,
                     usage=usage,
-                    **({"checkpoint": checkpoint} if checkpoint else {}),
                 ),
                 timeout=remaining,
             )

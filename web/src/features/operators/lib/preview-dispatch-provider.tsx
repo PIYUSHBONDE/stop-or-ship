@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { usePlant } from '@/providers/plant-session-provider';
 import { usePreviewDispatchState } from '@/features/operators/lib/use-preview-dispatch';
 import {
@@ -20,11 +21,7 @@ import type { Asset } from '@/lib/types';
 const EMPTY: Asset[] = [];
 
 type PreviewDispatch = {
-  process: ProcessState | null;
-  view: ReturnType<typeof processView> | null;
-  command: (command: SimulationCommand) => void;
-  controlError: string;
-  storageError: string;
+  enabled: boolean;
   seed: number;
   tick: number;
   readings: Record<string, PreviewReading[]>;
@@ -45,21 +42,22 @@ const PreviewDispatchContext = createContext<PreviewDispatch | null>(null);
 
 export function PreviewDispatchProvider({ children }: { children: ReactNode }) {
   const { state } = usePlant();
-  return <PlantDispatch key={state?.plant.id || ''}>{children}</PlantDispatch>;
+  const enabled = useSearchParams().get('preview') === '1';
+  return (
+    <PreviewDispatchSession key={`${state?.plant.id || ''}-${enabled}`} enabled={enabled}>
+      {children}
+    </PreviewDispatchSession>
+  );
 }
 
-function PlantDispatch({ children }: { children: ReactNode }) {
+function PreviewDispatchSession({ children, enabled }: { children: ReactNode; enabled: boolean }) {
   const { state } = usePlant();
   const dispatch = usePreviewDispatchState(
-    {
-      assets: state?.assets ?? EMPTY,
-      areas: state?.areas ?? [],
-      dependencies: state?.dependencies ?? [],
-    },
-    state?.plant.id ?? '',
+    enabled ? (state?.assets ?? EMPTY) : EMPTY,
+    enabled ? (state?.plant.id ?? '') : '',
   );
   return (
-    <PreviewDispatchContext.Provider value={{ ...dispatch, operators: OPERATORS }}>
+    <PreviewDispatchContext.Provider value={{ ...dispatch, enabled, operators: OPERATORS }}>
       {children}
     </PreviewDispatchContext.Provider>
   );

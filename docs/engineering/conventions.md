@@ -73,7 +73,7 @@ Equipment configuration lives in `profiles.py`; presentation does not decide dow
 
 The IMS preparation utility verifies its reviewed archive checksum, restricts extracted record paths, checks finite values and exact snapshot/channel shapes, and retains provenance. Raw archives, extracted measurements and derived runtime artifacts are ignored by Git. Rebuild artifacts before starting the API, and restart after replacing them.
 
-Use `PLANTSENSE_AI_PROVIDER` to choose scripted, Gemini API or Vertex identity independently of local/cloud persistence. All credentials remain server side. Do not present the scripted stages or stubbed specialist tests as live model evaluation.
+Use `PLANTSENSE_AI_PROVIDER` to choose scripted, Gemini API or Vertex identity independently of local/cloud persistence. All credentials remain server side. Live model-client creation requires a passing evaluation report matching the backend implementation, provider, model and region. Reserve request and estimated spend allowances before dispatch, settle observed usage or retain an explicit unknown charge, and fence workflow publication by the active claim. Keep source evidence read-only and shared calculations deterministic. Do not present the scripted stages or stubbed specialist tests as live model evaluation. See [local Gemini investigation](../operations/live-gemini.md).
 
 ## Incident decision rules
 
