@@ -2932,6 +2932,8 @@ export interface components {
             items: components["schemas"]["HumanTask"][];
             /** Next Cursor */
             next_cursor: number | null;
+            /** Actionable Count */
+            actionable_count: number;
         };
         /** TaskResponse */
         TaskResponse: {
@@ -5105,6 +5107,7 @@ export interface operations {
             query?: {
                 cursor?: number;
                 limit?: number;
+                unread_only?: boolean;
             };
             header?: never;
             path: {
@@ -5329,6 +5332,7 @@ export interface operations {
             query?: {
                 cursor?: number;
                 limit?: number;
+                assignment?: "all" | "mine" | "available";
             };
             header?: never;
             path: {

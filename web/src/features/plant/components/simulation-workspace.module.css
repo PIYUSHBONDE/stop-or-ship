@@ -21,7 +21,8 @@
   caret-color: var(--accent);
 }
 .workspace button:focus-visible,
-.workspace a:focus-visible {
+.workspace a:focus-visible,
+.inspector h2:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
@@ -228,14 +229,14 @@
   margin: 11px 0 9px;
 }
 .inspector h3 {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   margin: 20px 0 10px;
   padding-top: 15px;
   border-top: 1px solid var(--edge);
 }
 .inspector p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--subtle);
   line-height: 1.6;
 }
@@ -297,6 +298,8 @@
   justify-content: space-between;
   gap: 6px;
   font-size: 12px;
+}
+.reading > div > span {
   text-transform: capitalize;
 }
 .reading strong {
@@ -449,8 +452,8 @@
   z-index: 2;
   left: 26px;
   bottom: 108px;
-  max-width: 280px;
-  font-size: 11px;
+  max-width: 340px;
+  font-size: 12px;
   line-height: 1.5;
   color: #23414a;
   pointer-events: none;
@@ -460,7 +463,7 @@
   color: #214a43;
   display: flex;
   margin-top: 3px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .controls {
   position: absolute;
@@ -1152,11 +1155,16 @@
 }
 .notice .scenarioStatus {
   position: static;
-  margin-top: 5px;
+  margin-bottom: 7px;
   max-width: 100%;
   padding: 0;
-  font-size: 10px;
+  font-size: 14px;
+  line-height: 1.5;
   background: transparent;
+}
+.scenarioOutput {
+  margin-bottom: 7px;
+  font-variant-numeric: tabular-nums;
 }
 .controls select {
   width: 225px;

@@ -738,6 +738,30 @@
   color: #d3d9c7;
   font-size: 12px;
 }
+.taskDeadline {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--copy-primary);
+}
+.taskDeadline[data-overdue='true'] {
+  color: #f6b2a4;
+}
+.inboxFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.inboxFilters button {
+  min-height: 40px;
+  padding: 8px 12px;
+}
+.inboxFilters button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
 .taskRequirements {
   padding: 12px 0;
   border-top: 1px solid var(--surface-border-strong);
@@ -917,6 +941,7 @@
   font-size: 13px;
 }
 .inboxTrigger {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 7px;

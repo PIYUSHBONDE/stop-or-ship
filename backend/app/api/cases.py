@@ -20,6 +20,7 @@ from app.contracts.cases import (
     CaseView,
     HumanTask,
     PolicyUpdate,
+    TaskAssignment,
     TaskCreate,
     TaskPage,
     TaskResponse,
@@ -52,9 +53,14 @@ Limit = Annotated[int, Query(ge=1, le=50)]
 
 @router.get("/notifications", response_model=NotificationPage)
 def notification_feed(
-    plant_id: str, token: StaffToken, store: Storage, cursor: Cursor = 0, limit: Limit = 25
+    plant_id: str,
+    token: StaffToken,
+    store: Storage,
+    cursor: Cursor = 0,
+    limit: Limit = 25,
+    unread_only: bool = False,
 ):
-    return notifications.list_notifications(store, token, plant_id, cursor, limit)
+    return notifications.list_notifications(store, token, plant_id, cursor, limit, unread_only)
 
 
 @router.post("/notifications/read", response_model=NotificationAcknowledgement)
@@ -83,8 +89,15 @@ def request_task(plant_id: str, case_id: str, body: TaskCreate, token: StaffToke
 
 
 @router.get("/tasks", response_model=TaskPage)
-def tasks(plant_id: str, token: StaffToken, store: Storage, cursor: Cursor = 0, limit: Limit = 25):
-    return service.list_tasks(store, token, plant_id, cursor, limit)
+def tasks(
+    plant_id: str,
+    token: StaffToken,
+    store: Storage,
+    cursor: Cursor = 0,
+    limit: Limit = 25,
+    assignment: TaskAssignment = "all",
+):
+    return service.list_tasks(store, token, plant_id, cursor, limit, assignment)
 
 
 @router.post("/tasks/{task_id}/claim", response_model=HumanTask)

@@ -54,7 +54,11 @@ export function SimulationWorkspace() {
   const resetDialog = useRef<HTMLDialogElement>(null);
   const equipmentTrigger = useRef<HTMLButtonElement>(null);
   const inspectorTrigger = useRef<HTMLButtonElement>(null);
+  const inspectorHeading = useRef<HTMLHeadingElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (inspectorOpen) inspectorHeading.current?.focus({ preventScroll: true });
+  }, [focus, inspectorOpen]);
   useEffect(() => {
     if (reset) resetDialog.current?.showModal();
     else resetDialog.current?.close();
@@ -96,6 +100,21 @@ export function SimulationWorkspace() {
   const readings = view.readings[asset.id] ?? [];
   const line = view.lines.find((l) => l.id === asset.area_id);
   const dependent = state.dependencies.filter((d) => d.source === asset.id);
+  const faultAsset = state.assets.find((a) => a.id === process.fault?.assetId);
+  const phaseCopy: Record<string, string> = {
+    developing: 'Pressure is falling. Downstream production is slowing.',
+    dispatched: 'Pressure loss detected. An operator is assigned.',
+    en_route: 'Operator travelling to the pump. Downstream production is reduced.',
+    on_site: 'Operator inspecting the pump. The affected line is stopped.',
+    correcting: 'Pump repair in progress. The affected line remains stopped.',
+    recovering: 'Repair complete. Checking pressure recovery for 30 simulated seconds.',
+    cleared: 'Recovery complete. Simulated production restored.',
+    returning: 'Simulated production restored. Operator returning to station.',
+    returned: 'Simulated production restored. Operator back at station.',
+  };
+  const scenarioMessage = process.fault
+    ? `${faultAsset?.name ?? process.fault.assetId}: ${phaseCopy[view.phase] ?? 'Response in progress.'}`
+    : 'Plant running normally.';
   const scene = {
     ...state,
     assets: sceneAssets(state.assets, view.modes),
@@ -122,11 +141,18 @@ export function SimulationWorkspace() {
         </div>
       </header>
       <div className={styles.notice}>
+        <div className={styles.scenarioStatus} role="status" aria-label="Simulation progress">
+          <strong>{scenarioMessage}</strong>
+        </div>
+        <p className={styles.scenarioOutput}>
+          {view.output} / {view.nominal} parts/h · {time(process.elapsed)} simulated time
+          {process.paused ? ' · Paused' : ''}
+        </p>
         Generated readings, dispatch and output illustrate a manufacturing scenario.{' '}
         <Link href="/plant?view=observations">
           Reviewed operational observations <ArrowRight size={13} />
         </Link>
-        <div className={styles.scenarioStatus}>
+        <div>
           {!process.fault && (
             <small>
               Normal operation is stable. The next scheduled fault starts in{' '}
@@ -482,11 +508,28 @@ export function SimulationWorkspace() {
           <span className={styles.eyebrow}>
             {asset.id} · {asset.type}
           </span>
-          <h2>{asset.name}</h2>
+          <h2 ref={inspectorHeading} tabIndex={-1}>
+            {asset.name}
+          </h2>
           <span className={styles.state} data-mode={mode}>
             {label(mode)}
           </span>
           <p>{asset.purpose}</p>
+          <h3>Current response</h3>
+          <p>
+            {job
+              ? `${operator?.name ?? job.operatorId} · ${PHASE_COPY[job.phase]}. ${Math.ceil(job.remainingMs / 1000)} simulated seconds to station return.`
+              : mode === 'degraded'
+                ? 'Pressure is deteriorating. Dispatch starts when the scenario envelope is breached.'
+                : line?.impacted
+                  ? 'Upstream pump work is controlling this line. Open the affected pump for its operator job.'
+                  : 'No active work on this machine.'}
+          </p>
+          {job && (
+            <Link href={`/operators?assignment=${job.id}`}>
+              Follow operator job <ArrowRight size={13} />
+            </Link>
+          )}
           <h3>Simulated readings</h3>
           {readings.map((r) => (
             <div className={styles.reading} key={r.signal_id}>
@@ -529,21 +572,6 @@ export function SimulationWorkspace() {
               <small>End of this dependency path.</small>
             )}
           </div>
-          <h3>Current response</h3>
-          <p>
-            {job
-              ? `${operator?.name ?? job.operatorId} · ${PHASE_COPY[job.phase]}. ${Math.ceil(job.remainingMs / 1000)} simulated seconds to station return.`
-              : mode === 'degraded'
-                ? 'Pressure is deteriorating. Dispatch starts when the scenario envelope is breached.'
-                : line?.impacted
-                  ? 'Upstream pump work is controlling this line. Open the affected pump for its operator job.'
-                  : 'No active work on this machine.'}
-          </p>
-          {job && (
-            <Link href={`/operators?assignment=${job.id}`}>
-              Follow operator job <ArrowRight size={13} />
-            </Link>
-          )}
           <h3>Recent simulated cases</h3>
           {cases.length ? (
             cases.map((c) => (

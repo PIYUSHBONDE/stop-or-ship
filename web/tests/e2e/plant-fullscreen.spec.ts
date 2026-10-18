@@ -69,6 +69,16 @@ test('full-screen plant retains the live scene, overlays, controls and mobile na
     inspector.getByRole('heading', { name: 'Hydraulic pump A', exact: true }),
   ).toBeVisible();
   await expect(
+    inspector.getByRole('heading', { name: 'Hydraulic pump A', exact: true }),
+  ).toBeFocused();
+  expect(
+    await inspector
+      .locator('strong small')
+      .evaluateAll((units) =>
+        units.every((unit) => getComputedStyle(unit).textTransform === 'none'),
+      ),
+  ).toBe(true);
+  await expect(
     inspector.getByRole('link', { name: 'Full machine records', exact: true }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Close machine inspector', exact: true }).click();

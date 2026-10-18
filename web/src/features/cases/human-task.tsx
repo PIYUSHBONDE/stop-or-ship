@@ -94,11 +94,18 @@ export function HumanTaskCard({
             ? 'Claimed by you'
             : `Owned by ${task.owner_name || 'another staff member'}`
           : 'Unclaimed'}
-        {task.due_at
-          ? ` · Due ${new Date(task.due_at).toLocaleString()}${Date.parse(task.due_at) < Date.now() && active ? ' · Overdue' : ''}`
-          : ' · No deadline set'}
+        {!task.due_at && ' · No deadline set'}
         {task.escalated ? ' · Escalated to manager' : ''}
       </p>
+      {task.due_at && (
+        <p
+          className={styles.taskDeadline}
+          data-overdue={active && Date.parse(task.due_at) < Date.now()}
+        >
+          {active && Date.parse(task.due_at) < Date.now() ? 'Overdue' : 'Due'} ·{' '}
+          <time dateTime={task.due_at}>{new Date(task.due_at).toLocaleString()}</time>
+        </p>
+      )}
       <details className={styles.taskRequirements} open={(!inCase && responding) || undefined}>
         <summary>Request and completion requirements</summary>
         {taskTitle(task.question) !== task.question && <p>{task.question}</p>}

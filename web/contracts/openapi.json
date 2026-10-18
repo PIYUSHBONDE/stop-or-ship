@@ -3698,6 +3698,16 @@
             }
           },
           {
+            "name": "unread_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unread Only"
+            }
+          },
+          {
             "name": "plantsense_staff",
             "in": "cookie",
             "required": true,
@@ -4152,6 +4162,21 @@
               "minimum": 1,
               "default": 25,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "assignment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "mine",
+                "available"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Assignment"
             }
           },
           {
@@ -10213,13 +10238,19 @@
               }
             ],
             "title": "Next Cursor"
+          },
+          "actionable_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Actionable Count"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "items",
-          "next_cursor"
+          "next_cursor",
+          "actionable_count"
         ],
         "title": "TaskPage"
       },

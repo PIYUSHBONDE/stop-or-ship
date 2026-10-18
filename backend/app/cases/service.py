@@ -616,18 +616,39 @@ def list_cases(store, token, plant_id, cursor=0, limit=25):
         }
 
 
-def list_tasks(store, token, plant_id, cursor=0, limit=25):
+def list_tasks(store, token, plant_id, cursor=0, limit=25, assignment="all"):
     with store.connection() as db:
         scope = authorize(db, token, plant_id)
         role = scope["role"]
+        user = scope["user"]["id"]
+        where = "t.organization_id=? AND t.plant_id=? AND t.state IN ('open','claimed') AND (?='admin' OR t.target_role=?)"
+        args = (scope["organization_id"], plant_id, role, role)
+        count = row(
+            db,
+            "SELECT count(*) AS total FROM issue_tasks t WHERE "
+            + where
+            + " AND (t.owner_id IS NULL OR t.owner_id=?)",
+            (*args, user),
+        )
+        due_order = (
+            "CAST(t.due_at AS TIMESTAMPTZ)"
+            if getattr(store, "dialect", "sqlite") == "postgres"
+            else "julianday(t.due_at)"
+        )
         found = rows(
             db,
-            "SELECT t.*,u.display_name AS owner_name FROM issue_tasks t LEFT JOIN staff_users u ON u.id=t.owner_id WHERE t.organization_id=? AND t.plant_id=? AND t.state IN ('open','claimed') AND (?='admin' OR t.target_role=?) ORDER BY t.created_at,t.id LIMIT ? OFFSET ?",
-            (scope["organization_id"], plant_id, role, role, limit + 1, cursor),
+            "SELECT t.*,u.display_name AS owner_name FROM issue_tasks t LEFT JOIN staff_users u ON u.id=t.owner_id WHERE "
+            + where
+            + " AND (?='all' OR (?='mine' AND t.owner_id=?) OR (?='available' AND t.owner_id IS NULL))"
+            + " ORDER BY CASE WHEN t.due_at IS NULL THEN 1 ELSE 0 END,"
+            + due_order
+            + ",t.created_at,t.id LIMIT ? OFFSET ?",
+            (*args, assignment, assignment, user, assignment, limit + 1, cursor),
         )
         return {
             "items": [unpack(r) for r in found[:limit]],
             "next_cursor": cursor + limit if len(found) > limit else None,
+            "actionable_count": count["total"],
         }
 
 

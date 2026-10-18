@@ -10,6 +10,7 @@ from app.contracts.models import Hypothesis, RequestModel
 Text = Annotated[str, Field(min_length=1, max_length=3000)]
 Category = Literal["equipment", "production", "maintenance", "quality", "staffing", "materials", "general"]
 TaskRole = Literal["reliability", "manager", "technician"]
+TaskAssignment = Literal["all", "mine", "available"]
 Phase = Literal[
     "triage",
     "investigating",
@@ -185,6 +186,7 @@ class CasePage(RequestModel):
 class TaskPage(RequestModel):
     items: list[HumanTask]
     next_cursor: int | None
+    actionable_count: int = Field(ge=0)
 
 
 class CaseDetail(RequestModel):

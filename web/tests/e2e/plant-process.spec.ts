@@ -23,6 +23,9 @@ test('connected plant follows pressure loss, line shutdown, repair and recovery 
   await openPlantControls(page);
   await page.getByLabel('Simulation speed', { exact: true }).selectOption('10');
   await page.getByRole('button', { name: 'Start pump pressure loss', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Simulation progress' })).toContainText(
+    'Hydraulic pump A:',
+  );
   const inspector = page.getByLabel('Machine inspector');
   await expect(inspector.getByText('under repair', { exact: true })).toBeVisible({
     timeout: 12000,
@@ -48,7 +51,13 @@ test('connected plant follows pressure loss, line shutdown, repair and recovery 
   await expect(page.getByRole('button', { name: 'Pause simulation', exact: true })).toBeVisible();
   await follower.close();
   await expect(inspector.getByText('recovering', { exact: true })).toBeVisible({ timeout: 25000 });
+  await expect(page.getByRole('status', { name: 'Simulation progress' })).toContainText(
+    'Checking pressure recovery',
+  );
   await expect(inspector.getByText('Recovered', { exact: true })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('status', { name: 'Simulation progress' })).toContainText(
+    /production restored/,
+  );
   await expect(page.getByLabel('Simulated production rate')).toContainText(String(nominal));
   const after = await (await page.request.get(`/api/v1/plants/${plant}/snapshot`)).json();
   expect(after.incidents).toEqual(before.incidents);

@@ -97,7 +97,7 @@ def present(record):
     }
 
 
-def list_notifications(store, token, plant_id, cursor=0, limit=25):
+def list_notifications(store, token, plant_id, cursor=0, limit=25, unread_only=False):
     with store.connection() as db:
         scope = authorize(db, token, plant_id)
         if scope["role"] == "viewer":
@@ -108,8 +108,9 @@ def list_notifications(store, token, plant_id, cursor=0, limit=25):
         )
         found = service.rows(
             db,
-            CANDIDATES + "SELECT * FROM feed ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
-            (*args, limit + 1, cursor),
+            CANDIDATES
+            + "SELECT * FROM feed WHERE (?=0 OR acknowledged=0) ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
+            (*args, int(unread_only), limit + 1, cursor),
         )
         return {
             "items": [present(item) for item in found[:limit]],

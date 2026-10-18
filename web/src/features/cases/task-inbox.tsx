@@ -16,6 +16,7 @@ export function TaskInbox({ triggerClassName }: { triggerClassName?: string }) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState<Page | null>(null);
   const [cursor, setCursor] = useState(0);
+  const [assignment, setAssignment] = useState<'all' | 'mine' | 'available'>('all');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -27,8 +28,14 @@ export function TaskInbox({ triggerClassName }: { triggerClassName?: string }) {
     const version = ++epoch.current;
     setLoading(true);
     try {
-      const next = await controller.current<Page>(`/tasks?cursor=${cursor}`);
+      const next = await controller.current<Page>(
+        `/tasks?cursor=${cursor}&assignment=${assignment}`,
+      );
       if (epoch.current === version) {
+        if (!next.items.length && cursor > 0) {
+          setCursor(Math.max(0, cursor - 25));
+          return;
+        }
         setPage(next);
         setError('');
       }
@@ -40,23 +47,39 @@ export function TaskInbox({ triggerClassName }: { triggerClassName?: string }) {
     }
   }
   useEffect(() => {
-    if (!open) return;
     void load();
-    const timer = setInterval(() => {
-      if (!document.hidden) void load();
-    }, 10000);
+    const timer = setInterval(
+      () => {
+        if (!document.hidden) void load();
+      },
+      open ? 10000 : 20000,
+    );
     return () => {
       invalidateReads();
       clearInterval(timer);
     };
     // Scope changes remount this panel; queued reads use the current shared controller.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, cursor]);
+  }, [open, cursor, assignment]);
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger className={triggerClassName || styles.inboxTrigger} aria-label="My tasks">
-        <ClipboardList size={17} />
+      <Dialog.Trigger
+        className={triggerClassName || styles.inboxTrigger}
+        aria-label="My tasks"
+        aria-describedby="task-open-count"
+      >
+        <ClipboardList size={17} aria-hidden="true" />
         <span>My tasks</span>
+        {!!page?.actionable_count && (
+          <b className={styles.noticeCount} aria-hidden="true">
+            {page.actionable_count > 99 ? '99+' : page.actionable_count}
+          </b>
+        )}
+        <span id="task-open-count" className="sr-only">
+          {page
+            ? `${page.actionable_count} tasks assigned to you or available to claim`
+            : 'Loading task count'}
+        </span>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
@@ -74,6 +97,32 @@ export function TaskInbox({ triggerClassName }: { triggerClassName?: string }) {
           <button className="secondary" onClick={() => void load()}>
             Refresh requests
           </button>
+          <div className={styles.inboxFilters} role="group" aria-label="Filter tasks">
+            {(
+              [
+                ['all', 'All tasks'],
+                ['mine', 'Assigned to me'],
+                ['available', 'Available to claim'],
+              ] as const
+            ).map(([value, text]) => (
+              <button
+                key={value}
+                className="secondary"
+                aria-pressed={assignment === value}
+                onClick={() => {
+                  if (assignment === value) return;
+                  invalidateReads();
+                  setCursor(0);
+                  setAssignment(value);
+                }}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+          <p className={styles.note}>
+            Overdue tasks first, then upcoming deadlines. Undated tasks follow.
+          </p>
           {loading && !page && <p role="status">Loading your tasks…</p>}
           {feedback && (
             <p role="status" className={styles.success}>
@@ -91,15 +140,21 @@ export function TaskInbox({ triggerClassName }: { triggerClassName?: string }) {
               task={task}
               onChanged={(message) => {
                 setFeedback(message || 'Task updated. Open the case to follow its next step.');
-                void load();
+                if (assignment === 'available' && !task.owner_id) {
+                  setCursor(0);
+                  setAssignment('mine');
+                } else void load();
               }}
               onNavigate={() => setOpen(false)}
             />
           ))}
           {page && !page.items.length && (
             <p>
-              No open tasks for your role in this plant. Tasks assigned to other roles remain
-              visible in their case.
+              {assignment === 'mine'
+                ? 'No tasks are currently assigned to you.'
+                : assignment === 'available'
+                  ? 'No tasks are available to claim for your role.'
+                  : 'No open tasks for your role in this plant. Tasks assigned to other roles remain visible in their case.'}
             </p>
           )}
           <div className={styles.line}>

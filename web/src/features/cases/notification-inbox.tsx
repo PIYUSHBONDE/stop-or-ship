@@ -10,6 +10,12 @@ import type { components } from '@/lib/generated/api-schema';
 import styles from './cases.module.css';
 
 type Page = components['schemas']['NotificationPage'];
+const kindNames = {
+  human_request: 'Request',
+  analysis_ready: 'Review',
+  blocked: 'Blocker',
+  recurring_issue: 'Recurring issue',
+};
 export function NotificationInbox({
   triggerClassName,
   onNavigate,
@@ -24,6 +30,7 @@ export function NotificationInbox({
   const epoch = useRef(0);
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(0);
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const [page, setPage] = useState<Page | null>(null);
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -31,8 +38,14 @@ export function NotificationInbox({
   async function load() {
     const version = ++epoch.current;
     try {
-      const data = await controller.current<Page>(`/notifications?cursor=${cursor}`);
+      const data = await controller.current<Page>(
+        `/notifications?cursor=${cursor}&unread_only=${unreadOnly}`,
+      );
       if (version === epoch.current) {
+        if (!data.items.length && cursor > 0) {
+          setCursor(Math.max(0, cursor - 25));
+          return;
+        }
         setPage(data);
         setError('');
       }
@@ -57,7 +70,7 @@ export function NotificationInbox({
     };
     // Every read/mutation uses the shared serialized plant controller. Scope changes remount this inbox.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, cursor]);
+  }, [open, cursor, unreadOnly]);
   async function markRead(id: string) {
     if (pending) return;
     setPending(true);
@@ -106,6 +119,28 @@ export function NotificationInbox({
           <button className="secondary" onClick={() => void load()}>
             Refresh notifications
           </button>
+          <div className={styles.inboxFilters} role="group" aria-label="Filter notifications">
+            {(
+              [
+                [false, 'All'],
+                [true, 'Unread'],
+              ] as const
+            ).map(([value, text]) => (
+              <button
+                key={text}
+                className="secondary"
+                aria-pressed={unreadOnly === value}
+                onClick={() => {
+                  if (unreadOnly === value) return;
+                  epoch.current++;
+                  setCursor(0);
+                  setUnreadOnly(value);
+                }}
+              >
+                {text}
+              </button>
+            ))}
+          </div>
           {feedback && (
             <p role="status" className={styles.success}>
               {feedback}
@@ -119,8 +154,9 @@ export function NotificationInbox({
           {!page && !error && <p role="status">Loading notifications…</p>}
           {page && !page.items.length && (
             <p>
-              No actionable notifications. New requests, review-ready cases and blockers will appear
-              here.
+              {unreadOnly
+                ? 'No unread notifications. Read updates remain in All while their cases are actionable.'
+                : 'No actionable notifications. New requests, review-ready cases and blockers will appear here.'}
             </p>
           )}
           {page?.items.map((item) => (
@@ -130,14 +166,8 @@ export function NotificationInbox({
                 <span className={styles.taskState}>{item.read ? 'Read' : 'Unread'}</span>
               </div>
               <p>{item.message}</p>
-              {item.ai_summary && (
-                <details>
-                  <summary>Saved AI assessment</summary>
-                  <p>{item.ai_summary}</p>
-                </details>
-              )}
               <small className={styles.note}>
-                {item.asset_id || 'Plant-wide'} ·{' '}
+                {kindNames[item.kind]} · {item.asset_id || 'Plant-wide'} ·{' '}
                 <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString()}</time>
               </small>
               <div className={styles.line}>
@@ -171,6 +201,12 @@ export function NotificationInbox({
                   </button>
                 )}
               </div>
+              {item.ai_summary && (
+                <details>
+                  <summary>Saved AI assessment</summary>
+                  <p>{item.ai_summary}</p>
+                </details>
+              )}
             </article>
           ))}
           <div className={styles.line}>
