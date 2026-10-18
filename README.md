@@ -1,23 +1,86 @@
 # PlantSense
 
-Plant reliability with configurable equipment, named staff access, observation-based incidents, evidence inspection, deterministic INR comparisons, human authorization and verified repair memory.
+An operational copilot for maintenance and production decisions. PlantSense turns abnormal machine readings into a line-level repair recommendation, explains the evidence with Gemini on Vertex AI, and leaves approval, the repair record and recovery verification to named people.
 
-## UI preview integration
+Built for **Manufacturing: Intelligent Operations & Industrial Efficiency**, focused on reliability and line efficiency.
 
-The updated landing page uses local staff email/password authentication, not Google or Microsoft SSO. Synthetic equipment and operator previews are opt-in through `?preview=1`; they do not establish equipment health or authorize work. Operational observations, incidents, maintenance and verified repair memory remain separate.
+## Problem statement
 
-## Current product
+Manufacturing lines lose output when one machine degrades, but the abnormal reading does not say whether to stop now, derate, or wait for a planned window. The same signal can be missing, stale, or conflicting, and a chart of it does not show which downstream line is exposed. Teams either keep running and miss a delivery target, or stop a healthy parallel line because the dependency is unclear. A general model asked to "diagnose the plant" invents a cause, a probability, or a saving, and a chat reply cannot be approved, repaired, or checked afterward.
 
-- **Plant:** dedicated 3D explorer and accessible 2D plan, adapting to reviewed two-to-eight-line configurations (up to 36 assets in supplied templates).
-- **Monitor:** reviewed operational/historical sources, freshness, units, record provenance, CSV validation, read-only preview and explicit import confirmation.
-- **Operations:** measured output, rated capacity and estimated dependency impact shown separately. Unconnected equipment remains unknown.
-- **Incidents:** retained evidence, uncertainty, specialist positions, intervention assumptions and versioned approval.
-- **Maintenance:** authorized work, UTC eligibility, technician outcomes and recovery from three qualifying post-repair observation windows.
-- **Memory:** confirmed operational repairs with original diagnosis and technician corrections.
-- **Ask PlantSense:** contextual read-only answers, inspectable citations, saved costs, editable English voice transcripts and playback on request. See [local activation and limits](docs/operations/assistant.md).
-- **Setup:** administrator-reviewed plant configuration and immutable revision history.
+PlantSense turns reviewed equipment observations and the plant's configured dependencies into an evidence-backed recommendation. It shows which line capacity is affected, compares stop-and-repair, repair at the planned window, derate, and continue, and keeps the cost and lost-output arithmetic in deterministic code rather than in the model. Gemini explains competing causes, missing checks, and the production consequence, and it cites the records it used. A named person approves that exact version. A technician records what was found and what was done. Recovery is accepted only after qualifying healthy observations, and that confirmed repair can be retrieved for the next similar case.
 
-**The standard local stack defaults to the explicitly scripted investigator.** Live Gemini uses bounded evidence collection, independent specialist explanations, token/spend accounting and a matching real-response evaluation gate. See [local evaluation and activation](docs/operations/live-gemini.md) and [observed results](docs/status.md). No PLC/historian connector or cloud staff identity/storage adapter is active. Historical imports do not establish current plant health or authorize operational work. Replay adapters remain for internal tests and are disabled by default.
+**Short form:** when a machine reading goes abnormal, a manufacturing team cannot tell which production line is exposed or whether to stop, derate, or defer. PlantSense uses those observations, their quality, and the plant's dependencies to recommend a repair decision, explains the evidence and the gaps with generative AI, and leaves approval, the repair record, and recovery verification to named people.
+
+| Requirement word              | How PlantSense addresses it                                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reliability                   | Abnormal observations, cause hypotheses, procedure checks, verified repair, later retrieval of that repair                                                     |
+| Efficiency                    | A fault derates only its dependent line; the choice is lost units and downtime over the shift                                                                  |
+| Supply and demand             | The cost comparison includes a configured delivery target and a penalty for units not made                                                                     |
+| Data quality                  | Observations are fresh, missing, stale, or conflicting. Missing data stays unknown                                                                             |
+| AI insight and recommendation | Gemini investigator, Reliability and Production specialists, and Ask PlantSense; the recommendation is one of four interventions tied to a calculation version |
+
+PlantSense does not claim product-quality inspection, inventory or supplier planning, sustainability, or a measured saving.
+
+## Live deployment
+
+- **URL:** https://plantsense-web-nponfirhaa-el.a.run.app
+- **Region:** Google Cloud `asia-south1` (Mumbai)
+
+### Demo sign-in
+
+| Email | Password |
+| --- | --- |
+| `product-owner@example.test` | `lTxXiVHAQqmuAQaPDc2T_bYBnnBr78wX` |
+
+These are demonstration account on a simulated plant. Open the product link, choose **Local account sign-in**, enter the email and password, then choose **Open plant** on the workspace page. Please do not change the plant setup or staff accounts, so other reviewers see the same plant.
+
+## What you can see in the app
+
+- **Plant:** 3D factory and 2D floor plan of a hydraulic-forming reference plant. Line rate is shown against configured parts per hour. A pump fault slows or stops only its dependent press line; the parallel line keeps running.
+- **Monitor:** machines grouped under each production line. Open a machine for its current readings, one chart per signal (pressure, flow, temperature and so on) and a cause stack: what is wrong, the signals it points at, the one task to do now, tasks already used, and other checks folded underneath.
+- **Operators:** five named operators, assignment by experience and severity, walk to the cell, the operator comment beside the recorded fix and the tool's suggested task.
+- **Incidents:** factory cases with retained evidence, uncertainty, specialist positions and a four-option comparison (stop and repair now, repair at the planned window, derate until the repair window, continue this shift) over an 8-hour horizon, costed in integer paise. The lowest-cost feasible option is recommended, and approval is bound to that exact calculation version.
+- **Maintenance:** opened from an approved incident. The technician records the finding and the work done; recovery needs three qualifying healthy post-repair windows.
+- **Memory:** a plant guide per station (floor address, what can break, what can be fixed, user guide) and confirmed repairs with the original diagnosis and technician corrections.
+- **Ask PlantSense:** a read-only assistant beside every screen, with inspectable citations, saved cost cards and editable English voice transcripts with playback on request.
+- **Notifications and My tasks:** All/Unread filters, category labels, case links, and tasks filtered by assigned-to-me or available-to-claim, sorted by deadline.
+- **Setup:** administrator-reviewed plant configuration with immutable revision history. Five staff roles: admin, manager, reliability, technician and viewer.
+
+## How AI and Google Cloud are used
+
+| Service                                          | Role                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cloud Run                                        | Three services: public Next.js web, private FastAPI API and private case worker. The private services reject unauthenticated direct requests                                                                                                                                                                                                                          |
+| Vertex AI Gemini (`gemini-3.8-flash`)            | Investigator, evidence reviewer, Reliability and Production specialists on Google ADK with read-only MCP tools, and Ask PlantSense                                                                                                                                                                                                                                    |
+| Google speech                                    | Transcription and playback for reviewed voice questions                                                                                                                                                                                                                                                                                                               |
+| Cloud SQL PostgreSQL 16                          | Plant configuration, sources, incidents, cases, approvals and audit history                                                                                                                                                                                                                                                                                           |
+| Cloud Tasks and Cloud Scheduler                  | Durable case job delivery and a reconcile run every minute                                                                                                                                                                                                                                                                                                            |
+| Secret Manager, Artifact Registry, Cloud Storage | Separate secrets, container images and private release reports                                                                                                                                                                                                                                                                                                        |
+| Firestore and Firebase                           | Implemented adapters for sessions, AI usage budgets, vector search over procedure knowledge and anonymous Firebase identity (`backend/app/persistence/store.py`, `backend/app/persistence/ai_usage.py`, `backend/app/ai/knowledge.py`, `backend/app/api/dependencies.py`, `web/src/lib/api/client.ts`). The live deployment uses Cloud SQL and staff accounts instead |
+
+AI proposes; server code decides what is allowed; people approve physical work. Costs and lost output come from `backend/app/incidents/economics.py`, never from the model.
+
+## Simulated data
+
+The Plant, Monitor, Operators and Memory screens run a clearly labelled browser simulation of a reference factory. The supported scenario is pump pressure loss: a developing fault derates only the downstream press line, an operator is dispatched, the line stops for repair, recovery is checked and output returns. Readings and output are authored demonstration values, not a calibrated hydraulic model.
+
+Simulation state is plant-scoped and stored in the browser. It never becomes plant evidence, cannot authorize work and cannot verify a repair. Accepted operational observations, incidents, maintenance and verified repair memory remain separate. No PLC or historian connector is active.
+
+## Recent changes
+
+- **Monitor and machine pages:** machines grouped by production line; every signal on its own chart with no pager; current readings stated in plain words (at zero, below the limit, above the limit, inside the limit).
+- **Cause stack:** a short stack of what is wrong, the signals it points at, the one task to do now and tasks already used. Other checks and branches sit behind a disclosure. The next task is suggested only when that specific task was recorded as completed.
+- **Operators:** the operator comment, the recorded fix and the tool's suggested task appear side by side.
+- **Notifications and My tasks:** filters, category labels, a sidebar badge for actionable tasks and deadline ordering.
+- **Plant:** progress messages while the factory loads. Opening the plant from the workspace starts the simulation automatically; no preview URL flag is needed.
+- **Navigation:** Operations and Maintenance are off the sidebar. `/operations` goes to Plant; `/maintenance` remains for authorized repair opened from an approved incident.
+
+## Verified results
+
+The 18 October 2026 release passed GitHub Actions validation, image build and promotion to Cloud Run. CI passed **194 backend tests**, **10 infrastructure tests** and **42 frontend unit tests**, with PostgreSQL migration and runtime checks, secret scanning, contract drift, formatting, lint, type checks and the production build. Public smoke checks returned 200 for the health endpoint, sign-in page and staff-access bootstrap.
+
+The earlier cloud release recorded **211 backend and PostgreSQL tests**, **12 desktop and mobile browser checks** and live Gemini gates of **5 investigation, 6 assistant and 4 case fixtures** plus voice. Database migration verified **38 tables and 200 rows** by counts and SHA-256 checks. See [observed status](docs/status.md) for the full record.
 
 ## Run with Docker
 
@@ -33,9 +96,9 @@ The stack starts the web app, API, Cloud SQL Auth Proxy and background case work
 
 Open **http://127.0.0.1:3000/workspace**. Initial setup creates a named administrator and plant; later visits use that account's email and original passphrase. There is no default password. Staff sessions use expiring HttpOnly cookies; passwords are hashed. Existing accounts and plant history persist in the named volume. Do not delete that volume to update the app.
 
-Administrators can invite staff and assign plant-scoped roles. Invitation links are copied manually; password recovery and invitation email delivery remain later release gates.
+Administrators can invite staff and assign plant-scoped roles. Invitation links are copied manually; password recovery and invitation email delivery are not part of this release.
 
-A fresh plant has no operational readings or automatically asserted operational health. The default Plant page runs a clearly labeled browser simulation. Open **Monitor → Add source**, review required units/envelopes/procedure, then accept observations or historical imports. See [source setup and CSV/API contracts](docs/data/telemetry-sources.md), [Docker controls](docs/operations/docker.md) and [security boundaries](SECURITY.md).
+A fresh plant has no operational readings or automatically asserted operational health. Open **Monitor → Add source**, review required units, envelopes and procedure, then accept observations or historical imports. See [source setup and CSV/API contracts](docs/data/telemetry-sources.md), [Docker controls](docs/operations/docker.md) and [security boundaries](SECURITY.md).
 
 ## Native development
 
@@ -77,11 +140,11 @@ npm --prefix web run build
 
 Start the API with `.venv/bin/python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000`, and the frontend in a separate terminal with `npm --prefix web run start`. Development frontend: `npm --prefix web run dev` (Windows: `npm.cmd`). Inspect occupied ports before launching additional servers. Containers expose only the web service on laptop loopback; the API remains private.
 
-Factory case coordination also needs a separate local worker using the same database/provider environment: set `PYTHONPATH=backend`, then run `.venv/Scripts/python.exe -m app.cases.worker` (Unix: `.venv/bin/python`). Automation starts disabled for every plant. Manual reports, claims and responses remain available without live AI. See [case startup, backup and rollback](docs/operations/cases.md) and the [production architecture blueprint](docs/architecture/case-foundation.md). The earlier provisional shared Firestore target is superseded by Cloud SQL PostgreSQL; no cloud migration is performed here.
+Factory case coordination also needs a separate local worker using the same database and provider environment: set `PYTHONPATH=backend`, then run `.venv/Scripts/python.exe -m app.cases.worker` (Unix: `.venv/bin/python`). Automation starts disabled for every plant. Manual reports, claims and responses remain available without live AI. See [case startup, backup and rollback](docs/operations/cases.md) and the [production architecture blueprint](docs/architecture/case-foundation.md).
 
 ## Historical datasets
 
-Existing preparation scripts support attributed UCI hydraulic and IMS bearing artifacts. They are optional for historical analysis, and no synthetic fallback populates the product when artifacts are missing. The [source guide](docs/data/telemetry-sources.md) explains conversion into bounded imports, preserved source IDs/features, attribution, missing timestamps and detector limits. Raw datasets and converted batches must remain outside Git.
+Existing preparation scripts support attributed UCI hydraulic and IMS bearing artifacts. They are optional for historical analysis, and no synthetic fallback populates the product when artifacts are missing. The [source guide](docs/data/telemetry-sources.md) explains conversion into bounded imports, preserved source IDs and features, attribution, missing timestamps and detector limits. Raw datasets and converted batches must remain outside Git. Historical imports do not establish current plant health or authorize operational work.
 
 ## Validation
 
@@ -102,45 +165,17 @@ $env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:3002'
 npm.cmd --prefix web run test:e2e
 ```
 
-Use an isolated acceptance database/Compose project for browser tests; tests create staff accounts and import explicitly authored values. Internal backend regression fixtures enable legacy adapters intentionally. Archived replay UI tests are skipped because those controls are no longer product features; active browser acceptance covers staff access, sources, evidence and operational repair verification.
+Use an isolated acceptance database or Compose project for browser tests; tests create staff accounts and import explicitly authored values. Internal backend regression fixtures enable legacy adapters intentionally. Archived replay UI tests are skipped because those controls are no longer product features; active browser acceptance covers staff access, sources, evidence and operational repair verification.
+
+Run `.venv/Scripts/python.exe scripts/validate.py` (Unix: `.venv/bin/python`) for portable local validation. Add `--skip-tests` for static checks only.
 
 ## Project guide
 
 - `web/src/`: Next.js routes, dedicated features, shared UI, providers and typed API clients. `web/contracts/` holds generated OpenAPI; `web/tests/` separates unit, product browser and archived legacy checks.
 - `backend/app/`: capability packages for HTTP, contracts, identity, plant, telemetry, incidents, AI, persistence and runtime. `backend/tests/` separates tests from shared fixtures; `backend/scripts/` groups data, contract, cloud and submission utilities.
-- `infra/gcp/` and `infra/firebase/`: future deployment definitions and storage access configuration.
+- `infra/gcp/`: Cloud Run, Cloud SQL, Cloud Tasks and Scheduler deployment definitions. `infra/firebase/`: Firestore rules and indexes for the Firestore adapter.
 - `docs/`: [architecture](docs/architecture/overview.md), [engineering](docs/engineering/conventions.md), [observed status](docs/status.md), [evaluation limits](docs/engineering/evaluation.md) and [source contracts](docs/data/telemetry-sources.md).
 
-Development remains local. Draft proposals/recordings and earlier screenshots represent earlier iterations and must not be presented as proof of live Gemini or physical plant validation.
+Earlier draft proposals, recordings and screenshots show previous iterations and are not proof of current live Gemini behaviour or physical plant validation.
 
-See [repository structure](docs/engineering/repository-structure.md), [contributing](CONTRIBUTING.md), and the [documentation index](docs/README.md). Run `.venv/Scripts/python.exe scripts/validate.py` (Unix: `.venv/bin/python`) for portable local validation. Add `--skip-tests` for static checks only.
-<<<<<<< HEAD
-
-## Recent local changes
-
-- Home is a local staff sign-in. Name, organization and plant are derived from the work email.
-- Plant simulation connects machine modes, synthetic readings, line throughput and operator response. Unconnected equipment stays unknown.
-- Operators assign by experience and severity, walk to the cell and take at least two minutes to clear a preview OOC.
-- Monitor is card-first. Click a machine for `/monitoring/{id}` records, trend graphs and case history.
-- Each OOC case stores occurred, attended and fixed times, the operator note and metadata. Incidents shows a paginated table; the row arrow opens that record underneath.
-- Memory is a plant-guide card list (floor address, what can break, what can be fixed, station guide). Click a card for `/memory/{id}`.
-- Operations and Maintenance were removed from navigation. `/operations` goes to Plant. `/maintenance` remains for authorized repair opened from an approved incident.
-- Preview records stay in a plant-scoped browser ledger. They do not write operational sources or authorize work.
-
-## Statistics integration branch
-
-The simulated plant starts automatically; no preview URL flag is required. Operators, machine graphs, incident tables and plant guides retain the statistics branch layout. The top bar labels the simulated plant, while backend observations and repair authorization remain separate.
-
-The read-only assistant can inspect explicitly synthetic browser snapshots through a separate citation. Browser simulation cannot establish measured plant health or authorize operational work. See [assistant configuration](docs/operations/assistant.md) and [Gemini gates](docs/operations/live-gemini.md).
-
-Simulation state is plant-scoped and browser-local. Seed, tick, samples, cases and dispatch survive refresh. A Web Lock elects one writing tab; other tabs follow saved updates. Legacy unfinished cases without dispatch state are marked interrupted. Storage or coordination failure falls back to a labeled in-memory simulation. Closing all tabs pauses generation; reopening reconciles elapsed simulated assignments without inventing missed samples.
-
-## Connected Plant simulator
-
-Plant opens as a hydraulic-forming reference factory using the configured equipment graph. Material enters forming presses, conveyors transfer formed components, and shared utilities support production. The supported scenario is pump pressure loss: a developing fault derates only downstream press lines, dispatches an operator, stops the line for inspection/repair, verifies recovery for 30 simulated seconds and restores output. Normal readings remain within synthetic reference envelopes.
-
-Use **Start pump pressure loss**, **Pause/Resume**, **1x/10x speed**, and **Reset scenario**. Reset retains records and marks interrupted work. The writing browser tab serializes controls across tabs. Simulation speed changes simulated durations; it is not physical repair timing. Output derating and readings are authored demonstration assumptions, not a calibrated hydraulic model. The scenario requires a configured pump with a dependency path to a press.
-
-# Open **Reviewed operational observations** from Plant to inspect backend observations and authorization. Simulation does not submit observations or change work orders. Old browser samples and completed cases are retained; unfinished pre-process dispatch cases become interrupted history when adopted by the new controller.
-
-> > > > > > > 2de8d47854fa8275935ffabcfe0073d08c96e14e
+See [repository structure](docs/engineering/repository-structure.md), [contributing](CONTRIBUTING.md) and the [documentation index](docs/README.md).
