@@ -1,5 +1,13 @@
 # Implementation status
 
+## Plant and inbox update deployed and verified - 18 October 2026
+
+At the user's explicit request to resume deployment, pushed application commit `5723e6861c4066bb6a065c9a632de5a57d1735a9` to `f_statistics-main-integration`. [Release run 39097108910](https://github.com/PIYUSHBONDE/stop-or-ship/actions/runs/39097108910) passed validation, immutable image build and application promotion. Cloud Build `763a7e21-b800-49f1-bc62-15e5265b22bc` supplied this release. Cloud Run inspection confirmed API `plantsense-api-00014-dar`, worker `plantsense-worker-00013-kug` and web `plantsense-web-00010-mec` each serving 100% traffic.
+
+CI passed **194 backend tests** (one PostgreSQL module skipped in that job), **10 infrastructure tests** and **42 frontend unit tests**, along with dedicated PostgreSQL migration/runtime checks, secret scanning, contract drift, formatting, lint, type checks and the production build. The complete packaged-browser matrix was skipped under the existing prototype release policy; the local focused browser evidence above remains separate.
+
+Read-only public smoke checks returned **200** for the live health endpoint, sign-in page and staff-access bootstrap. Staff access remained available and initial setup remained complete. Served JavaScript contained the new notification/task filters, deadline-order copy and Plant progress messages. No production sign-in, case mutation, account/password reset or model call was performed during this verification. Live Gemini behavior was not reevaluated, and authenticated cloud case access was not retested. No database migration or infrastructure provisioning was requested for this update. Release observations are committed separately with `[skip ci]` to avoid a second rollout for documentation alone.
+
 ## Notification and task inbox filters - 18 October 2026
 
 Notifications now offer All/Unread filters, category labels and prominent case/request links before the expandable saved AI assessment. My tasks offers All tasks, Assigned to me and Available to claim filters, a sidebar badge counting tasks owned by the current actor or available to their role, and clearer deadline labels. Tasks sort by actual deadline before pagination, including timestamps with different UTC offsets; undated tasks follow dated tasks. Claiming from Available to claim switches to Assigned to me while retaining the inline finding form and its draft across refresh. Empty later pages step back when the actionable set shrinks. Closed-panel badge refreshes use the existing serialized plant controller. No additional model calls, workflow transitions or schema migration were introduced.
